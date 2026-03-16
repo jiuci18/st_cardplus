@@ -172,7 +172,7 @@ import type {
   EnhancedRegion,
   ProjectIntegration,
 } from '../../types/world-editor';
-import { getLandmarkTypeIcon } from '@/utils/worldeditor/landmarkMeta';
+import { getLandmarkTypeIcon } from '@/utils/worldeditor/typeMeta';
 import { getParentLandmarkId } from '@/utils/worldeditor/landmarkHierarchy';
 
 type SelectableItem = Project | EnhancedLandmark | EnhancedForce | EnhancedRegion | ProjectIntegration;

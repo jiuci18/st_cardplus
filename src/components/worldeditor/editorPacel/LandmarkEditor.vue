@@ -488,7 +488,7 @@ import {
 import { Icon } from '@iconify/vue';
 import type { EnhancedLandmark, EnhancedForce, EnhancedRegion } from '@/types/world-editor';
 import { LandmarkType } from '@/types/world-editor';
-import { getLandmarkTypeLabel } from '@/utils/worldeditor/landmarkMeta';
+import { getLandmarkTypeLabel } from '@/utils/worldeditor/typeMeta';
 import { useValidation } from '@/composables/worldeditor/useValidation';
 import { collectDescendantIds, getParentLandmarkId, setLandmarkParent } from '@/utils/worldeditor/landmarkHierarchy';
 import { formatRoadLinkLabel, getRoadConnectionLengthText, unlinkLandmarks } from '@/composables/worldeditor/graph/worldGraphLinks';

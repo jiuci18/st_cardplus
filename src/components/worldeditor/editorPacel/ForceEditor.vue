@@ -504,6 +504,7 @@ import { Icon } from '@iconify/vue';
 import type { EnhancedForce, EnhancedLandmark } from '@/types/world-editor';
 import { ForceType } from '@/types/world-editor';
 import { useValidation, forceValidationRules } from '@/composables/worldeditor/useValidation';
+import { getForceTypeLabel } from '@/utils/worldeditor/typeMeta';
 import { v4 as uuidv4 } from 'uuid';
 import '@/css/worldbook.css';
 
@@ -532,22 +533,7 @@ const projectLandmarks = computed(() => {
   return props.allLandmarks.filter((l) => l.projectId === props.force!.projectId);
 });
 
-const localizeForceType = (type: string): string => {
-  const map: Record<string, string> = {
-    [ForceType.POLITICAL]: '政治组织',
-    [ForceType.MILITARY]: '军事组织',
-    [ForceType.RELIGIOUS]: '宗教组织',
-    [ForceType.COMMERCIAL]: '商业组织',
-    [ForceType.CRIMINAL]: '犯罪组织',
-    [ForceType.ACADEMIC]: '学术组织',
-    [ForceType.MAGICAL]: '魔法组织',
-    [ForceType.TRIBAL]: '部族组织',
-    [ForceType.GUILD]: '行会',
-    [ForceType.CULT]: '教派',
-    [ForceType.CUSTOM]: '自定义',
-  };
-  return map[type] || type;
-};
+const localizeForceType = (type: string): string => getForceTypeLabel(type);
 
 const addLeader = () => {
   if (props.force) {

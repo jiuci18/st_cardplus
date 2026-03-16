@@ -1,4 +1,4 @@
-import { LandmarkType } from '@/types/world-editor';
+import { ForceType, LandmarkType } from '@/types/world-editor';
 
 const LANDMARK_TYPE_LABELS: Record<string, string> = {
   [LandmarkType.CITY]: '城市',
@@ -42,6 +42,20 @@ const LANDMARK_TYPE_ICONS: Record<string, string> = {
   [LandmarkType.CUSTOM]: 'ph:map-pin-line-duotone',
 };
 
+const FORCE_TYPE_LABELS: Record<string, string> = {
+  [ForceType.POLITICAL]: '政治组织',
+  [ForceType.MILITARY]: '军事组织',
+  [ForceType.RELIGIOUS]: '宗教组织',
+  [ForceType.COMMERCIAL]: '商业组织',
+  [ForceType.CRIMINAL]: '犯罪组织',
+  [ForceType.ACADEMIC]: '学术组织',
+  [ForceType.MAGICAL]: '魔法组织',
+  [ForceType.TRIBAL]: '部族组织',
+  [ForceType.GUILD]: '行会',
+  [ForceType.CULT]: '教派',
+  [ForceType.CUSTOM]: '自定义',
+};
+
 export const getLandmarkTypeLabel = (type: string): string => {
   return LANDMARK_TYPE_LABELS[type] || type;
 };
@@ -49,4 +63,8 @@ export const getLandmarkTypeLabel = (type: string): string => {
 export const getLandmarkTypeIcon = (type?: string): string => {
   if (!type) return 'ph:map-pin-duotone';
   return LANDMARK_TYPE_ICONS[type] || 'ph:map-pin-duotone';
+};
+
+export const getForceTypeLabel = (type: string): string => {
+  return FORCE_TYPE_LABELS[type] || type;
 };
