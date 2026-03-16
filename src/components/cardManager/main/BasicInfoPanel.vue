@@ -15,6 +15,7 @@
 
       <el-form-item label="标签">
         <el-select
+          ref="tagsSelectRef"
           :model-value="character.data.tags"
           @update:model-value="updateField('tags', $event)"
           multiple
@@ -122,8 +123,9 @@ import { serializeCharacterInfo } from '@/composables/characterInfo/useCardDataH
 import type { CharacterCard, CharacterProject } from '@/types/character';
 import type { CharacterCardV3 } from '@/types/character-card-v3';
 import { readLocalStorageJSON } from '@/utils/localStorageUtils';
+import { bindDelimitedPaste, mergeUniqueValues } from '@/utils/multiValuePaste';
 import { ElButton, ElDialog, ElEmpty, ElForm, ElFormItem, ElInput, ElMessage, ElMessageBox, ElOption, ElScrollbar, ElSelect, ElTag } from 'element-plus';
-import { ref, watch } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref, type ComponentPublicInstance, watch } from 'vue';
 
 const props = defineProps<{
   character: CharacterCardV3;
@@ -137,6 +139,9 @@ const emit = defineEmits<{
 }>();
 
 const dialogVisible = ref(false);
+type SelectComponentInstance = ComponentPublicInstance & { $el: HTMLElement };
+const tagsSelectRef = ref<SelectComponentInstance | null>(null);
+let tagsPasteCleanup: (() => void) | null = null;
 
 interface CharacterCollection {
   characters: Record<string, CharacterCard>;
@@ -160,6 +165,14 @@ const updateField = (field: BasicInfoField, value: string | string[]) => {
   emit('update-field', {
     field,
     value,
+  });
+};
+
+const bindTagsPasteHandler = async () => {
+  tagsPasteCleanup?.();
+  await nextTick();
+  tagsPasteCleanup = bindDelimitedPaste(tagsSelectRef.value?.$el, (values) => {
+    updateField('tags', mergeUniqueValues(props.character.data.tags || [], values));
   });
 };
 
@@ -210,6 +223,14 @@ watch(dialogVisible, (visible) => {
   if (visible) {
     loadCharacterInfoOptions();
   }
+});
+
+onMounted(() => {
+  void bindTagsPasteHandler();
+});
+
+onBeforeUnmount(() => {
+  tagsPasteCleanup?.();
 });
 
 const handleApplyCharacterInfo = async () => {

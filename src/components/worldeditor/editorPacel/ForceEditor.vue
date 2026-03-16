@@ -324,6 +324,7 @@
               <div>
                 <label class="form-label">特殊能力</label>
                 <el-select
+                  ref="capabilitiesSelectRef"
                   v-model="force.capabilities"
                   multiple
                   filterable
@@ -337,6 +338,7 @@
               <div>
                 <label class="form-label">弱点</label>
                 <el-select
+                  ref="weaknessesSelectRef"
                   v-model="force.weaknesses"
                   multiple
                   filterable
@@ -454,6 +456,7 @@
             <div>
               <label class="form-label">标签</label>
               <el-select
+                ref="tagsSelectRef"
                 v-model="force.tags"
                 multiple
                 filterable
@@ -488,7 +491,7 @@
 </template>
 
 <script setup lang="ts">
-import { toRefs, watch, computed } from 'vue';
+import { toRefs, watch, computed, nextTick, onBeforeUnmount, ref, type ComponentPublicInstance } from 'vue';
 import {
   ElScrollbar,
   ElForm,
@@ -505,6 +508,7 @@ import type { EnhancedForce, EnhancedLandmark } from '@/types/world-editor';
 import { ForceType } from '@/types/world-editor';
 import { useValidation, forceValidationRules } from '@/composables/worldeditor/useValidation';
 import { getForceTypeLabel } from '@/utils/worldeditor/typeMeta';
+import { bindDelimitedPaste, mergeUniqueValues } from '@/utils/multiValuePaste';
 import { v4 as uuidv4 } from 'uuid';
 import '@/css/worldbook.css';
 
@@ -518,6 +522,11 @@ const props = defineProps<Props>();
 const { errors, validate } = useValidation();
 const { force } = toRefs(props);
 const forceTypes = Object.values(ForceType);
+type SelectComponentInstance = ComponentPublicInstance & { $el: HTMLElement };
+const capabilitiesSelectRef = ref<SelectComponentInstance | null>(null);
+const weaknessesSelectRef = ref<SelectComponentInstance | null>(null);
+const tagsSelectRef = ref<SelectComponentInstance | null>(null);
+let pasteCleanupFns: Array<() => void> = [];
 
 const filteredForces = computed(() => {
   if (!props.allForces || !props.force) {
@@ -534,6 +543,33 @@ const projectLandmarks = computed(() => {
 });
 
 const localizeForceType = (type: string): string => getForceTypeLabel(type);
+
+const clearPasteHandlers = () => {
+  pasteCleanupFns.forEach((cleanup) => cleanup());
+  pasteCleanupFns = [];
+};
+
+const bindPasteHandlers = async () => {
+  clearPasteHandlers();
+  await nextTick();
+
+  const capabilitiesCleanup = bindDelimitedPaste(capabilitiesSelectRef.value?.$el, (values) => {
+    if (!props.force) return;
+    props.force.capabilities = mergeUniqueValues(props.force.capabilities || [], values);
+  });
+  const weaknessesCleanup = bindDelimitedPaste(weaknessesSelectRef.value?.$el, (values) => {
+    if (!props.force) return;
+    props.force.weaknesses = mergeUniqueValues(props.force.weaknesses || [], values);
+  });
+  const tagsCleanup = bindDelimitedPaste(tagsSelectRef.value?.$el, (values) => {
+    if (!props.force) return;
+    props.force.tags = mergeUniqueValues(props.force.tags || [], values);
+  });
+
+  pasteCleanupFns = [capabilitiesCleanup, weaknessesCleanup, tagsCleanup].filter(
+    (cleanup): cleanup is () => void => typeof cleanup === 'function'
+  );
+};
 
 const addLeader = () => {
   if (props.force) {
@@ -620,9 +656,14 @@ watch(
       }
       validate(newForce, forceValidationRules);
     }
+    void bindPasteHandlers();
   },
   { deep: true, immediate: true }
 );
+
+onBeforeUnmount(() => {
+  clearPasteHandlers();
+});
 </script>
 
 <style scoped>
