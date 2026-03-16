@@ -36,12 +36,14 @@ export type SettingOption = SwitchSetting | NumberInputSetting | PasswordInputSe
 
 interface AppSettingsModels {
   betaFeaturesEnabled: Ref<boolean>;
+  umamiEnabled: Ref<boolean>;
   autoSaveInterval: Ref<number>;
   autoSaveDebounce: Ref<number>;
   imgbbApiKey: Ref<string>;
 }
 interface AppSettingsHandlers {
   onBetaFeaturesToggle: (value: boolean) => void;
+  onUmamiToggle: (value: boolean) => void;
   onAutoSaveIntervalChange: (value: number | undefined) => void;
   onAutoSaveDebounceChange: (value: number | undefined) => void;
   onImgbbApiKeyChange: (value: string) => void;
@@ -58,6 +60,16 @@ export const getAppSettings = (models: AppSettingsModels, handlers: AppSettingsH
       type: 'switch',
       model: models.betaFeaturesEnabled,
       handler: handlers.onBetaFeaturesToggle,
+    },
+    {
+      id: 'umamiEnabled',
+      label: '启用 Umami 远程遥测',
+      icon: 'material-symbols:analytics-outline',
+      iconColor: 'var(--el-color-primary)',
+      description: '开启后会向 Umami 发送匿名访问统计，用于了解页面访问和功能使用趋势',
+      type: 'switch',
+      model: models.umamiEnabled,
+      handler: handlers.onUmamiToggle,
     },
     {
       id: 'imgbbApiKey',
@@ -87,7 +99,7 @@ export const getAppSettings = (models: AppSettingsModels, handlers: AppSettingsH
     {
       id: 'autoSaveDebounce',
       label: '自动保存防抖',
-      icon: 'material-symbols:hourglass-top-outline',
+      icon: 'material-symbols:timer-outline',
       iconColor: 'var(--el-color-warning)',
       description: '监听模式下的防抖时间，范围：0.1-10秒 ',
       type: 'numberInput',

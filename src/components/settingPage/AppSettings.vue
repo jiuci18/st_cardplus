@@ -82,6 +82,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { computed, onMounted, ref } from 'vue';
 
 const betaFeaturesEnabled = ref(false);
+const umamiEnabled = ref(true);
 const autoSaveInterval = ref(5);
 const autoSaveDebounce = ref(1.5);
 const imgbbApiKey = ref('');
@@ -139,6 +140,11 @@ const onAutoSaveDebounceChange = (value: number | undefined) => {
   window.dispatchEvent(new CustomEvent('autoSaveDebounceChange', { detail: value }));
 };
 
+const onUmamiToggle = (value: boolean) => {
+  setSetting('umamiEnabled', value);
+  window.dispatchEvent(new CustomEvent('umamiToggle', { detail: value }));
+};
+
 const onImgbbApiKeyChange = (value: string) => {
   setSetting('imgbbApiKey', value);
 };
@@ -147,12 +153,14 @@ const settings = computed(() =>
   getAppSettings(
     {
       betaFeaturesEnabled,
+      umamiEnabled,
       autoSaveInterval,
       autoSaveDebounce,
       imgbbApiKey,
     },
     {
       onBetaFeaturesToggle,
+      onUmamiToggle,
       onAutoSaveIntervalChange,
       onAutoSaveDebounceChange,
       onImgbbApiKeyChange,
@@ -162,6 +170,7 @@ const settings = computed(() =>
 
 onMounted(() => {
   betaFeaturesEnabled.value = getSetting('betaFeaturesEnabled');
+  umamiEnabled.value = getSetting('umamiEnabled');
   autoSaveInterval.value = getSetting('autoSaveInterval');
   autoSaveDebounce.value = getSetting('autoSaveDebounce');
   imgbbApiKey.value = getSetting('imgbbApiKey');

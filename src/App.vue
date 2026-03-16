@@ -53,6 +53,7 @@ import MobileTabBar from '@/components/layout/MobileTabBar.vue';
 import { provideNavigation } from '@/composables/useNavigation';
 import { provideOverflowControl } from '@/composables/useOverflowControl';
 import { usePersonalization } from '@/composables/usePersonalization';
+import { syncUmamiTelemetry } from '@/composables/useUmamiTelemetry';
 
 import { getSetting } from '@/utils/localStorageUtils';
 
@@ -60,6 +61,7 @@ const { isOverflowHidden, setOverflowHidden } = provideOverflowControl();
 const route = useRoute();
 const { sidebarConfig, refreshSidebarConfig } = usePersonalization();
 const betaFeaturesEnabled = ref(false);
+const umamiEnabled = ref(true);
 const drawerVisible = ref(false);
 
 
@@ -91,23 +93,36 @@ watch(
   { immediate: true }
 );
 
-const handleBetaFeaturesToggle = (event: CustomEvent) => {
-  betaFeaturesEnabled.value = event.detail;
+const handleBetaFeaturesToggle = (event: Event) => {
+  betaFeaturesEnabled.value = (event as CustomEvent<boolean>).detail;
 };
 
 const handleSidebarConfigChange = () => {
   refreshSidebarConfig();
 };
 
+const handleUmamiToggle = (event: Event) => {
+  umamiEnabled.value = (event as CustomEvent<boolean>).detail;
+  void syncUmamiTelemetry(umamiEnabled.value).catch((error) => {
+    console.error('切换 Umami 遥测失败:', error);
+  });
+};
+
 onMounted(() => {
   betaFeaturesEnabled.value = getSetting('betaFeaturesEnabled');
+  umamiEnabled.value = getSetting('umamiEnabled');
   refreshSidebarConfig();
-  window.addEventListener('betaFeaturesToggle', handleBetaFeaturesToggle as EventListener);
+  void syncUmamiTelemetry(umamiEnabled.value).catch((error) => {
+    console.error('初始化 Umami 遥测失败:', error);
+  });
+  window.addEventListener('betaFeaturesToggle', handleBetaFeaturesToggle);
+  window.addEventListener('umamiToggle', handleUmamiToggle);
   window.addEventListener('sidebarConfigChange', handleSidebarConfigChange as EventListener);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('betaFeaturesToggle', handleBetaFeaturesToggle as EventListener);
+  window.removeEventListener('betaFeaturesToggle', handleBetaFeaturesToggle);
+  window.removeEventListener('umamiToggle', handleUmamiToggle);
   window.removeEventListener('sidebarConfigChange', handleSidebarConfigChange as EventListener);
 });
 </script>
