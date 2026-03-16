@@ -89,49 +89,6 @@
 
       <div
         v-if="store.previewCode"
-        class="quick-actions"
-        :class="{ 'mobile-quick-actions': isMobile }"
-      >
-        <template v-if="isMobile">
-          <el-button
-            size="small"
-            @click="formatCode"
-            :icon="DocumentChecked"
-            class="action-button"
-          >
-            格式化
-          </el-button>
-          <el-button
-            size="small"
-            @click="validateSyntax"
-            :icon="CircleCheck"
-            class="action-button"
-          >
-            语法检查
-          </el-button>
-        </template>
-        <template v-else>
-          <el-button-group>
-            <el-button
-              size="small"
-              @click="formatCode"
-              :icon="DocumentChecked"
-            >
-              格式化
-            </el-button>
-            <el-button
-              size="small"
-              @click="validateSyntax"
-              :icon="CircleCheck"
-            >
-              语法检查
-            </el-button>
-          </el-button-group>
-        </template>
-      </div>
-
-      <div
-        v-if="store.previewCode"
         class="template-info"
       >
         <h5>模板信息</h5>
@@ -154,7 +111,7 @@
 import { useEjsEditorStore } from '@/composables/ejs/ejsEditor';
 import { formatDateTime } from '@/utils/datetime';
 import { useDevice } from '@/composables/useDevice';
-import { CircleCheck, CopyDocument, DocumentChecked, RefreshRight } from '@element-plus/icons-vue';
+import { CopyDocument, RefreshRight } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
 import { computed, ref, watch } from 'vue';
 
@@ -199,57 +156,6 @@ async function copyCode() {
     ElMessage.success('代码已复制到剪贴板');
   } catch (error) {
     ElMessage.error('复制失败');
-  }
-}
-
-function formatCode() {
-  if (!store.previewCode) return;
-
-  try {
-    let formatted = store.previewCode
-      .replace(/<%_\s*/g, '<%_ ')
-      .replace(/\s*_%>/g, ' _%>')
-      .replace(/\n\n+/g, '\n\n'); // 移除多余空行
-
-    store.previewCode = formatted;
-    store.ejsTemplate = formatted;
-    ElMessage.success('代码格式化完成');
-  } catch (error) {
-    ElMessage.error('格式化失败');
-  }
-}
-
-function validateSyntax() {
-  if (!store.previewCode) return;
-
-  try {
-    const errors = [];
-    const lines = store.previewCode.split('\n');
-
-    let ejsBlockCount = 0;
-    lines.forEach((line, index) => {
-      const openTags = (line.match(/<%/g) || []).length;
-      const closeTags = (line.match(/%>/g) || []).length;
-      ejsBlockCount += openTags - closeTags;
-
-      if (line.includes('<%') && !line.includes('%>') && !lines[index + 1]?.includes('%>')) {
-        errors.push(`第 ${index + 1} 行: EJS 标签可能未正确闭合`);
-      }
-    });
-
-    if (ejsBlockCount !== 0) {
-      errors.push('EJS 标签未正确匹配');
-    }
-
-    if (errors.length === 0) {
-      ElMessage.success('语法检查通过');
-    } else {
-      errors.forEach((error) => {
-        ElMessage.error(error);
-      });
-    }
-  } catch (error) {
-    ElMessage.error('语法检查失败');
   }
 }
 

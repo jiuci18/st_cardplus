@@ -30,8 +30,6 @@ export const characterCardService = {
    */
   async getFullCharacterCardCollection(): Promise<CharacterCardCollection> {
     const allCardsStored = await db.characterCards.orderBy('order').toArray();
-    console.log('--- [DEBUG] All cards from DB ---', allCardsStored);
-
     const cards: Record<string, CharacterCardV3 & { id: string; createdAt: string; updatedAt: string; order: number }> =
       {};
 

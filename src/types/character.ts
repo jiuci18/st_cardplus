@@ -86,6 +86,17 @@ export interface CharacterMetadata {
   id?: string; // 唯一标识符，用于本地管理
   order?: number; // 列表排序值
   starred?: boolean; // 星标置顶
+  projectId?: string; // 所属项目ID，为空表示未分组
+}
+
+/**
+ * 角色项目接口定义
+ * 用于在侧边栏中对角色进行分组管理
+ */
+export interface CharacterProject {
+  id: string;
+  name: string;
+  order: number;
 }
 
 /**

@@ -1,11 +1,5 @@
 <template>
   <div class="card-regex-panel">
-    <!-- 提示条 -->
-    <div class="panel-notice">
-      <Icon icon="ph:info-duotone" />
-      <span>正在编辑角色卡「{{ character.name }}」的正则脚本</span>
-    </div>
-
     <!-- 空状态 -->
     <div
       v-if="regexScripts.length === 0"
@@ -56,8 +50,8 @@
                     v-for="(script, index) in regexScripts"
                     :key="script.id"
                     class="script-item"
-                    :class="{ 'is-active': selectedScriptIndex === index, 'is-disabled': script.disabled }"
-                    @click="selectScript(index)"
+                    :class="{ 'is-active': currentScriptId === script.id, 'is-disabled': script.disabled }"
+                    @click="selectScript(script.id)"
                   >
                     <div class="script-item-content">
                       <Icon
@@ -90,7 +84,7 @@
           >
             <div class="script-editor-panel">
               <div
-                v-if="selectedScriptIndex === null"
+                v-if="currentScriptIndex === null"
                 class="editor-empty-state"
               >
                 <el-empty
@@ -117,7 +111,7 @@
                     <el-button-group size="small">
                       <el-button
                         type="danger"
-                        @click="handleDeleteScript(selectedScriptIndex)"
+                        @click="handleDeleteScript(currentScriptIndex)"
                       >
                         <Icon icon="ph:trash-duotone" />
                         删除
@@ -133,14 +127,22 @@
                       label-position="top"
                     >
                       <RegexEditorCore
-                        v-model:script-name="currentScriptRequired.scriptName"
-                        v-model:find-regex="currentScriptRequired.findRegex"
-                        v-model:replace-string="currentScriptRequired.replaceString"
-                        v-model:trim-strings="trimStringsText"
-                        v-model:substitute-regex="currentScriptRequired.substituteRegex"
+                        :script-name="currentScriptRequired.scriptName || ''"
+                        :find-regex="currentScriptRequired.findRegex || ''"
+                        :replace-string="currentScriptRequired.replaceString || ''"
+                        :trim-strings="trimStringsText"
+                        :substitute-regex="currentScriptRequired.substituteRegex"
+                        @update:script-name="updateCurrentScriptField('scriptName', $event)"
+                        @update:find-regex="updateCurrentScriptField('findRegex', $event)"
+                        @update:replace-string="updateCurrentScriptField('replaceString', $event)"
+                        @update:trim-strings="trimStringsText = $event"
+                        @update:substitute-regex="updateCurrentScriptField('substituteRegex', $event)"
                       />
 
-                      <RegexAdvancedSettings v-model="currentScriptRequired" />
+                      <RegexAdvancedSettings
+                        :model-value="currentScriptRequired"
+                        @update:model-value="updateCurrentScript($event)"
+                      />
 
                       <el-divider />
 
@@ -179,8 +181,8 @@
                     v-for="(script, index) in regexScripts"
                     :key="script.id"
                     class="script-item-mobile"
-                    :class="{ 'is-active': selectedScriptIndex === index, 'is-disabled': script.disabled }"
-                    @click="handleMobileSelectScript(index)"
+                    :class="{ 'is-active': currentScriptId === script.id, 'is-disabled': script.disabled }"
+                    @click="handleMobileSelectScript(script.id)"
                   >
                     <div class="script-item-content">
                       <Icon
@@ -207,11 +209,11 @@
           </el-tab-pane>
           <el-tab-pane
             name="editor"
-            :label="selectedScriptIndex !== null ? currentScriptRequired.scriptName || '编辑中' : '编辑器'"
+            :label="currentScriptIndex !== null ? currentScriptRequired.scriptName || '编辑中' : '编辑器'"
           >
             <div class="script-editor-panel-mobile">
               <div
-                v-if="selectedScriptIndex === null"
+                v-if="currentScriptIndex === null"
                 class="editor-empty-state"
               >
                 <el-empty
@@ -235,7 +237,7 @@
                     <el-button
                       type="danger"
                       size="small"
-                      @click="handleDeleteScript(selectedScriptIndex)"
+                      @click="handleDeleteScript(currentScriptIndex)"
                     >
                       <Icon icon="ph:trash-duotone" />
                       删除
@@ -250,14 +252,22 @@
                       label-position="top"
                     >
                       <RegexEditorCore
-                        v-model:script-name="currentScriptRequired.scriptName"
-                        v-model:find-regex="currentScriptRequired.findRegex"
-                        v-model:replace-string="currentScriptRequired.replaceString"
-                        v-model:trim-strings="trimStringsText"
-                        v-model:substitute-regex="currentScriptRequired.substituteRegex"
+                        :script-name="currentScriptRequired.scriptName || ''"
+                        :find-regex="currentScriptRequired.findRegex || ''"
+                        :replace-string="currentScriptRequired.replaceString || ''"
+                        :trim-strings="trimStringsText"
+                        :substitute-regex="currentScriptRequired.substituteRegex"
+                        @update:script-name="updateCurrentScriptField('scriptName', $event)"
+                        @update:find-regex="updateCurrentScriptField('findRegex', $event)"
+                        @update:replace-string="updateCurrentScriptField('replaceString', $event)"
+                        @update:trim-strings="trimStringsText = $event"
+                        @update:substitute-regex="updateCurrentScriptField('substituteRegex', $event)"
                       />
 
-                      <RegexAdvancedSettings v-model="currentScriptRequired" />
+                      <RegexAdvancedSettings
+                        :model-value="currentScriptRequired"
+                        @update:model-value="updateCurrentScript($event)"
+                      />
 
                       <el-divider />
 
@@ -329,6 +339,7 @@ interface Props {
 
 interface Emits {
   (e: 'regexChanged'): void;
+  (e: 'update:regexScripts', value: SillyTavernRegexScript[]): void;
 }
 
 const props = defineProps<Props>();
@@ -336,14 +347,16 @@ const emit = defineEmits<Emits>();
 
 const showRegexSelector = ref(false);
 const showReplaceSelector = ref(false);
-const selectedScriptIndex = ref<number | null>(null);
+const regexDraft = ref<SillyTavernRegexScript[]>([]);
+const currentScriptId = ref<string | null>(null);
+const lastCommittedSnapshot = ref('');
 
 // 移动端状态
 const mobileActiveTab = ref<'list' | 'editor'>('list');
 
 // 移动端选择脚本
-const handleMobileSelectScript = (index: number) => {
-  selectedScriptIndex.value = index;
+const handleMobileSelectScript = (scriptId: string) => {
+  currentScriptId.value = scriptId;
   mobileActiveTab.value = 'editor';
 };
 
@@ -357,26 +370,104 @@ const userMacroValue = ref('User');
 const charMacroValue = ref('Character');
 
 // 计算属性：正则脚本列表
+const cloneRegexScript = (script: SillyTavernRegexScript, index: number = 0): SillyTavernRegexScript => ({
+  id: script.id || `regex-script-${index}`,
+  scriptName: script.scriptName || '',
+  findRegex: script.findRegex || '',
+  replaceString: script.replaceString || '',
+  trimStrings: [...(script.trimStrings ?? [])],
+  placement: [...(script.placement ?? [])],
+  disabled: script.disabled ?? false,
+  markdownOnly: script.markdownOnly ?? false,
+  promptOnly: script.promptOnly ?? false,
+  runOnEdit: script.runOnEdit ?? false,
+  substituteRegex: script.substituteRegex ?? SUBSTITUTE_FIND_REGEX.NONE,
+  minDepth: script.minDepth ?? null,
+  maxDepth: script.maxDepth ?? null,
+});
+
+const serializeRegexScripts = (scripts: SillyTavernRegexScript[]) => {
+  return JSON.stringify(
+    scripts.map((script, index) => cloneRegexScript(script, index))
+  );
+};
+
+const initializeRegexDraft = (scripts: SillyTavernRegexScript[]) => {
+  regexDraft.value = scripts.map((script, index) => cloneRegexScript(script, index));
+  lastCommittedSnapshot.value = serializeRegexScripts(regexDraft.value);
+
+  if (regexDraft.value.length === 0) {
+    currentScriptId.value = null;
+    mobileActiveTab.value = 'list';
+    return;
+  }
+
+  const hasCurrentSelection = currentScriptId.value
+    ? regexDraft.value.some((script) => script.id === currentScriptId.value)
+    : false;
+
+  if (!hasCurrentSelection) {
+    currentScriptId.value = regexDraft.value[0].id;
+  }
+};
+
+const emitRegexScripts = (scripts: SillyTavernRegexScript[]) => {
+  const normalizedScripts = scripts.map((script, index) => cloneRegexScript(script, index));
+  regexDraft.value = normalizedScripts;
+  lastCommittedSnapshot.value = serializeRegexScripts(normalizedScripts);
+  emit('update:regexScripts', normalizedScripts.map((script, index) => cloneRegexScript(script, index)));
+  emit('regexChanged');
+};
+
 const regexScripts = computed(() => {
-  if (!props.character.data.extensions) {
-    props.character.data.extensions = {};
-  }
-  if (!props.character.data.extensions.regex_scripts) {
-    props.character.data.extensions.regex_scripts = [];
-  }
-  return props.character.data.extensions.regex_scripts as SillyTavernRegexScript[];
+  return regexDraft.value;
+});
+
+watch(
+  () => serializeRegexScripts((props.character.data.extensions?.regex_scripts ?? []) as SillyTavernRegexScript[]),
+  (snapshot) => {
+    if (snapshot === lastCommittedSnapshot.value) return;
+    initializeRegexDraft((props.character.data.extensions?.regex_scripts ?? []) as SillyTavernRegexScript[]);
+  },
+  { immediate: true }
+);
+
+const currentScriptIndex = computed(() => {
+  if (!currentScriptId.value) return null;
+  const index = regexScripts.value.findIndex((script) => script.id === currentScriptId.value);
+  return index >= 0 ? index : null;
 });
 
 // 当前选中的脚本（可空）
 const currentScript = computed(() => {
-  if (selectedScriptIndex.value === null) return null;
-  return regexScripts.value[selectedScriptIndex.value] || null;
+  if (currentScriptIndex.value === null) return null;
+  return regexScripts.value[currentScriptIndex.value] || null;
 });
 
-// 非空断言版本（用于模板绑定，模板层已保证 selectedScriptIndex !== null）
+// 非空断言版本（用于模板绑定，模板层已保证 currentScriptIndex !== null）
 const currentScriptRequired = computed(() => {
   return (currentScript.value || ({} as SillyTavernRegexScript)) as SillyTavernRegexScript;
 });
+
+const updateCurrentScript = (script: SillyTavernRegexScript) => {
+  if (currentScriptIndex.value === null || !regexScripts.value[currentScriptIndex.value]) return;
+
+  const nextScripts = regexScripts.value.map((item, index) =>
+    index === currentScriptIndex.value ? cloneRegexScript(script, index) : cloneRegexScript(item, index)
+  );
+  emitRegexScripts(nextScripts);
+};
+
+const updateCurrentScriptField = <K extends keyof SillyTavernRegexScript>(
+  field: K,
+  value: SillyTavernRegexScript[K]
+) => {
+  if (!currentScript.value) return;
+  updateCurrentScript({
+    ...cloneRegexScript(currentScript.value),
+    [field]: value,
+  });
+};
 
 // trimStrings 的文本表示
 const trimStringsText = computed({
@@ -386,8 +477,10 @@ const trimStringsText = computed({
   },
   set: (value: string) => {
     if (currentScript.value) {
-      currentScript.value.trimStrings = value.split('\n').filter((s) => s.trim() !== '');
-      emit('regexChanged');
+      updateCurrentScriptField(
+        'trimStrings',
+        value.split('\n').filter((s) => s.trim() !== '')
+      );
     }
   },
 });
@@ -418,9 +511,27 @@ watch(testString, (val) => {
   simTestString.value = val;
 });
 
+watch(
+  () => regexScripts.value.length,
+  (length) => {
+    if (length === 0) {
+      currentScriptId.value = null;
+      mobileActiveTab.value = 'list';
+      return;
+    }
+
+    if (currentScriptId.value && regexScripts.value.some((script) => script.id === currentScriptId.value)) {
+      return;
+    }
+
+    currentScriptId.value = regexScripts.value[0].id;
+  },
+  { immediate: true }
+);
+
 // 方法
-const selectScript = (index: number) => {
-  selectedScriptIndex.value = index;
+const selectScript = (scriptId: string) => {
+  currentScriptId.value = scriptId;
 };
 
 const truncateRegex = (regex: string, maxLength: number = 40) => {
@@ -441,9 +552,9 @@ const handleCreateNew = () => {
     disabled: false,
   };
 
-  regexScripts.value.push(newScript);
-  selectedScriptIndex.value = regexScripts.value.length - 1;
-  emit('regexChanged');
+  const nextScripts = [...regexScripts.value.map((script, index) => cloneRegexScript(script, index)), newScript];
+  emitRegexScripts(nextScripts);
+  currentScriptId.value = newScript.id;
 
   ElMessage.success('新建脚本成功');
 };
@@ -473,12 +584,12 @@ const handleAddScriptsFromLibrary = (scripts: SillyTavernRegexScript[]) => {
       }) as SillyTavernRegexScript
   );
 
-  regexScripts.value.push(...clones);
-  if (regexScripts.value.length > 0) {
-    selectedScriptIndex.value = regexScripts.value.length - 1;
+  const nextScripts = [...regexScripts.value.map((script, index) => cloneRegexScript(script, index)), ...clones];
+  emitRegexScripts(nextScripts);
+  if (nextScripts.length > 0) {
+    currentScriptId.value = nextScripts[nextScripts.length - 1].id;
   }
   ElMessage.success(`已添加 ${clones.length} 个脚本`);
-  emit('regexChanged');
 };
 
 const handleDeleteScript = async (index: number) => {
@@ -489,13 +600,15 @@ const handleDeleteScript = async (index: number) => {
       type: 'warning',
     });
 
-    regexScripts.value.splice(index, 1);
-    if (selectedScriptIndex.value === index) {
-      selectedScriptIndex.value = null;
-    } else if (selectedScriptIndex.value !== null && selectedScriptIndex.value > index) {
-      selectedScriptIndex.value--;
+    const nextScripts = regexScripts.value
+      .filter((_, scriptIndex) => scriptIndex !== index)
+      .map((script, scriptIndex) => cloneRegexScript(script, scriptIndex));
+    const deletedScriptId = regexScripts.value[index]?.id ?? null;
+    emitRegexScripts(nextScripts);
+
+    if (deletedScriptId && currentScriptId.value === deletedScriptId) {
+      currentScriptId.value = nextScripts[index]?.id || nextScripts[index - 1]?.id || null;
     }
-    emit('regexChanged');
     ElMessage.success('删除成功');
   } catch {
     // 用户取消
@@ -571,32 +684,16 @@ const handleReplaceScriptsFromLibrary = async (scripts: SillyTavernRegexScript[]
     );
 
     // 完全替换
-    regexScripts.value.splice(0, regexScripts.value.length, ...clones);
+    emitRegexScripts(clones);
 
     // 选中第一个脚本
-    if (regexScripts.value.length > 0) {
-      selectedScriptIndex.value = 0;
-    } else {
-      selectedScriptIndex.value = null;
-    }
+    currentScriptId.value = clones[0]?.id || null;
 
     ElMessage.success(`已替换为 ${clones.length} 个脚本`);
-    emit('regexChanged');
   } catch {
     // 用户取消
   }
 };
-
-// 监听当前脚本的变化，触发保存
-watch(
-  () => currentScript.value,
-  () => {
-    if (currentScript.value) {
-      emit('regexChanged');
-    }
-  },
-  { deep: true }
-);
 
 // 导出方法供父组件调用
 defineExpose({

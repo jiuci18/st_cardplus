@@ -289,7 +289,6 @@ export function useEjsProject(
             ElMessage.success(`项目 "${data.name}" 已成功导入`);
           }
         } catch (error) {
-          console.error('导入失败:', error);
           ElMessage.error(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
         }
       };

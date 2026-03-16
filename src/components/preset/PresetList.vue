@@ -13,36 +13,23 @@
     @node-dblclick="handleNodeDblClick"
   >
     <template #header-actions>
-      <el-tooltip
-        content="创建新预设"
-        placement="top"
-        :show-arrow="false"
-        :offset="8"
-        :hide-after="0"
-      >
-        <button
-          @click="$emit('create-preset')"
-          class="btn-adv btn-primary-adv sidebar-header-button"
-          aria-label="创建新预设"
+      <div class="split-create-actions">
+        <el-tooltip
+          content="创建新预设"
+          placement="top"
+          :show-arrow="false"
+          :offset="8"
+          :hide-after="0"
         >
-          <Icon icon="ph:plus-bold" />
-        </button>
-      </el-tooltip>
-      <el-tooltip
-        content="新建空白模板"
-        placement="top"
-        :show-arrow="false"
-        :offset="8"
-        :hide-after="0"
-      >
-        <button
-          @click="$emit('create-blank')"
-          class="btn-adv btn-secondary-adv sidebar-header-button"
-          aria-label="新建空白模板"
-        >
-          <Icon icon="ph:file-dashed-duotone" />
-        </button>
-      </el-tooltip>
+          <button
+            @click="$emit('create-preset')"
+            class="btn-adv btn-primary-adv sidebar-header-button split-create-main"
+            aria-label="创建新预设"
+          >
+            <Icon icon="ph:plus-bold" />
+          </button>
+        </el-tooltip>
+      </div>
     </template>
 
     <template #node="{ node, data }">
@@ -142,6 +129,44 @@
             </button>
           </el-tooltip>
         </div>
+        <div
+          class="sidebar-tree-node-actions"
+          v-if="data.isRegexFolder"
+        >
+          <el-tooltip
+            content="新增正则脚本"
+            placement="top"
+            :show-arrow="false"
+            :offset="8"
+            :hide-after="0"
+          >
+            <button
+              @click.stop="$emit('add-regex', data.presetId)"
+              class="sidebar-tree-node-action-button"
+            >
+              <Icon icon="ph:plus-circle-duotone" />
+            </button>
+          </el-tooltip>
+        </div>
+        <div
+          class="sidebar-tree-node-actions"
+          v-if="data.isRegexScript"
+        >
+          <el-tooltip
+            content="删除正则脚本"
+            placement="top"
+            :show-arrow="false"
+            :offset="8"
+            :hide-after="0"
+          >
+            <button
+              @click.stop="$emit('delete-regex', data.presetId, data.regexIndex)"
+              class="sidebar-tree-node-action-button is-danger"
+            >
+              <Icon icon="ph:trash-duotone" />
+            </button>
+          </el-tooltip>
+        </div>
       </div>
     </template>
 
@@ -208,6 +233,8 @@ import type { StoredPresetFile } from '@/database/db';
 import {
   buildPresetTreeData,
   getHeaderNodeKey,
+  getRegexFolderNodeKey,
+  getRegexNodeKey,
   resolvePromptIdentifier,
   getPromptNodeKey,
 } from '@/composables/preset/utils/presetTree';
@@ -216,6 +243,7 @@ interface Props {
   presets: StoredPresetFile[];
   activePresetId: string | null;
   selectedPromptIndex: number | null;
+  selectedRegexIndex: number | null;
   selectedIsHeader: boolean;
   multiSelectedNodeKeys?: string[];
   dragDropHandlers: {
@@ -233,15 +261,17 @@ const emit = defineEmits<{
   (e: 'select-preset', id: string): void;
   (e: 'select-header', id: string): void;
   (e: 'select-prompt', presetId: string, promptIndex: number): void;
+  (e: 'select-regex', presetId: string, regexIndex?: number): void;
   (e: 'toggle-prompt-enabled', presetId: string, promptIndex: number): void;
   (e: 'toggle-node-selection', data: any, additive: boolean): void;
   (e: 'create-preset'): void;
-  (e: 'create-blank'): void;
   (e: 'rename-preset', id: string): void;
   (e: 'delete-preset', id: string): void;
   (e: 'add-prompt', presetId: string): void;
+  (e: 'add-regex', presetId: string): void;
   (e: 'duplicate-prompt', presetId: string, promptIndex: number): void;
   (e: 'delete-prompt', presetId: string, promptIndex: number): void;
+  (e: 'delete-regex', presetId: string, regexIndex: number): void;
   (e: 'import-preset', file: File): void;
   (e: 'export-preset'): void;
 }>();
@@ -258,6 +288,15 @@ const currentNodeKey = computed(() => {
   if (props.selectedIsHeader) {
     return getHeaderNodeKey(props.activePresetId);
   }
+  if (props.selectedRegexIndex !== null && props.selectedRegexIndex !== undefined) {
+    const preset = props.presets.find((p) => p.id === props.activePresetId);
+    if (!preset) return undefined;
+    const scripts = (preset.data.extensions as Record<string, any>).regex_scripts as Record<string, any>[];
+    const script = scripts[props.selectedRegexIndex];
+    if (!script) return undefined;
+    const scriptId = script.id as string;
+    return getRegexNodeKey(props.activePresetId, scriptId);
+  }
   if (props.selectedPromptIndex !== null && props.selectedPromptIndex !== undefined) {
     const preset = props.presets.find((p) => p.id === props.activePresetId);
     const prompt = preset?.data?.prompts?.[props.selectedPromptIndex] as Record<string, any> | undefined;
@@ -265,16 +304,31 @@ const currentNodeKey = computed(() => {
     const identifier = resolvePromptIdentifier(prompt, props.selectedPromptIndex);
     return getPromptNodeKey(props.activePresetId, identifier);
   }
-  return props.activePresetId;
+  return getRegexFolderNodeKey(props.activePresetId);
 });
 
-const handleNodeClick = (data: any, context?: { event?: MouseEvent }) => {
-  if (data.isGroup) return;
+const handleNodeClick = (data: any, context?: { event?: MouseEvent; node?: any }) => {
   const event = context?.event;
   const additive = Boolean(event && (event.ctrlKey || event.metaKey));
+  const treeNode = context?.node;
+
+  if (data?.isPreset || data?.isRegexFolder || data?.isGroup) {
+    if (treeNode?.expanded) {
+      treeNode.collapse?.();
+    } else {
+      treeNode.expand?.();
+    }
+  }
+
+  if (data.isGroup) return;
+
   emit('toggle-node-selection', data, additive);
   if (data.isHeader) {
     emit('select-header', data.presetId);
+  } else if (data.isRegexFolder) {
+    emit('select-regex', data.presetId);
+  } else if (data.isRegexScript) {
+    emit('select-regex', data.presetId, data.regexIndex);
   } else if (data.isPrompt) {
     emit('select-prompt', data.presetId, data.promptIndex);
   } else {
@@ -311,6 +365,8 @@ const isFullyLockedPrompt = (prompt: Record<string, any> | undefined) => {
 </script>
 
 <style scoped>
+@import '@/styles/split-create-actions.css';
+
 .preset-footer-actions {
   display: flex;
   gap: 8px;
@@ -352,7 +408,6 @@ const isFullyLockedPrompt = (prompt: Record<string, any> | undefined) => {
   color: var(--el-text-color-disabled);
   opacity: 0.65;
 }
-
 
 .sidebar-tree-node.is-multi-selected .sidebar-tree-node-label,
 .sidebar-tree-node.is-multi-selected .sidebar-tree-node-icon {

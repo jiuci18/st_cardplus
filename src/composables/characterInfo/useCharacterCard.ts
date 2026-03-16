@@ -1,4 +1,3 @@
-import { ref } from 'vue';
 import type { CharacterCard } from '../../types/character';
 
 /**
@@ -61,10 +60,3 @@ export const createDefaultCharacterCard = (id?: string): CharacterCard => {
 
   return card;
 };
-
-export function useCharacterCard() {
-  const form = ref<CharacterCard>(createDefaultCharacterCard());
-  return {
-    form,
-  };
-}

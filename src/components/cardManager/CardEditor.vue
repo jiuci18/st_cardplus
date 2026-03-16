@@ -29,6 +29,7 @@
           <BasicInfoPanel
             :character="character"
             :all-tags="props.allTags"
+            @update-field="emit('update-field', $event)"
           />
         </div>
       </div>
@@ -44,7 +45,10 @@
         多开场白
       </h3>
       <div class="form-section-content">
-        <GreetingsPanel v-model="character.data.alternate_greetings" />
+        <GreetingsPanel
+          :model-value="character.data.alternate_greetings"
+          @update:model-value="emit('update-field', { field: 'alternate_greetings', value: $event })"
+        />
       </div>
     </section>
 
@@ -80,7 +84,10 @@
       <div v-show="advancedOptionsVisible">
         <section class="form-section">
           <div class="form-section-content">
-            <AdvancedInfoPanel :character="character" />
+            <AdvancedInfoPanel
+              :character="character"
+              @update-field="emit('update-field', $event)"
+            />
           </div>
         </section>
       </div>
@@ -113,6 +120,10 @@ const emit = defineEmits<{
   (e: 'imageUrlChange', url: string): void;
   (e: 'providerChange', provider: 'catbox' | 'imgbb'): void;
   (e: 'uploadToHosting', provider: 'catbox' | 'imgbb'): void;
+  (e: 'update-field', payload: {
+    field: keyof CharacterCardV3['data'];
+    value: CharacterCardV3['data'][keyof CharacterCardV3['data']];
+  }): void;
   (e: 'update:advancedOptionsVisible', value: boolean): void;
 }>();
 

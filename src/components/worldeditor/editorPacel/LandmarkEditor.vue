@@ -98,6 +98,7 @@
             <div class="form-grid-span-3">
               <label class="form-label">标签</label>
               <el-select
+                ref="tagsSelectRef"
                 v-model="landmark.tags"
                 multiple
                 filterable
@@ -434,6 +435,7 @@
             <div class="form-grid-span-3">
               <label class="form-label">资源</label>
               <el-select
+                ref="resourcesSelectRef"
                 v-model="landmark.resources"
                 multiple
                 filterable
@@ -472,7 +474,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch, computed } from 'vue';
+import { watch, computed, nextTick, onBeforeUnmount, ref, type ComponentPublicInstance } from 'vue';
 import {
   ElScrollbar,
   ElForm,
@@ -488,10 +490,11 @@ import {
 import { Icon } from '@iconify/vue';
 import type { EnhancedLandmark, EnhancedForce, EnhancedRegion } from '@/types/world-editor';
 import { LandmarkType } from '@/types/world-editor';
-import { getLandmarkTypeLabel } from '@/utils/worldeditor/landmarkMeta';
+import { getLandmarkTypeLabel } from '@/utils/worldeditor/typeMeta';
 import { useValidation } from '@/composables/worldeditor/useValidation';
 import { collectDescendantIds, getParentLandmarkId, setLandmarkParent } from '@/utils/worldeditor/landmarkHierarchy';
-import { getRoadConnectionLength, unlinkLandmarks } from '@/composables/worldeditor/worldGraphLinks';
+import { formatRoadLinkLabel, getRoadConnectionLengthText, unlinkLandmarks } from '@/composables/worldeditor/graph/worldGraphLinks';
+import { bindDelimitedPaste, mergeUniqueValues } from '@/utils/multiValuePaste';
 import RegionSelect from '../RegionSelect.vue';
 import '@/css/worldbook.css';
 
@@ -508,6 +511,10 @@ const props = defineProps<Props>();
 const emit = defineEmits<{
   (e: 'select-force', force: EnhancedForce): void;
 }>();
+type SelectComponentInstance = ComponentPublicInstance & { $el: HTMLElement };
+const tagsSelectRef = ref<SelectComponentInstance | null>(null);
+const resourcesSelectRef = ref<SelectComponentInstance | null>(null);
+let pasteCleanupFns: Array<() => void> = [];
 
 // 虽然WorldBookEditor中没有直接使用，但考虑到LandmarkEditor原有功能，暂时保留校验逻辑
 // 如果父组件统一处理，则可以移除
@@ -574,7 +581,6 @@ const getRoadLinkedIds = (landmark: EnhancedLandmark, allLandmarks: EnhancedLand
 };
 
 // 过滤掉当前正在编辑的地标，用于相对位置选择
-// 过滤掉当前正在编辑的地标，并且只显示当前项目下的地标
 const filteredLandmarks = computed(() => {
   if (!props.allLandmarks || !props.landmark) {
     return [];
@@ -615,9 +621,7 @@ const selectedParentId = computed({
 
 const childLandmarks = computed(() => {
   if (!props.landmark || !props.allLandmarks) return [];
-  const childIds = props.landmark.childLandmarkIds?.length
-    ? props.landmark.childLandmarkIds
-    : props.allLandmarks.filter((item) => getParentLandmarkId(item) === props.landmark!.id).map((item) => item.id);
+  const childIds = props.landmark.childLandmarkIds;
   const map = new Map(props.allLandmarks.map((item) => [item.id, item]));
   return childIds.map((id) => map.get(id)).filter(Boolean) as EnhancedLandmark[];
 });
@@ -631,9 +635,8 @@ const roadLinkOptions = computed(() => {
     if (!match || match.projectId !== props.landmark!.projectId) {
       return { id, name: `未知地标 (${id})`, missing: true };
     }
-    const distance = getRoadConnectionLength(props.landmark!, match);
-    const distanceText = distance === undefined ? '未计算' : String(distance);
-    return { id: match.id, name: `${match.name} (长度: ${distanceText})`, missing: false };
+    const distanceText = getRoadConnectionLengthText(props.landmark!, match, undefined, props.allLandmarks);
+    return { id: match.id, name: formatRoadLinkLabel(match.name, distanceText, '与此地标的距离'), missing: false };
   });
 });
 
@@ -661,7 +664,7 @@ const forcesAtLandmark = computed(() => {
     .filter((force) => force.projectId === landmark.projectId)
     .map((force) => {
       const roles: string[] = [];
-      if (force.headquarters === landmark.id || force.headquarters === landmark.name) {
+      if (force.headquarters === landmark.id) {
         roles.push('总部');
       }
       if (force.branchLocations?.some((branch) => branch.locationId === landmark.id)) {
@@ -676,22 +679,38 @@ const emitSelectForce = (force: EnhancedForce) => {
   emit('select-force', force);
 };
 
+const clearPasteHandlers = () => {
+  pasteCleanupFns.forEach((cleanup) => cleanup());
+  pasteCleanupFns = [];
+};
+
+const bindPasteHandlers = async () => {
+  clearPasteHandlers();
+  await nextTick();
+
+  const tagCleanup = bindDelimitedPaste(tagsSelectRef.value?.$el, (values) => {
+    if (!props.landmark) return;
+    props.landmark.tags = mergeUniqueValues(props.landmark.tags || [], values);
+  });
+  const resourceCleanup = bindDelimitedPaste(resourcesSelectRef.value?.$el, (values) => {
+    if (!props.landmark) return;
+    props.landmark.resources = mergeUniqueValues(props.landmark.resources || [], values);
+  });
+
+  pasteCleanupFns = [tagCleanup, resourceCleanup].filter(
+    (cleanup): cleanup is () => void => typeof cleanup === 'function'
+  );
+};
+
 const normalizeRelativePosition = (landmark: EnhancedLandmark) => {
   if (!landmark.relativePosition) {
     landmark.relativePosition = { north: [], south: [], east: [], west: [] };
     return;
   }
-  const relativePosition = landmark.relativePosition as {
-    north?: string | string[];
-    south?: string | string[];
-    east?: string | string[];
-    west?: string | string[];
-  };
-  const ensureArray = (value?: string | string[]) => (Array.isArray(value) ? value : value ? [value] : []);
-  landmark.relativePosition.north = ensureArray(relativePosition.north);
-  landmark.relativePosition.south = ensureArray(relativePosition.south);
-  landmark.relativePosition.east = ensureArray(relativePosition.east);
-  landmark.relativePosition.west = ensureArray(relativePosition.west);
+  landmark.relativePosition.north = landmark.relativePosition.north || [];
+  landmark.relativePosition.south = landmark.relativePosition.south || [];
+  landmark.relativePosition.east = landmark.relativePosition.east || [];
+  landmark.relativePosition.west = landmark.relativePosition.west || [];
 };
 
 const pruneRelativePosition = (landmark: EnhancedLandmark, allowedIds: Set<string>) => {
@@ -710,6 +729,7 @@ watch(
     if (newLandmark) {
       normalizeRelativePosition(newLandmark);
     }
+    void bindPasteHandlers();
   },
   { immediate: true }
 );
@@ -723,6 +743,10 @@ watch(
   },
   { immediate: true }
 );
+
+onBeforeUnmount(() => {
+  clearPasteHandlers();
+});
 </script>
 
 <style scoped>

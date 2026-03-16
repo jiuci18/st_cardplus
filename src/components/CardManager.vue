@@ -1,8 +1,8 @@
 <template>
   <div class="card-manager-container">
     <div class="card-manager-layout">
-      <CharacterCardTabs :tabs="tabs" :active-tab-id="activeTabId" @switch-tab="handleTabSwitch"
-        @close-tab="handleTabClose" @reorder-tabs="handleTabReorder" />
+      <CharacterCardTabs :tabs="tabs" :active-tab-id="activeTabId" @switch-tab="switchToTab"
+        @close-tab="handleTabClose" @reorder-tabs="reorderTabs" />
 
       <div class="tab-content-area">
         <div v-if="currentTab?.type === 'home'" class="tab-content-panel">
@@ -59,26 +59,26 @@
               </div>
               <div class="header-actions" v-else-if="rightEditorTab === 'regex'">
                 <el-tooltip content="创建一个新的空白正则脚本" placement="bottom">
-                  <el-button size="small" @click="handleRegexCreateNew" :disabled="!currentCardInTab">
+                  <el-button size="small" @click="regexPanelRef?.handleCreateNew()" :disabled="!currentCardInTab">
                     <Icon icon="ph:file-plus-duotone" />
                     <span class="button-text">创建新脚本</span>
                   </el-button>
                 </el-tooltip>
                 <el-tooltip content="从正则脚本库中选择并添加脚本" placement="bottom">
-                  <el-button size="small" @click="handleRegexAddFromLibrary" :disabled="!currentCardInTab">
+                  <el-button size="small" @click="regexPanelRef?.handleAddFromLibrary()" :disabled="!currentCardInTab">
                     <Icon icon="ph:books-duotone" />
                     <span class="button-text">从正则库添加</span>
                   </el-button>
                 </el-tooltip>
                 <el-divider direction="vertical" />
                 <el-tooltip content="将角色卡的正则脚本发送到正则编辑器（副本），之后完全独立" placement="bottom">
-                  <el-button size="small" @click="handleRegexSendToEditor" :disabled="!hasRegexScripts">
+                  <el-button size="small" @click="regexPanelRef?.handleSendToRegexEditor()" :disabled="!hasRegexScripts">
                     <Icon icon="ph:upload-duotone" />
                     <span class="button-text">发送到编辑器</span>
                   </el-button>
                 </el-tooltip>
                 <el-tooltip content="用正则编辑器中的脚本替换角色卡的所有正则脚本" placement="bottom">
-                  <el-button size="small" @click="handleRegexReplaceFromEditor" :disabled="!currentCardInTab">
+                  <el-button size="small" @click="regexPanelRef?.handleReplaceFromRegexEditor()" :disabled="!currentCardInTab">
                     <Icon icon="ph:arrow-counter-clockwise-duotone" />
                     <span class="button-text">从编辑器替换</span>
                   </el-button>
@@ -94,12 +94,12 @@
                   </span>
                 </template>
                 <div class="tab-full-content">
-                  <CardEditor v-if="currentCardInTab" :character="characterData" :image-preview-url="imagePreviewUrl"
-                    :avatar-url="avatarUrl" :is-desktop-app="isDesktopApp" :selected-provider="selectedProvider"
-                    :all-tags="allTags"
+                  <CardEditor v-if="currentCardInTab" :key="`card-${currentEditorCardId}`" :character="currentDraft"
+                    :image-preview-url="imagePreviewUrl" :avatar-url="avatarUrl" :is-desktop-app="isDesktopApp"
+                    :selected-provider="selectedProvider" :all-tags="allTags"
                     v-model:advanced-options-visible="advancedOptionsVisible" @image-change="handleImageUpdate"
                     @image-url-change="handleImageUrlUpdate" @provider-change="selectedProvider = $event"
-                    @upload-to-hosting="handleUploadToHosting" />
+                    @upload-to-hosting="handleUploadToHosting" @update-field="handleCardEditorFieldUpdate" />
                 </div>
               </el-tab-pane>
 
@@ -111,7 +111,9 @@
                   </span>
                 </template>
                 <div class="tab-full-content">
-                  <CardWorldBookPanel ref="worldbookPanelRef" :character="characterData"
+                  <CardWorldBookPanel ref="worldbookPanelRef" :key="`worldbook-${currentEditorCardId}`"
+                    :character="currentDraft"
+                    @update:character-book="handleCharacterBookUpdate"
                     @worldbookChanged="handleWorldBookChanged" />
                 </div>
               </el-tab-pane>
@@ -124,7 +126,9 @@
                   </span>
                 </template>
                 <div class="tab-full-content">
-                  <CardRegexPanel ref="regexPanelRef" :character="characterData" @regexChanged="handleRegexChanged" />
+                  <CardRegexPanel ref="regexPanelRef" :character="currentDraft"
+                    @update:regex-scripts="handleRegexScriptsUpdate"
+                    @regexChanged="handleRegexChanged" />
                 </div>
               </el-tab-pane>
             </el-tabs>
@@ -139,7 +143,7 @@
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
-import { ElButton, ElDivider, ElMessage, ElMessageBox, ElTabPane, ElTabs } from 'element-plus';
+import { ElButton, ElDivider, ElMessage, ElTabPane, ElTabs } from 'element-plus';
 import { computed, onUnmounted, ref, watch } from 'vue';
 
 import CardEditor from '@/components/cardManager/CardEditor.vue';
@@ -153,12 +157,13 @@ import { useCardExport } from '@/composables/characterCard/useCardExport';
 import { useCardImport } from '@/composables/characterCard/useCardImport';
 import { useCharacterCardAutoSave, type AutoSaveMode } from '@/composables/characterCard/useCharacterCardAutoSave';
 import { useCharacterCardCollection } from '@/composables/characterCard/useCharacterCardCollection';
+import { useCharacterCardEditorSessions } from '@/composables/characterCard/useCharacterCardEditorSessions';
 import { useTabManager } from '@/composables/characterCard/useTabManager';
-import { useV3CharacterCard } from '@/composables/characterCard/useV3CharacterCard';
-import { isTauriApp, uploadImageToHostingViaTauri, type HostingProvider } from '@/utils/catbox';
+import type { CharacterCardV3 } from '@/types/character-card-v3';
+import type { SillyTavernRegexScript } from '@/composables/regex/types';
+import { isTauriApp, type HostingProvider } from '@/utils/imageHosting';
 import { getSetting } from '@/utils/localStorageUtils';
-
-const { characterData, isLoadingData, loadCharacter, resetCharacter } = useV3CharacterCard();
+import { useImageHosting } from '@/utils/useImageHosting';
 
 const {
   tabs,
@@ -168,17 +173,15 @@ const {
   switchToTab,
   updateTabLabel,
   closeCharacterCardTab,
+  closeAllCharacterCardTabs,
   reorderTabs,
   getActiveTab,
 } = useTabManager();
 
 const {
   characterCardCollection,
-  activeCardId,
-  activeCard,
   allTags,
   isLoading,
-  handleSelectCard,
   handleSaveCurrentCard,
   handleUpdateCard,
   handleRenameCard: handleRenameCardOriginal,
@@ -186,46 +189,10 @@ const {
   handleImportFromFile,
   handleExportCard,
   handleExportAllCards,
-  handleClearAllCards,
+  handleClearAllCards: handleClearAllCardsFromCollection,
   handleCreateNewCard: handleCreateNewCardFromCollection,
 } = useCharacterCardCollection();
 
-const autoSaveMode = ref<AutoSaveMode>('watch');
-
-const {
-  saveStatus,
-  manualSave,
-  resetSaveState,
-  updateSavedSnapshot,
-  cleanup: cleanupAutoSave,
-} = useCharacterCardAutoSave({
-  characterData,
-  activeCardId,
-  isLoadingData,
-  autoSaveMode,
-  onSave: async (cardId, data) => {
-    await handleUpdateCard(cardId, data, true); // silent = true
-  },
-});
-
-const toggleAutoSaveMode = () => {
-  const modes: AutoSaveMode[] = ['auto', 'watch', 'manual'];
-  const currentIndex = modes.indexOf(autoSaveMode.value);
-  const nextIndex = (currentIndex + 1) % modes.length;
-  autoSaveMode.value = modes[nextIndex];
-
-  const intervalSeconds = Math.max(1, Math.round(getSetting('autoSaveInterval')));
-  const debounceSeconds = Math.max(0.1, Math.round(getSetting('autoSaveDebounce') * 10) / 10);
-  const messages = {
-    auto: `已切换到自动保存模式：每 ${intervalSeconds} 秒自动保存`,
-    watch: `已切换到监听模式：检测到修改后 ${debounceSeconds} 秒自动保存`,
-    manual: '已切换到手动模式：自动保存已禁用',
-  };
-
-  ElMessage.info(messages[autoSaveMode.value]);
-};
-
-const activeTab = ref('editor');
 const rightEditorTab = ref<'card' | 'worldbook' | 'regex'>('card');
 const headerTitle = computed(() => {
   if (rightEditorTab.value === 'worldbook') return '世界书';
@@ -247,105 +214,156 @@ const currentCardInTab = computed(() => {
   }
   return null;
 });
+const currentCardId = computed(() => currentCardInTab.value?.id || null);
+const currentEditorCardId = computed(() => currentCardId.value || 'none');
 
-const characterImageFile = ref<File | null>(null);
+const {
+  currentSession,
+  currentDraft,
+  currentImageFile,
+  ensureSession,
+  getSession,
+  replaceCurrentSessionDraft,
+  setCurrentSessionImageFile,
+  setCurrentSessionAvatarUrl,
+  closeSession,
+  closeAllSessions,
+} = useCharacterCardEditorSessions({
+  collection: characterCardCollection,
+  currentCardId,
+});
+
+const { handleUploadToHosting } = useImageHosting(currentImageFile, setCurrentSessionAvatarUrl);
+
+const autoSaveMode = ref<AutoSaveMode>('watch');
+
+const {
+  saveStatus,
+  manualSave,
+} = useCharacterCardAutoSave({
+  currentSession,
+  autoSaveMode,
+  onSave: async (cardId, data) => {
+    await handleUpdateCard(cardId, data, true);
+  },
+});
+
+type CharacterDataField = keyof CharacterCardV3['data'];
+
+const syncTopLevelFieldMap: Partial<Record<CharacterDataField, keyof CharacterCardV3>> = {
+  name: 'name',
+  description: 'description',
+  personality: 'personality',
+  scenario: 'scenario',
+  first_mes: 'first_mes',
+  mes_example: 'mes_example',
+  tags: 'tags',
+};
+
+const updateCurrentDraft = (updater: (draft: CharacterCardV3) => void) => {
+  if (!currentSession.value) return;
+  updater(currentSession.value.draft);
+};
+
+const cloneFieldValue = <T,>(value: T): T => {
+  if (Array.isArray(value)) {
+    return [...value] as T;
+  }
+  return value;
+};
+
+const handleCardEditorFieldUpdate = (payload: {
+  field: CharacterDataField;
+  value: CharacterCardV3['data'][CharacterDataField];
+}) => {
+  updateCurrentDraft((draft) => {
+    const nextValue = cloneFieldValue(payload.value);
+    draft.data[payload.field] = nextValue;
+
+    const topLevelField = syncTopLevelFieldMap[payload.field];
+    if (topLevelField) {
+      draft[topLevelField] = cloneFieldValue(nextValue) as never;
+    }
+  });
+};
+
+const handleCharacterBookUpdate = (characterBook: CharacterCardV3['data']['character_book']) => {
+  updateCurrentDraft((draft) => {
+    draft.data.character_book = characterBook;
+  });
+};
+
+const handleRegexScriptsUpdate = (scripts: SillyTavernRegexScript[]) => {
+  updateCurrentDraft((draft) => {
+    if (!draft.data.extensions) {
+      draft.data.extensions = {};
+    }
+    draft.data.extensions.regex_scripts = scripts;
+  });
+};
+
+const toggleAutoSaveMode = () => {
+  const modes: AutoSaveMode[] = ['auto', 'watch', 'manual'];
+  const currentIndex = modes.indexOf(autoSaveMode.value);
+  const nextIndex = (currentIndex + 1) % modes.length;
+  autoSaveMode.value = modes[nextIndex];
+
+  const intervalSeconds = Math.max(1, Math.round(getSetting('autoSaveInterval')));
+  const debounceSeconds = Math.max(0.1, Math.round(getSetting('autoSaveDebounce') * 10) / 10);
+  const messages = {
+    auto: `已切换到自动保存模式：每 ${intervalSeconds} 秒自动保存`,
+    watch: `已切换到监听模式：检测到修改后 ${debounceSeconds} 秒自动保存`,
+    manual: '已切换到手动模式：自动保存已禁用',
+  };
+
+  ElMessage.info(messages[autoSaveMode.value]);
+};
+
 const handleImageUpdate = (file: File) => {
-  characterImageFile.value = file;
+  setCurrentSessionImageFile(file);
 };
+
 const handleImageUrlUpdate = (url: string) => {
-  const trimmed = url.trim();
-  characterData.value.avatar = trimmed || 'none';
-  characterImageFile.value = null;
+  setCurrentSessionAvatarUrl(url);
 };
+
 const isDesktopApp = isTauriApp();
 const selectedProvider = ref<HostingProvider>('catbox');
-const IMGBB_API_KEY_STORAGE = 'imgbb-api-key';
 
-const ensureImgBBApiKey = async (): Promise<string | null> => {
-  const cached = localStorage.getItem(IMGBB_API_KEY_STORAGE)?.trim();
-  if (cached) return cached;
-  try {
-    const result = await ElMessageBox.prompt('请输入 ImgBB API Key（仅需一次）', 'ImgBB 配置', {
-      confirmButtonText: '保存并继续',
-      cancelButtonText: '取消',
-      inputPlaceholder: 'ImgBB API Key',
-      inputPattern: /^.{6,}$/,
-      inputErrorMessage: '请输入有效的 ImgBB API Key',
-    });
-    const key = String((result as { value?: string }).value || '').trim();
-    if (!key) return null;
-    localStorage.setItem(IMGBB_API_KEY_STORAGE, key);
-    return key;
-  } catch {
-    return null;
-  }
-};
-
-const handleUploadToHosting = async (provider: HostingProvider) => {
-  selectedProvider.value = provider;
-  if (!isDesktopApp) {
-    ElMessage.warning('该功能仅在桌面 APP 版本可用');
-    return;
-  }
-
-  if (!characterImageFile.value) {
-    ElMessage.warning('请先选择一张本地头像图片');
-    return;
-  }
-
-  try {
-    let imgbbApiKey: string | undefined;
-    if (provider === 'imgbb') {
-      const key = await ensureImgBBApiKey();
-      if (!key) {
-        ElMessage.info('已取消 ImgBB 上传');
-        return;
-      }
-      imgbbApiKey = key;
-    }
-
-    const uploadedUrl = await uploadImageToHostingViaTauri(characterImageFile.value, provider, imgbbApiKey);
-    characterData.value.avatar = uploadedUrl;
-    ElMessage.success(`上传到 ${provider === 'catbox' ? 'Catbox' : 'ImgBB'} 成功，已写入角色 image URL`);
-  } catch (error) {
-    const errorInfo =
-      error instanceof Error
-        ? {
-          name: error.name,
-          message: error.message,
-          stack: error.stack,
-        }
-        : { raw: error };
-    console.error('[ImageHosting] 上传失败 - 完整错误对象:', error);
-    console.error('[ImageHosting] 上传失败 - 可读详情:', errorInfo);
-    ElMessage.error(error instanceof Error ? error.message : '上传失败');
-  }
-};
 const avatarUrl = computed(() => {
-  if (characterData.value.avatar && characterData.value.avatar !== 'none') {
-    return characterData.value.avatar;
+  if (currentDraft.value.avatar && currentDraft.value.avatar !== 'none') {
+    return currentDraft.value.avatar;
   }
   return '';
 });
-const imagePreviewUrl = computed(() => {
-  if (characterImageFile.value) {
-    return URL.createObjectURL(characterImageFile.value);
-  }
-  if (avatarUrl.value) {
-    return avatarUrl.value;
-  }
-  return undefined;
-});
+
+const localPreviewUrl = ref<string>();
+
+watch(
+  currentImageFile,
+  (file) => {
+    if (localPreviewUrl.value) {
+      URL.revokeObjectURL(localPreviewUrl.value);
+      localPreviewUrl.value = undefined;
+    }
+
+    if (file) {
+      localPreviewUrl.value = URL.createObjectURL(file);
+    }
+  },
+  { immediate: true }
+);
+
+const imagePreviewUrl = computed(() => localPreviewUrl.value || avatarUrl.value || undefined);
 
 const { isUploading, uploadProgress, triggerFileInput, handleFileSelected } = useCardImport((card) => {
-  loadCharacter(card);
-  activeTab.value = 'editor';
+  replaceCurrentSessionDraft(card, { markAsPersisted: false });
   rightEditorTab.value = 'card';
 }, handleImageUpdate);
-const { handleSave } = useCardExport(characterData, characterImageFile, imagePreviewUrl);
+const { handleSave } = useCardExport(currentDraft, currentImageFile, imagePreviewUrl);
 
 const handleRegexChanged = async () => {
-  if (activeCard.value && activeCardId.value) {
+  if (currentSession.value) {
     try {
       await manualSave();
     } catch (error) {
@@ -358,47 +376,47 @@ const handleRegexChanged = async () => {
 };
 
 watch(
-  [isLoading, activeCardId],
-  ([loading, cardId], [, prevCardId]) => {
+  [isLoading, activeTabId],
+  ([loading, tabId]) => {
     if (loading) return;
 
-    if (cardId !== prevCardId) {
-      if (cardId) {
-        const card = characterCardCollection.value.cards[cardId];
-        if (card) {
-          loadCharacter(card);
-          characterImageFile.value = null;
-          setTimeout(() => {
-            updateSavedSnapshot();
-          }, 100);
-        }
-      } else {
-        resetCharacter();
-        characterImageFile.value = null;
-        resetSaveState();
-      }
+    const tab = tabs.value.find((item) => item.id === tabId);
+    if (tab?.type === 'character-card' && tab.cardId) {
+      ensureSession(tab.cardId);
     }
   },
   { immediate: true }
 );
 
 const handleSaveCurrentAsNew = async () => {
-  await handleSaveCurrentCard(characterData.value);
+  const cardId = await handleSaveCurrentCard(currentDraft.value);
+  if (cardId) {
+    const newCard = characterCardCollection.value.cards[cardId];
+    if (newCard) {
+      rightEditorTab.value = 'card';
+      openCharacterCardTab(cardId, newCard.name || '未命名角色');
+      ensureSession(cardId);
+    }
+  }
 };
 
 const handleSaveAsNewCard = async () => {
-  await handleSaveCurrentCard(characterData.value);
+  await handleSaveCurrentAsNew();
 };
 
 const handleUpdateActiveCard = async () => {
-  if (activeCard.value) {
-    await handleUpdateCard(activeCard.value.id, characterData.value);
+  if (currentSession.value) {
+    await handleUpdateCard(currentSession.value.cardId, currentSession.value.draft);
+    replaceCurrentSessionDraft(currentSession.value.draft, {
+      preserveImageFile: true,
+      markAsPersisted: true,
+    });
   }
 };
 
 const handleExportCurrentCard = async () => {
-  if (activeCard.value) {
-    await handleExportCard(activeCard.value.id);
+  if (currentSession.value) {
+    await handleExportCard(currentSession.value.cardId);
   }
 };
 
@@ -407,9 +425,6 @@ const handleCreateNewCard = async () => {
   if (cardId) {
     const newCard = characterCardCollection.value.cards[cardId];
     if (newCard) {
-      characterImageFile.value = null;
-      loadCharacter(newCard);
-      activeTab.value = 'editor';
       rightEditorTab.value = 'card';
       openCharacterCardTab(cardId, newCard.name || '未命名角色');
     }
@@ -417,39 +432,13 @@ const handleCreateNewCard = async () => {
 };
 
 const handleOpenCardFromHome = (cardId: string, cardName: string) => {
+  rightEditorTab.value = 'card';
   openCharacterCardTab(cardId, cardName);
-  const card = characterCardCollection.value.cards[cardId];
-  if (card) {
-    characterImageFile.value = null;
-    loadCharacter(card);
-    handleSelectCard(cardId);
-  }
-};
-
-const handleTabSwitch = (tabId: string) => {
-  switchToTab(tabId);
-
-  const tab = tabs.value.find((t) => t.id === tabId);
-  if (tab?.type === 'character-card' && tab.cardId) {
-    const card = characterCardCollection.value.cards[tab.cardId];
-    if (card) {
-      characterImageFile.value = null;
-      loadCharacter(card);
-      handleSelectCard(tab.cardId);
-    }
-  } else if (tab?.type === 'home') {
-    handleSelectCard(null);
-    resetCharacter();
-    characterImageFile.value = null;
-  }
 };
 
 const handleTabClose = (tabId: string) => {
   closeTab(tabId);
-};
-
-const handleTabReorder = (newTabs: any[]) => {
-  reorderTabs(newTabs);
+  closeSession(tabId);
 };
 
 const handleRenameCard = async (cardId: string) => {
@@ -457,15 +446,31 @@ const handleRenameCard = async (cardId: string) => {
   const card = characterCardCollection.value.cards[cardId];
   if (card) {
     updateTabLabel(cardId, card.name || '未命名角色');
+    const session = getSession(cardId);
+    if (session) {
+      session.draft.name = card.name || '';
+      session.draft.data.name = card.name || '';
+    }
   }
 };
 
 const handleDeleteCard = async (cardId: string) => {
   await handleDeleteCardOriginal(cardId);
   closeCharacterCardTab(cardId);
+  closeSession(cardId);
 };
+
+const handleClearAllCards = async () => {
+  const previousCount = Object.keys(characterCardCollection.value.cards).length;
+  await handleClearAllCardsFromCollection();
+  if (previousCount > 0 && Object.keys(characterCardCollection.value.cards).length === 0) {
+    closeAllSessions();
+    closeAllCharacterCardTabs();
+  }
+};
+
 const handleWorldBookChanged = async () => {
-  if (activeCard.value && activeCardId.value) {
+  if (currentSession.value) {
     try {
       await manualSave();
     } catch (error) {
@@ -490,31 +495,15 @@ const handleReplaceWorldBookFromDB = () => {
 const regexPanelRef = ref<InstanceType<typeof CardRegexPanel>>();
 
 const hasRegexScripts = computed(() => {
-  const scripts = characterData.value.data.extensions?.regex_scripts;
+  const scripts = currentDraft.value.data.extensions?.regex_scripts;
   return scripts && scripts.length > 0;
 });
 
-const handleRegexCreateNew = () => {
-  regexPanelRef.value?.handleCreateNew();
-};
-
-const handleRegexAddFromLibrary = () => {
-  regexPanelRef.value?.handleAddFromLibrary();
-};
-
-const handleRegexSendToEditor = () => {
-  regexPanelRef.value?.handleSendToRegexEditor();
-};
-
-const handleRegexReplaceFromEditor = () => {
-  regexPanelRef.value?.handleReplaceFromRegexEditor();
-};
 
 onUnmounted(() => {
-  if (imagePreviewUrl.value) {
-    URL.revokeObjectURL(imagePreviewUrl.value);
+  if (localPreviewUrl.value) {
+    URL.revokeObjectURL(localPreviewUrl.value);
   }
-  cleanupAutoSave();
 });
 </script>
 

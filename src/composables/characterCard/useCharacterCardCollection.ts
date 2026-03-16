@@ -413,10 +413,6 @@ export function useCharacterCardCollection() {
           character_version: '',
           alternate_greetings: [],
           group_only_greetings: [],
-          character_book: {
-            name: '',
-            entries: [],
-          },
           extensions: {
             world: '',
             talkativeness: 0.5,

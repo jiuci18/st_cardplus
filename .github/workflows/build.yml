@@ -21,14 +21,14 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup pnpm
-      uses: pnpm/action-setup@v3
+      uses: pnpm/action-setup@v4
       with:
         version: 10
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '24'
         cache: 'pnpm'
         cache-dependency-path: pnpm-lock.yaml
 
@@ -48,14 +48,14 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup pnpm
-      uses: pnpm/action-setup@v3
+      uses: pnpm/action-setup@v4
       with:
         version: 10
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '24'
         cache: 'pnpm'
         cache-dependency-path: pnpm-lock.yaml
 
@@ -81,14 +81,14 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup pnpm
-      uses: pnpm/action-setup@v3
+      uses: pnpm/action-setup@v4
       with:
         version: 10
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '24'
         cache: 'pnpm'
         cache-dependency-path: pnpm-lock.yaml
 
@@ -130,14 +130,14 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Setup pnpm
-      uses: pnpm/action-setup@v3
+      uses: pnpm/action-setup@v4
       with:
         version: 10
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
+        node-version: '24'
         cache: 'pnpm'
         cache-dependency-path: pnpm-lock.yaml
 
@@ -174,35 +174,3 @@ jobs:
         name: linux-appimage
         path: src-tauri/target/release/bundle/appimage/*.AppImage
         if-no-files-found: error
-
-  cleanup-caches:
-    needs: [build-web, build-windows, build-linux-appimage]
-    if: always() && github.repository == 'awaae001/st_cardplus'
-    runs-on: ubuntu-latest
-    steps:
-    - name: Keep only the 6 newest caches
-      env:
-        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        set -euo pipefail
-        REPO="${{ github.repository }}"
-        KEEP_COUNT=6
-
-        mapfile -t cache_ids < <(
-          gh api -H "Accept: application/vnd.github+json" \
-            "/repos/${REPO}/actions/caches?per_page=100" \
-            --jq '.actions_caches | sort_by(.last_accessed_at) | reverse | .[].id'
-        )
-
-        total="${#cache_ids[@]}"
-        if (( total <= KEEP_COUNT )); then
-          echo "Total caches: ${total}, nothing to delete."
-          exit 0
-        fi
-
-        for ((i=KEEP_COUNT; i<total; i++)); do
-          id="${cache_ids[$i]}"
-          echo "Deleting cache id=${id}"
-          gh api --method DELETE -H "Accept: application/vnd.github+json" \
-            "/repos/${REPO}/actions/caches/${id}"
-        done

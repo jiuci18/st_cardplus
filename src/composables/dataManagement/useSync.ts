@@ -11,7 +11,7 @@ import {
   uploadToGist,
 } from '@/utils/cloud/gist';
 import { SYNC_EXCLUDED_KEYS, SYNC_SNAPSHOT_SESSION_KEY } from '@/config/dataSyncConfig';
-import { getSessionStorageItem, removeSessionStorageItem } from '@/utils/localStorageUtils';
+import { getSessionStorageItem, removeSessionStorageItem, writeLocalStorageJSON } from '@/utils/localStorageUtils';
 import { formatDateTime, formatRelative, now, nowIso } from '@/utils/datetime';
 import type { GistConfig } from '@/types/gist';
 import { DEFAULT_SYNC_PROVIDER, SYNC_PROVIDER_OPTIONS, WEB_DAV_BACKUP_FILE_NAME } from './sync/constants';
@@ -34,6 +34,11 @@ export function useSync() {
 
   const progress = useSyncProgress();
   const providerOptions = SYNC_PROVIDER_OPTIONS;
+
+  const persistSyncConfigs = () => {
+    writeLocalStorageJSON('webdavConfig', webdavConfig.value);
+    saveGistConfig(gistConfig.value);
+  };
 
   const canPush = computed(() => {
     if (selectedProvider.value === 'webdav') return !!webdavConfig.value.url;
@@ -128,6 +133,7 @@ export function useSync() {
   };
 
   const testConnection = async () => {
+    persistSyncConfigs();
     progress.start('test', '正在测试连接...');
     const ok = selectedProvider.value === 'webdav' ? await testWebDAV() : await testGist();
     if (ok) {
@@ -293,6 +299,7 @@ export function useSync() {
   };
 
   const push = async () => {
+    persistSyncConfigs();
     const confirmed = await confirmPush();
     if (!confirmed) return;
 
@@ -304,6 +311,7 @@ export function useSync() {
   };
 
   const pull = async () => {
+    persistSyncConfigs();
     if (selectedProvider.value === 'webdav') {
       await pullWebDAV();
       return;
@@ -339,6 +347,7 @@ export function useSync() {
   };
 
   const listGists = async () => {
+    persistSyncConfigs();
     if (!gistConfig.value.token) {
       ElMessage.error('请输入 GitHub Personal Access Token');
       return;

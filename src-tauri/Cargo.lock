@@ -3437,7 +3437,7 @@ dependencies = [
 
 [[package]]
 name = "st_cardplus"
-version = "0.1.8"
+version = "0.1.17"
 dependencies = [
  "base64 0.22.1",
  "env_logger",

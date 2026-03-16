@@ -94,7 +94,7 @@
                 size="small"
                 type="info"
               >
-                {{ formatConditions(stage) }}
+                {{ formatStageConditions(stage) }}
               </el-tag>
             </div>
           </div>
@@ -118,8 +118,9 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { Plus, Delete, Menu, InfoFilled } from '@element-plus/icons-vue';
 import draggable from 'vuedraggable';
 import { useEjsEditorStore } from '@/composables/ejs/ejsEditor';
+import { formatStageConditions } from '@/composables/ejs/stageConditions';
 import { useDevice } from '@/composables/useDevice';
-import type { LogicBlock, Stage, Condition } from '@/types/ejs-editor';
+import type { LogicBlock } from '@/types/ejs-editor';
 import StageEditor from './StageEditor.vue';
 
 const props = defineProps<{
@@ -172,49 +173,6 @@ async function removeStage(stageId: string) {
     }
   } catch {
   }
-}
-
-function formatSingleCondition(condition: Condition): string {
-  const { variableAlias, type, value, endValue } = condition;
-  const valStr = typeof value === 'string' ? `'${value}'` : value;
-  switch (type) {
-    case 'less':
-      return `${variableAlias || '变量'} < ${valStr}`;
-    case 'lessEqual':
-      return `${variableAlias || '变量'} <= ${valStr}`;
-    case 'equal':
-      return `${variableAlias || '变量'} == ${valStr}`;
-    case 'greater':
-      return `${variableAlias || '变量'} > ${valStr}`;
-    case 'greaterEqual':
-      return `${variableAlias || '变量'} >= ${valStr}`;
-    case 'range':
-      const endValStr = typeof endValue === 'string' ? `'${endValue}'` : endValue;
-      return `${variableAlias || '变量'} in [${valStr}, ${endValStr})`;
-    case 'is':
-      return `${variableAlias || '变量'} is ${valStr}`;
-    case 'isNot':
-      return `${variableAlias || '变量'} is not ${valStr}`;
-    default:
-      return '未知条件';
-  }
-}
-
-function formatConditions(stage: Stage): string {
-  if (!stage.conditionGroups || stage.conditionGroups.length === 0) {
-    return '无条件 (始终激活)';
-  }
-  const groupStrings = stage.conditionGroups
-    .map((group) => {
-      if (!group.conditions || group.conditions.length === 0) return null;
-      const conditionStrings = group.conditions.map(formatSingleCondition).join(' AND ');
-      return `(${conditionStrings})`;
-    })
-    .filter(Boolean);
-  if (groupStrings.length === 0) {
-    return '无条件 (始终激活)';
-  }
-  return groupStrings.join(' OR ');
 }
 </script>
 

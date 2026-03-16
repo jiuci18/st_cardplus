@@ -1,10 +1,6 @@
 <template>
   <div class="image-panel-container">
-    <el-image
-      :src="previewUrl"
-      fit="contain"
-      class="character-image"
-    >
+    <el-image :src="previewUrl" fit="contain" class="character-image">
       <template #error>
         <div class="image-placeholder">
           <span>暂无图片</span>
@@ -13,91 +9,45 @@
     </el-image>
 
     <div class="image-actions">
-      <el-button
-        type="primary"
-        class="upload-button"
-        @click="openUploadDialog"
-      >
+      <el-button type="primary" class="upload-button" @click="openUploadDialog">
         🖼️ 选择图片
       </el-button>
 
-      <el-button
-        type="default"
-        class="link-button"
-        @click="openImageUrlEditor"
-      >
+      <el-button type="default" class="link-button" @click="openImageUrlEditor">
         🔗
       </el-button>
     </div>
 
-    <el-dialog
-      v-model="uploadDialogVisible"
-      title="选择托管提供商"
-      width="420px"
-      append-to-body
-    >
+    <el-dialog v-model="uploadDialogVisible" title="选择图片" width="420px" append-to-body>
       <div class="upload-dialog-content">
-        <el-upload
-          ref="uploadRef"
-          action="#"
-          :show-file-list="false"
-          :auto-upload="false"
-          @change="handleImageChange"
-          @error="handleError"
-          accept="image/png, image/jpeg, image/webp"
-          class="dialog-upload-button"
-          :limit="1"
-        >
+        <el-upload ref="uploadRef" action="#" :show-file-list="false" :auto-upload="false" @change="handleImageChange"
+          @error="handleError" accept="image/png, image/jpeg, image/webp" class="dialog-upload-button" :limit="1">
           <el-button type="primary">选择图片</el-button>
         </el-upload>
-        <p
-          v-if="selectedImageName"
-          class="upload-dialog-selected"
-        >
+        <p v-if="selectedImageName" class="upload-dialog-selected">
           已选择：{{ selectedImageName }}
         </p>
-        <p
-          v-else
-          class="upload-dialog-selected upload-dialog-selected--placeholder"
-        >
+        <p v-else class="upload-dialog-selected upload-dialog-selected--placeholder">
           未选择图片
         </p>
+        <el-divider border-style="dashed" />
         <p class="upload-dialog-tip">选择托管提供商后上传，成功后会自动写入角色 image URL。</p>
-        <el-select
-          v-model="providerModel"
-          class="provider-select"
-          :disabled="!isDesktopApp"
-        >
-          <el-option
-            label="Catbox"
-            value="catbox"
-          />
-          <el-option
-            label="ImgBB"
-            value="imgbb"
-          />
+        <el-select v-model="providerModel" class="provider-select" :disabled="!isDesktopApp">
+          <el-option label="Catbox" value="catbox" />
+          <el-option label="ImgBB" value="imgbb" />
         </el-select>
-        <p
-          v-if="!isDesktopApp"
-          class="upload-dialog-disabled"
-        >
-          Web 端上传不可用（灰色禁用），请使用桌面版。
+        <p v-if="!isDesktopApp" class="upload-dialog-disabled">
+          Web 无法激活上传模块绕过CORS跨域拦截，请使用桌面版。
         </p>
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button
-            type="primary"
-            :disabled="!isDesktopApp || !selectedImageName"
-            @click="handleUploadInDialog"
-          >
+          <el-button type="primary" :disabled="!isDesktopApp || !selectedImageName" @click="handleUploadInDialog">
             上传
           </el-button>
           <el-button @click="uploadDialogVisible = false">取消</el-button>
           <span class="dialog-divider">|</span>
-          <el-button
-            @click="handleConfirmProvider"
-          >
+          <el-button @click="handleConfirmProvider">
             确认
           </el-button>
         </div>
@@ -110,7 +60,7 @@
 import { computed, ref } from 'vue';
 import { ElImage, ElUpload, ElButton, ElMessage, ElMessageBox, ElSelect, ElOption, ElDialog } from 'element-plus';
 import type { UploadFile, UploadFiles, UploadInstance } from 'element-plus';
-import type { HostingProvider } from '@/utils/catbox';
+import type { HostingProvider } from '@/utils/imageHosting';
 
 const props = defineProps<{
   previewUrl?: string;

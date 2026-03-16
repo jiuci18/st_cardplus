@@ -422,9 +422,7 @@ onMounted(() => {
           }
         }
       }
-    } catch (error) {
-      console.warn('Failed to load saved projects:', error);
-    }
+    } catch {}
   }
 });
 
@@ -449,9 +447,7 @@ watch(
           timestamp: nowIso(),
         };
         localStorage.setItem('ejs-editor-projects', JSON.stringify(saveData));
-      } catch (error) {
-        console.warn('保存项目失败:', error);
-      }
+      } catch {}
       saveStateTimer = null;
     }, 1000); // 1秒防抖，减少保存频率
   },

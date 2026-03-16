@@ -2,6 +2,7 @@ import { ref } from 'vue';
 import type { Ref } from 'vue';
 import ejs from 'ejs';
 import type { LogicBlock } from '@/types/ejs-editor';
+import { matchesStage } from '@/composables/ejs/stageConditions';
 
 export function useEjsSimulation(ejsTemplate: Ref<string>, logicBlocks: Ref<LogicBlock[]>) {
   const simulationValues = ref<Record<string, any>>({});
@@ -27,59 +28,8 @@ export function useEjsSimulation(ejsTemplate: Ref<string>, logicBlocks: Ref<Logi
       if (trimmedResult) {
         testResult.value = trimmedResult;
       } else {
-        // 如果渲染结果为空，检查是否有任何条件被满足
         const anyMatch = logicBlocks.value.some((block) =>
-          block.stages.some((stage) => {
-            if (!stage.conditionGroups || stage.conditionGroups.length === 0) {
-              return true; // 无条件阶段被视为匹配
-            }
-            return stage.conditionGroups.some((group) =>
-              (group.conditions || []).every((cond) => {
-                const simValue = mockGetvar(`stat_data.${cond.variablePath}`);
-                if (simValue === undefined) return false;
-
-                const condValue = cond.value;
-                const numSimValue = Number(simValue);
-                const numCondValue = Number(condValue);
-
-                if (!isNaN(numSimValue) && !isNaN(numCondValue)) {
-                  switch (cond.type) {
-                    case 'less':
-                      return numSimValue < numCondValue;
-                    case 'lessEqual':
-                      return numSimValue <= numCondValue;
-                    case 'equal':
-                      return numSimValue == numCondValue;
-                    case 'greater':
-                      return numSimValue > numCondValue;
-                    case 'greaterEqual':
-                      return numSimValue >= numCondValue;
-                    case 'range':
-                      const numCondEndValue = Number(cond.endValue);
-                      if (isNaN(numCondEndValue)) return false;
-                      return numSimValue >= numCondValue && numSimValue < numCondEndValue;
-                    case 'is':
-                      return simValue === condValue;
-                    case 'isNot':
-                      return simValue !== condValue;
-                  }
-                }
-                const strSimValue = String(simValue);
-                const strCondValue = String(condValue);
-                switch (cond.type) {
-                  case 'equal':
-                    return strSimValue == strCondValue;
-                  case 'is':
-                    return strSimValue === strCondValue;
-                  case 'isNot':
-                    return strSimValue !== strCondValue;
-                  default:
-                    return false;
-                }
-                return false;
-              })
-            );
-          })
+          block.stages.some((stage) => matchesStage(stage, simulationValues.value))
         );
 
         if (anyMatch) {

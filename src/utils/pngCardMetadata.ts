@@ -153,6 +153,41 @@ export const write = (image: Uint8Array, data: string): Uint8Array => {
 };
 
 /**
+ * Removes character card metadata chunks from a PNG image buffer.
+ * Only strips app-specific `chara` and `ccv3` tEXt chunks and leaves other PNG data intact.
+ * @param image PNG image buffer as Uint8Array
+ * @returns PNG image buffer without character card metadata
+ */
+export const stripCharacterCardMetadata = (image: Uint8Array): Uint8Array => {
+  const chunks = extract(image);
+  let removedCount = 0;
+  const sanitizedChunks = chunks.filter((chunk) => {
+    if (chunk.name !== 'tEXt') {
+      return true;
+    }
+
+    try {
+      const decoded = PNGtext.decode(chunk.data);
+      const keyword = decoded.keyword.toLowerCase();
+      const shouldKeep = keyword !== 'chara' && keyword !== 'ccv3';
+      if (!shouldKeep) {
+        removedCount += 1;
+      }
+      return shouldKeep;
+    } catch (error) {
+      console.warn('Failed to decode PNG tEXt chunk while stripping metadata, keeping original chunk.', error);
+      return true;
+    }
+  });
+
+  if (removedCount === 0) {
+    return image;
+  }
+
+  return encode(sanitizedChunks);
+};
+
+/**
  * Reads Character metadata from a PNG image buffer.
  * Supports both V2 (chara) and V3 (ccv3). V3 takes precedence.
  * @param image PNG image buffer as Uint8Array

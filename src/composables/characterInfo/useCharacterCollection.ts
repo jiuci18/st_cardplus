@@ -1,16 +1,19 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { saveToLocalStorage as saveToLS, loadFromLocalStorage as loadFromLS } from '../../utils/localStorageUtils';
-import type { CharacterCard } from '../../types/character';
+import type { CharacterCard, CharacterProject } from '../../types/character';
 import { v4 as uuidv4 } from 'uuid';
 import { createDefaultCharacterCard } from './useCharacterCard';
 import { processLoadedData } from './useCardDataHandler';
 import { migrateCharacterCollection } from './characterCollectionMigration';
+import { useCharacterProjects } from './useCharacterProjects';
+import type { CharacterOrderPatch } from './useCharacterProjectTree';
 
 const LOCAL_STORAGE_KEY_CHARACTER_MANAGER = 'characterManagerData';
 
 export interface CharacterCollection {
   characters: { [id: string]: CharacterCard };
+  projects: { [id: string]: CharacterProject };
   activeCharacterId: string | null;
 }
 
@@ -42,6 +45,7 @@ const mergeCharacterMeta = (character: CharacterCard, metaPatch: Partial<Charact
 export function useCharacterCollection() {
   const characterCollection = ref<CharacterCollection>({
     characters: {},
+    projects: {},
     activeCharacterId: null,
   });
 
@@ -58,63 +62,44 @@ export function useCharacterCollection() {
     saveToLS(characterCollection.value, LOCAL_STORAGE_KEY_CHARACTER_MANAGER);
   };
 
+  const { projects, ensureProjects, handleCreateProject, reorderProjects } = useCharacterProjects(characterCollection);
+
   const ensureCharacterOrder = () => {
     const characters = { ...characterCollection.value.characters };
     const values = Object.values(characters);
-    const hasAnyOrder = values.some((character) => typeof character.meta.order === 'number');
+    const bucketCounters = new Map<string, number>();
 
-    if (!hasAnyOrder) {
-      const starredCharacters = values.filter((character) => !!character.meta.starred);
-      const regularCharacters = values.filter((character) => !character.meta.starred);
-      starredCharacters.forEach((character, index) => {
-        if (!character.meta.id) return;
-        characters[character.meta.id] = mergeCharacterMeta(character, {
-          order: index,
-          starred: typeof character.meta.starred === 'boolean' ? character.meta.starred : false,
-        });
-      });
-      regularCharacters.forEach((character, index) => {
-        if (!character.meta.id) return;
-        characters[character.meta.id] = mergeCharacterMeta(character, {
-          order: index,
-          starred: typeof character.meta.starred === 'boolean' ? character.meta.starred : false,
-        });
-      });
-    } else {
-      let maxStarredOrder = values
-        .filter((character) => !!character.meta.starred)
-        .reduce((max, character) => {
-          const currentOrder = typeof character.meta.order === 'number' ? character.meta.order : -1;
-          return Math.max(max, currentOrder);
-        }, -1);
-      let maxRegularOrder = values
-        .filter((character) => !character.meta.starred)
-        .reduce((max, character) => {
-          const currentOrder = typeof character.meta.order === 'number' ? character.meta.order : -1;
-          return Math.max(max, currentOrder);
-        }, -1);
+    values.forEach((character) => {
+      if (!character.meta.id) return;
+      const projectId = character.meta.projectId;
+      if (projectId && !characterCollection.value.projects[projectId]) {
+        characters[character.meta.id] = mergeCharacterMeta(character, { projectId: undefined });
+      }
+    });
 
-      values.forEach((character) => {
-        if (!character.meta.id) return;
-        if (typeof character.meta.starred !== 'boolean') {
-          characters[character.meta.id] = mergeCharacterMeta(character, { starred: false });
-        }
-        if (typeof character.meta.order === 'number') return;
-        if (character.meta.starred) {
-          maxStarredOrder += 1;
-          characters[character.meta.id] = mergeCharacterMeta(character, {
-            order: maxStarredOrder,
-            starred: true,
-          });
-          return;
-        }
-        maxRegularOrder += 1;
-        characters[character.meta.id] = mergeCharacterMeta(character, {
-          order: maxRegularOrder,
-          starred: false,
-        });
+    Object.values(characters).forEach((character) => {
+      if (!character.meta.id) return;
+      const starred = typeof character.meta.starred === 'boolean' ? character.meta.starred : false;
+      const projectId = character.meta.projectId ?? '';
+      const bucketKey = `${projectId}::${starred ? '1' : '0'}`;
+
+      if (typeof character.meta.starred !== 'boolean') {
+        characters[character.meta.id] = mergeCharacterMeta(characters[character.meta.id], { starred: false });
+      }
+
+      if (typeof character.meta.order === 'number') {
+        const currentMax = bucketCounters.get(bucketKey) ?? -1;
+        bucketCounters.set(bucketKey, Math.max(currentMax, character.meta.order));
+        return;
+      }
+
+      const nextOrder = (bucketCounters.get(bucketKey) ?? -1) + 1;
+      bucketCounters.set(bucketKey, nextOrder);
+      characters[character.meta.id] = mergeCharacterMeta(characters[character.meta.id], {
+        order: nextOrder,
+        starred,
       });
-    }
+    });
 
     characterCollection.value = {
       ...characterCollection.value,
@@ -122,9 +107,9 @@ export function useCharacterCollection() {
     };
   };
 
-  const getNextOrder = (starred: boolean) => {
+  const getNextCharacterOrder = (starred: boolean, projectId?: string) => {
     const orders = Object.values(characterCollection.value.characters)
-      .filter((character) => !!character.meta.starred === starred)
+      .filter((character) => !!character.meta.starred === starred && (character.meta.projectId ?? '') === (projectId ?? ''))
       .map((character) => character.meta.order)
       .filter((order): order is number => typeof order === 'number');
     return orders.length > 0 ? Math.max(...orders) + 1 : 0;
@@ -135,6 +120,7 @@ export function useCharacterCollection() {
     if (loadedData && typeof loadedData === 'object' && loadedData.characters) {
       const { collection, migrated } = migrateCharacterCollection(loadedData as CharacterCollection);
       characterCollection.value = collection;
+      ensureProjects();
       ensureCharacterOrder();
       if (migrated) {
         saveCharactersToLocalStorage();
@@ -148,6 +134,7 @@ export function useCharacterCollection() {
       );
       characterCollection.value = {
         characters: { [newId]: defaultCharacter },
+        projects: {},
         activeCharacterId: newId,
       };
       saveCharactersToLocalStorage();
@@ -182,7 +169,7 @@ export function useCharacterCollection() {
 
       const newId = uuidv4();
       const newCharacter = createCharacterCardWithMeta(
-        { id: newId, order: getNextOrder(false), starred: false },
+        { id: newId, order: getNextCharacterOrder(false), starred: false, projectId: undefined },
         { chineseName: characterName }
       );
 
@@ -265,8 +252,9 @@ export function useCharacterCollection() {
           ...processedData,
           meta: {
             id: newId, // 始终分配新ID以避免冲突
-            order: getNextOrder(false),
+            order: getNextCharacterOrder(false),
             starred: false,
+            projectId: undefined,
           },
         };
 
@@ -331,7 +319,7 @@ export function useCharacterCollection() {
     const updatedCharacter = {
       ...mergeCharacterMeta(character, {
         starred,
-        order: getNextOrder(starred),
+        order: getNextCharacterOrder(starred, character.meta.projectId),
       }),
     };
 
@@ -344,19 +332,17 @@ export function useCharacterCollection() {
     };
   };
 
-  const reorderCharacters = (orderedIds: string[]) => {
+  const applyCharacterOrderPatches = (patches: CharacterOrderPatch[]) => {
+    if (!patches.length) return;
     const updatedCharacters = { ...characterCollection.value.characters };
-    let starredIndex = 0;
-    let regularIndex = 0;
-    orderedIds.forEach((id) => {
-      if (!updatedCharacters[id]) return;
-      if (updatedCharacters[id].meta.starred) {
-        updatedCharacters[id] = mergeCharacterMeta(updatedCharacters[id], { order: starredIndex });
-        starredIndex += 1;
-        return;
-      }
-      updatedCharacters[id] = mergeCharacterMeta(updatedCharacters[id], { order: regularIndex });
-      regularIndex += 1;
+    patches.forEach((patch) => {
+      const character = updatedCharacters[patch.id];
+      if (!character) return;
+      const projectId = patch.projectId ?? undefined;
+      updatedCharacters[patch.id] = mergeCharacterMeta(character, {
+        order: patch.order,
+        projectId,
+      });
     });
 
     characterCollection.value = {
@@ -367,14 +353,17 @@ export function useCharacterCollection() {
 
   return {
     characterCollection,
+    projects,
     activeCharacterId,
     activeCharacter,
     handleSelectCharacter,
+    handleCreateProject,
     handleCreateCharacter,
     handleDeleteCharacter,
     handleImportCharacter,
     updateCharacter,
     setCharacterStar,
-    reorderCharacters,
+    applyCharacterOrderPatches,
+    reorderProjects,
   };
 }

@@ -4,9 +4,22 @@ import type { EnhancedLandmark, EnhancedRegion } from '@/types/world-editor';
 import type { BridgeNodeData, LandmarkNodeForce } from '@/types/worldeditor/worldGraphNodes';
 import { collectDescendantIds, getParentLandmarkId } from '@/utils/worldeditor/landmarkHierarchy';
 import { readSessionStorageJSON, writeSessionStorageJSON } from '@/utils/localStorageUtils';
-import { linkLandmarks, unlinkLandmarks } from '@/composables/worldeditor/worldGraphLinks';
-import { useWorldGraph, type WorldGraphProps } from '@/composables/worldeditor/useWorldGraph';
+import {
+  estimateRoadLengthBetweenLandmarks,
+  estimateRoadLengthFromLandmarkToPoint,
+  linkLandmarks,
+  unlinkLandmarks,
+} from '@/composables/worldeditor/graph/worldGraphLinks';
+import { useWorldGraph, type WorldGraphProps } from '@/composables/worldeditor/graph/useWorldGraph';
 import { ElMessage } from 'element-plus';
+import {
+  getBridgeHandlePoint,
+  getDefaultBridgePositionForSide,
+  getGraphBounds,
+  invertHandleSide,
+  parseHandleSide,
+  positionToSide,
+} from '@/utils/worldeditor/graphGeometry';
 
 interface WorldGraphViewOptions {
   onEdit?: (item: EnhancedLandmark) => void;
@@ -64,6 +77,7 @@ export const useWorldGraphView = (props: WorldGraphProps, options?: WorldGraphVi
       (landmark) => landmark.projectId === activeProjectId.value && !getParentLandmarkId(landmark)
     );
   });
+  const landmarkMap = computed(() => new Map(props.landmarks.map((landmark) => [landmark.id, landmark])));
 
   const mainGraphState = useWorldGraph(props, { landmarkScope: rootLandmarks });
   const {
@@ -98,7 +112,7 @@ export const useWorldGraphView = (props: WorldGraphProps, options?: WorldGraphVi
 
   const childGraphParent = computed(() => {
     if (!childGraphParentId.value) return null;
-    return props.landmarks.find((landmark) => landmark.id === childGraphParentId.value) || null;
+    return landmarkMap.value.get(childGraphParentId.value) || null;
   });
 
   const childGraphTitle = computed(() => {
@@ -113,37 +127,6 @@ export const useWorldGraphView = (props: WorldGraphProps, options?: WorldGraphVi
   });
 
   const childGraphLandmarkIdSet = computed(() => new Set(childGraphLandmarks.value.map((landmark) => landmark.id)));
-
-  const positionToSide = (
-    parent?: { x: number; y: number },
-    external?: { x: number; y: number }
-  ): 'left' | 'right' | 'top' | 'bottom' | null => {
-    if (!parent || !external) return null;
-    const dx = external.x - parent.x;
-    const dy = external.y - parent.y;
-    if (dx === 0 && dy === 0) return null;
-    const angle = (Math.atan2(dx, -dy) * 180) / Math.PI;
-    const normalized = (angle + 360) % 360;
-    if (normalized >= 315 || normalized < 45) return 'top';
-    if (normalized >= 45 && normalized < 135) return 'right';
-    if (normalized >= 135 && normalized < 225) return 'bottom';
-    return 'left';
-  };
-
-  const invertSide = (side: 'left' | 'right' | 'top' | 'bottom') => {
-    switch (side) {
-      case 'left':
-        return 'right';
-      case 'right':
-        return 'left';
-      case 'top':
-        return 'bottom';
-      case 'bottom':
-        return 'top';
-      default:
-        return side;
-    }
-  };
 
   const childGraphBridgeMeta = computed(() => {
     const meta = new Map<
@@ -167,7 +150,7 @@ export const useWorldGraphView = (props: WorldGraphProps, options?: WorldGraphVi
     externalIds.forEach((externalId) => {
       if (childGraphLandmarkIdSet.value.has(externalId)) return;
       if (externalId === parent.id) return;
-      const external = props.landmarks.find((item) => item.id === externalId);
+      const external = landmarkMap.value.get(externalId);
       if (!external) return;
       const parentConn = parent.roadConnections?.find((conn) => conn.targetId === externalId);
       const externalConn = external.roadConnections?.find((conn) => conn.targetId === parent.id);
@@ -178,7 +161,7 @@ export const useWorldGraphView = (props: WorldGraphProps, options?: WorldGraphVi
         nodeId,
         label: `来自 ${external.name} 的道路`,
         side,
-        handleId: `bridge-${invertSide(side)}`,
+        handleId: `bridge-${invertHandleSide(side)}`,
         externalId,
         externalHandle: externalConn?.handle ?? parentConn?.targetHandle,
       });
@@ -190,54 +173,11 @@ export const useWorldGraphView = (props: WorldGraphProps, options?: WorldGraphVi
   const getBridgeDefaults = () => {
     const positions: Record<string, { x: number; y: number }> = {};
     const sideCounts = { left: 0, right: 0, top: 0, bottom: 0 };
-    const spacing = 70;
-    const list = childGraphLandmarks.value;
-    const columns = 4;
-    const spacingX = 220;
-    const spacingY = 160;
-    const margin = 80;
-
-    let minX = 0;
-    let maxX = 400;
-    let minY = 0;
-    let maxY = 260;
-
-    if (list.length > 0) {
-      minX = Number.POSITIVE_INFINITY;
-      minY = Number.POSITIVE_INFINITY;
-      maxX = Number.NEGATIVE_INFINITY;
-      maxY = Number.NEGATIVE_INFINITY;
-      list.forEach((landmark, index) => {
-        const fallback = {
-          x: (index % columns) * spacingX,
-          y: Math.floor(index / columns) * spacingY,
-        };
-        const position = landmark.position ?? fallback;
-        minX = Math.min(minX, position.x);
-        maxX = Math.max(maxX, position.x);
-        minY = Math.min(minY, position.y);
-        maxY = Math.max(maxY, position.y);
-      });
-    }
+    const bounds = getGraphBounds(childGraphLandmarks.value);
 
     childGraphBridgeMeta.value.forEach((meta) => {
       const count = sideCounts[meta.side]++;
-      let x = minX;
-      let y = minY;
-      if (meta.side === 'left') {
-        x = minX - margin;
-        y = minY + count * spacing;
-      } else if (meta.side === 'right') {
-        x = maxX + margin;
-        y = minY + count * spacing;
-      } else if (meta.side === 'top') {
-        x = minX + count * spacing;
-        y = minY - margin;
-      } else if (meta.side === 'bottom') {
-        x = minX + count * spacing;
-        y = maxY + margin;
-      }
-      positions[meta.nodeId] = { x, y };
+      positions[meta.nodeId] = getDefaultBridgePositionForSide(bounds, meta.side, count);
     });
 
     return positions;
@@ -260,7 +200,7 @@ export const useWorldGraphView = (props: WorldGraphProps, options?: WorldGraphVi
       const data: BridgeNodeData = {
         label: meta.label,
         side: meta.side,
-        handleSide: invertSide(meta.side),
+        handleSide: invertHandleSide(meta.side),
         handleId: meta.handleId,
       };
       nodes.push({
@@ -281,11 +221,35 @@ export const useWorldGraphView = (props: WorldGraphProps, options?: WorldGraphVi
 
   const childGraphBridgeEdges = computed(() => {
     const edges: Edge[] = [];
+    const parent = childGraphParent.value;
+    if (!parent) return edges;
+
+    const bridgeNodeMap = new Map(childGraphBridgeNodes.value.map((node) => [node.id, node]));
+
     childGraphLandmarks.value.forEach((child) => {
       (child.relatedLandmarks || []).forEach((externalId) => {
         const meta = childGraphBridgeMeta.value.get(externalId);
         if (!meta) return;
+        const external = landmarkMap.value.get(externalId);
+        if (!external) return;
         const childConn = child.roadConnections?.find((conn) => conn.targetId === externalId);
+        const parentConn = parent.roadConnections?.find((conn) => conn.targetId === externalId);
+        const externalConn = external.roadConnections?.find((conn) => conn.targetId === parent.id);
+        const bridgeNode = bridgeNodeMap.get(meta.nodeId);
+        const bridgeHandleSide = parseHandleSide(meta.handleId);
+        const bridgeHandlePoint =
+          bridgeNode && bridgeHandleSide ? getBridgeHandlePoint(bridgeNode.position, bridgeHandleSide) : null;
+        const childToBridge = bridgeHandlePoint
+          ? estimateRoadLengthFromLandmarkToPoint(child, bridgeHandlePoint, childConn?.handle)
+          : undefined;
+        const parentToExternal = estimateRoadLengthBetweenLandmarks(
+          parent,
+          external,
+          parentConn?.handle ?? externalConn?.targetHandle,
+          parentConn?.targetHandle ?? externalConn?.handle
+        );
+        const bridgePathLength =
+          childToBridge !== undefined && parentToExternal !== undefined ? childToBridge + parentToExternal : undefined;
         edges.push({
           id: `bridge-edge:${child.id}:${externalId}`,
           source: child.id,
@@ -295,7 +259,7 @@ export const useWorldGraphView = (props: WorldGraphProps, options?: WorldGraphVi
           type: 'removable',
           data: {
             onRemove: () => removeBridgeConnection(child.id, externalId),
-            roadLength: childConn?.length,
+            roadLength: bridgePathLength,
           },
         });
       });

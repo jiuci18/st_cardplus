@@ -8,11 +8,12 @@ interface UsePresetPageNavigationOptions {
   activePresetId: Ref<string | null>;
   activePreset: ComputedRef<StoredPresetFile | null>;
   selectedPromptIndex: ComputedRef<number | null>;
-  activeEditorTab: Ref<'header' | 'prompt'>;
+  activeEditorTab: Ref<'header' | 'prompt' | 'regex'>;
   isMobileOrTablet: Ref<boolean>;
   selectPreset: (presetId: string) => void;
   selectHeader: (presetId: string) => void;
   selectPrompt: (presetId: string, promptIndex: number) => void;
+  selectRegex: (presetId: string, regexIndex?: number) => void;
   renamePreset: (preset: StoredPresetFile) => void | Promise<void>;
   removePreset: (preset: StoredPresetFile) => void | Promise<void>;
 }
@@ -34,6 +35,7 @@ export function usePresetPageNavigation(options: UsePresetPageNavigationOptions)
     selectPreset,
     selectHeader,
     selectPrompt,
+    selectRegex,
     renamePreset,
     removePreset,
   } = options;
@@ -42,7 +44,9 @@ export function usePresetPageNavigation(options: UsePresetPageNavigationOptions)
   const mobilePanelTab = ref<MobilePanelTab>('list');
 
   const orderedPresets = computed(() => presets.value.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
-  const activePresetOrderIndex = computed(() => orderedPresets.value.findIndex((item) => item.id === activePresetId.value));
+  const activePresetOrderIndex = computed(() =>
+    orderedPresets.value.findIndex((item) => item.id === activePresetId.value)
+  );
   const hasPreviousPreset = computed(() => activePresetOrderIndex.value > 0);
   const hasNextPreset = computed(
     () => activePresetOrderIndex.value >= 0 && activePresetOrderIndex.value < orderedPresets.value.length - 1
@@ -57,10 +61,7 @@ export function usePresetPageNavigation(options: UsePresetPageNavigationOptions)
     () => selectedPromptIndex.value !== null && selectedPromptIndex.value < promptCount.value - 1
   );
 
-  const withPresetById = (
-    presetId: string,
-    handler: (preset: StoredPresetFile) => void | Promise<void>
-  ) => {
+  const withPresetById = (presetId: string, handler: (preset: StoredPresetFile) => void | Promise<void>) => {
     const preset = presets.value.find((item) => item.id === presetId);
     if (!preset) return;
     handler(preset);
@@ -95,6 +96,11 @@ export function usePresetPageNavigation(options: UsePresetPageNavigationOptions)
     closeMobileDrawerOnTouchDevice();
   };
 
+  const handleSelectRegex = (presetId: string, regexIndex?: number) => {
+    selectRegex(presetId, regexIndex);
+    closeMobileDrawerOnTouchDevice();
+  };
+
   const navigatePrompt = (step: -1 | 1) => {
     if (!activePresetId.value || selectedPromptIndex.value === null) return;
     const nextIndex = selectedPromptIndex.value + step;
@@ -118,6 +124,9 @@ export function usePresetPageNavigation(options: UsePresetPageNavigationOptions)
       direction === 'previous' ? goToPreviousPreset() : goToNextPreset();
       return;
     }
+    if (activeEditorTab.value === 'regex') {
+      return;
+    }
     direction === 'previous' ? goToPreviousPrompt() : goToNextPrompt();
   };
 
@@ -134,6 +143,7 @@ export function usePresetPageNavigation(options: UsePresetPageNavigationOptions)
     handleSelectPreset,
     handleSelectHeader,
     handleSelectPrompt,
+    handleSelectRegex,
     hasPreviousPreset,
     hasNextPreset,
     hasPreviousPrompt,

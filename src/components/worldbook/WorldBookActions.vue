@@ -306,9 +306,14 @@ const handleListCommand = (command: string) => {
 
 .worldbook-action-dropdown {
   min-width: 40px;
-  padding: 8px;
+  padding: 6px 10px;
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
+}
+
+.worldbook-action-split .worldbook-bottom-button-text {
+  height: 32px;
+  box-sizing: border-box;
 }
 
 .dropdown-item-icon {

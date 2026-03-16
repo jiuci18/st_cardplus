@@ -1,0 +1,74 @@
+name: 功能请求
+description: 提交一个功能建议、改进想法或新工具需求
+title: "[Feature] "
+labels:
+  - enhancement
+body:
+  - type: dropdown
+    id: request_part
+    attributes:
+      label: 想改进哪个部分
+      description: 请选择最接近的页面、模块或功能
+      options:
+        - 首页 / 导航 / 布局
+        - 角色卡管理器
+        - 角色信息
+        - 世界地标
+        - 世界书
+        - EJS 模板编辑器
+        - 正则编辑器
+        - 预设管理器
+        - 工具箱 - JSON 格式化
+        - 工具箱 - 元数据分离器
+        - 工具箱 - 世界书转换器
+        - 工具箱 - 简繁转换器
+        - 工具箱 - 旧版世界编辑器
+        - 设置 - 应用设置
+        - 设置 - 个性化 / 侧边栏
+        - 设置 - 数据管理 / 同步
+        - 桌面端能力（文件读写 / 导入导出 / 系统集成）
+        - 全局体验优化
+        - 其他
+    validations:
+      required: true
+
+  - type: input
+    id: request_part_detail
+    attributes:
+      label: 模块补充说明
+      description: 如果上面的分类不够准确，请补充具体页面、按钮、弹窗或流程
+      placeholder: 例如：角色卡管理器 > 世界书绑定弹窗
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: 需求背景
+      description: 你现在遇到了什么问题，或者为什么需要这个功能
+      placeholder: |
+        例如：
+        1. 目前只能手动逐个处理
+        2. 操作路径较长
+        3. 容易出错或重复劳动
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 你希望怎么实现
+      description: 描述你期望的功能、交互或行为
+      placeholder: 请尽量具体描述你的想法
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 你的优先级
+      description: 这个需求对你有多重要
+      options:
+        - 高
+        - 中
+        - 低
+    validations:
+      required: true

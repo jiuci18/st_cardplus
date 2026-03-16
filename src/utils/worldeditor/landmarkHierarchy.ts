@@ -1,22 +1,18 @@
 import type { EnhancedLandmark } from '@/types/world-editor';
 
-const normalizeIds = (ids?: string[]) => (Array.isArray(ids) ? ids.filter(Boolean) : []);
-
 export const getParentLandmarkId = (landmark: EnhancedLandmark): string | null => {
-  return landmark.parentLandmarkIds && landmark.parentLandmarkIds.length > 0 ? landmark.parentLandmarkIds[0] : null;
+  return landmark.parentLandmarkIds[0] || null;
 };
 
 export const normalizeLandmarkHierarchy = (landmarks: EnhancedLandmark[]) => {
   const map = new Map(landmarks.map((landmark) => [landmark.id, landmark]));
 
   landmarks.forEach((landmark) => {
-    landmark.parentLandmarkIds = normalizeIds(landmark.parentLandmarkIds).filter(
-      (id) => map.has(id) && id !== landmark.id
-    );
+    landmark.parentLandmarkIds = landmark.parentLandmarkIds.filter((id) => map.has(id) && id !== landmark.id);
     if (landmark.parentLandmarkIds.length > 1) {
       landmark.parentLandmarkIds = [landmark.parentLandmarkIds[0]];
     }
-    landmark.childLandmarkIds = normalizeIds(landmark.childLandmarkIds);
+    landmark.childLandmarkIds = landmark.childLandmarkIds.filter(Boolean);
     if (landmark.position) {
       landmark.position = { ...landmark.position };
     }
@@ -37,24 +33,16 @@ export const normalizeLandmarkHierarchy = (landmarks: EnhancedLandmark[]) => {
   });
 };
 
-const getDirectChildIds = (landmarks: EnhancedLandmark[], parentId: string) => {
-  const map = new Map(landmarks.map((landmark) => [landmark.id, landmark]));
-  const parent = map.get(parentId);
-  if (parent && parent.childLandmarkIds && parent.childLandmarkIds.length > 0) {
-    return parent.childLandmarkIds.slice();
-  }
-  return landmarks.filter((landmark) => getParentLandmarkId(landmark) === parentId).map((landmark) => landmark.id);
-};
-
 export const collectDescendantIds = (landmarks: EnhancedLandmark[], rootId: string) => {
+  const map = new Map(landmarks.map((landmark) => [landmark.id, landmark]));
   const visited = new Set<string>();
-  const stack = getDirectChildIds(landmarks, rootId);
+  const stack = map.get(rootId)?.childLandmarkIds.slice() || [];
 
   while (stack.length > 0) {
     const current = stack.pop();
     if (!current || visited.has(current)) continue;
     visited.add(current);
-    getDirectChildIds(landmarks, current).forEach((id) => stack.push(id));
+    map.get(current)?.childLandmarkIds.forEach((id) => stack.push(id));
   }
 
   return visited;
@@ -81,7 +69,7 @@ export const setLandmarkParent = (landmarks: EnhancedLandmark[], childId: string
   if (oldParentId && map.has(oldParentId)) {
     const oldParent = map.get(oldParentId);
     if (oldParent) {
-      oldParent.childLandmarkIds = (oldParent.childLandmarkIds || []).filter((id) => id !== childId);
+      oldParent.childLandmarkIds = oldParent.childLandmarkIds.filter((id) => id !== childId);
     }
   }
 
@@ -93,7 +81,6 @@ export const setLandmarkParent = (landmarks: EnhancedLandmark[], childId: string
   const parent = map.get(parentId);
   child.parentLandmarkIds = [parentId];
   if (parent) {
-    if (!parent.childLandmarkIds) parent.childLandmarkIds = [];
     if (!parent.childLandmarkIds.includes(childId)) {
       parent.childLandmarkIds.push(childId);
     }
@@ -112,14 +99,14 @@ export const removeLandmarkFromHierarchy = (landmarks: EnhancedLandmark[], landm
   if (parentId && map.has(parentId)) {
     const parent = map.get(parentId);
     if (parent) {
-      parent.childLandmarkIds = (parent.childLandmarkIds || []).filter((id) => id !== landmarkId);
+      parent.childLandmarkIds = parent.childLandmarkIds.filter((id) => id !== landmarkId);
     }
   }
 
-  (landmark.childLandmarkIds || []).forEach((childId) => {
+  landmark.childLandmarkIds.forEach((childId) => {
     const child = map.get(childId);
     if (child) {
-      child.parentLandmarkIds = (child.parentLandmarkIds || []).filter((id) => id !== landmarkId);
+      child.parentLandmarkIds = child.parentLandmarkIds.filter((id) => id !== landmarkId);
     }
   });
 };

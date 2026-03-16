@@ -12,7 +12,7 @@ import { saveToLocalStorage, loadFromLocalStorage } from '@/utils/localStorageUt
 import { nowIso } from '@/utils/datetime';
 import { pickRandomRegionColor } from '@/utils/worldeditor/regionColors';
 import { normalizeLandmarkHierarchy, removeLandmarkFromHierarchy } from '@/utils/worldeditor/landmarkHierarchy';
-import { removeLandmarkLinksForIds } from '@/composables/worldeditor/worldGraphLinks';
+import { removeLandmarkLinksForIds } from '@/composables/worldeditor/graph/worldGraphLinks';
 
 const WORLD_EDITOR_DATA_KEY = 'world-editor-data';
 

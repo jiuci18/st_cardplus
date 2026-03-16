@@ -258,29 +258,47 @@ const emit = defineEmits<{
 }>();
 
 const activeTab = ref('appearance');
-const form = ref(JSON.parse(JSON.stringify(props.character)));
+const cloneCharacter = (character: CharacterCard): CharacterCard => JSON.parse(JSON.stringify(character));
+const form = ref(cloneCharacter(props.character));
 let isUpdatingFromProps = false;
+
+const syncFormFromProps = (character: CharacterCard) => {
+  isUpdatingFromProps = true;
+  form.value = cloneCharacter(character);
+  nextTick(() => {
+    isUpdatingFromProps = false;
+  });
+};
+
+const normalizeMeta = (updatedCharacter: CharacterCard) => {
+  const fallbackMeta = props.character?.meta ?? {};
+  const nextMeta = {
+    ...(updatedCharacter.meta || {}),
+    id: updatedCharacter.meta?.id ?? fallbackMeta.id,
+    order: updatedCharacter.meta?.order ?? fallbackMeta.order,
+    starred:
+      typeof updatedCharacter.meta?.starred === 'boolean' ? updatedCharacter.meta.starred : (fallbackMeta.starred ?? false),
+    projectId: updatedCharacter.meta?.projectId ?? fallbackMeta.projectId,
+  };
+
+  const metaChanged =
+    updatedCharacter.meta?.id !== nextMeta.id ||
+    updatedCharacter.meta?.order !== nextMeta.order ||
+    updatedCharacter.meta?.starred !== nextMeta.starred ||
+    updatedCharacter.meta?.projectId !== nextMeta.projectId;
+
+  if (metaChanged) {
+    updatedCharacter.meta = nextMeta;
+  }
+  return metaChanged;
+};
 
 watch(
   () => props.character,
   (newCharacter) => {
-    if (newCharacter && newCharacter.meta.id !== form.value.meta.id) {
-      isUpdatingFromProps = true;
-      form.value = JSON.parse(JSON.stringify(newCharacter)); // 深度克隆
-      nextTick(() => {
-        isUpdatingFromProps = false;
-      });
-    } else if (newCharacter && newCharacter.meta.id === form.value.meta.id) {
-      const currentFormJson = JSON.stringify(form.value);
-      const newCharacterJson = JSON.stringify(newCharacter);
-      if (currentFormJson !== newCharacterJson) {
-        isUpdatingFromProps = true;
-        form.value = JSON.parse(JSON.stringify(newCharacter));
-        nextTick(() => {
-          isUpdatingFromProps = false;
-        });
-      }
-    }
+    if (!newCharacter) return;
+    if (JSON.stringify(form.value) === JSON.stringify(newCharacter)) return;
+    syncFormFromProps(newCharacter);
   },
   { deep: true, immediate: true }
 );
@@ -288,18 +306,9 @@ watch(
 watch(
   form,
   (updatedCharacter) => {
-    if (!isUpdatingFromProps) {
-      if (!updatedCharacter.meta.id && props.character?.meta?.id) {
-        console.warn('CharacterInfoEditor: form 缺少 ID，从 props 恢复');
-        updatedCharacter.meta.id = props.character.meta.id;
-      }
-
-      if (updatedCharacter.meta.id) {
-        emit('update:character', JSON.parse(JSON.stringify(updatedCharacter))); // 深度克隆
-      } else {
-        console.error('CharacterInfoEditor: 无法更新角色，缺少 ID');
-      }
-    }
+    if (isUpdatingFromProps) return;
+    if (normalizeMeta(updatedCharacter)) return;
+    emit('update:character', cloneCharacter(updatedCharacter));
   },
   { deep: true }
 );

@@ -19,12 +19,15 @@
           </template>
           <CharacterListSidebar
             :characters="characters"
+            :projects="projects"
             :active-character-id="activeCharacterId"
             @select="handleSelectCharacterWithTabSwitch"
+            @create-project="handleCreateProject"
             @create="handleCreateCharacter"
             @delete="handleDeleteCharacter"
             @import="handleImportCharacter"
-            @reorder="handleReorderCharacters"
+            @reorder="handleReorderCharacterPatches"
+            @reorder-projects="handleReorderProjects"
             @toggle-star="handleToggleStar"
           />
         </el-tab-pane>
@@ -72,12 +75,15 @@
         >
           <CharacterListSidebar
             :characters="characters"
+            :projects="projects"
             :active-character-id="activeCharacterId"
             @select="handleSelectCharacter"
+            @create-project="handleCreateProject"
             @create="handleCreateCharacter"
             @delete="handleDeleteCharacter"
             @import="handleImportCharacter"
-            @reorder="handleReorderCharacters"
+            @reorder="handleReorderCharacterPatches"
+            @reorder-projects="handleReorderProjects"
             @toggle-star="handleToggleStar"
           />
         </Pane>
@@ -118,6 +124,7 @@ import 'splitpanes/dist/splitpanes.css';
 import CharacterListSidebar from '../components/charcard/CharacterListSidebar.vue';
 import { useCharacterCollection } from '../composables/characterInfo/useCharacterCollection';
 import { useDevice } from '../composables/useDevice';
+import type { CharacterCard } from '../types/character';
 
 const { isMobile } = useDevice();
 const activeTab = ref('list');
@@ -126,14 +133,17 @@ const editorComponent = shallowRef<Component | null>(null);
 
 const {
   characterCollection,
+  projects,
   activeCharacterId,
   activeCharacter,
   handleSelectCharacter,
+  handleCreateProject,
   handleCreateCharacter,
   handleDeleteCharacter,
   handleImportCharacter,
   updateCharacter,
-  reorderCharacters,
+  applyCharacterOrderPatches,
+  reorderProjects,
   setCharacterStar,
 } = useCharacterCollection();
 
@@ -150,30 +160,23 @@ watch(activeCharacterId, (newId) => {
   }
 });
 
-const characters = computed(() => {
-  return Object.values(characterCollection.value.characters).sort((a, b) => {
-    const aStarred = !!a.meta.starred;
-    const bStarred = !!b.meta.starred;
-    if (aStarred !== bStarred) {
-      return aStarred ? -1 : 1;
-    }
-    const aOrder = a.meta.order ?? 0;
-    const bOrder = b.meta.order ?? 0;
-    return aOrder - bOrder;
-  });
-});
+const characters = computed(() => Object.values(characterCollection.value.characters));
 
-const handleUpdateCharacter = (updatedCharacter: any) => {
-  if (updatedCharacter && updatedCharacter.meta?.id) {
-    updateCharacter(updatedCharacter.meta.id, updatedCharacter);
-  } else {
-    console.warn('角色更新失败：无效的角色数据或缺少ID', updatedCharacter);
-  }
+const handleUpdateCharacter = (updatedCharacter: CharacterCard) => {
+  if (!updatedCharacter) return;
+  const characterId = updatedCharacter.meta?.id || activeCharacterId.value;
+  if (!characterId) return;
+  updateCharacter(characterId, updatedCharacter);
 };
 
-const handleReorderCharacters = (orderedIds: string[]) => {
+const handleReorderCharacterPatches = (patches: Array<{ id: string; order: number; projectId: string | null }>) => {
+  if (!patches.length) return;
+  applyCharacterOrderPatches(patches);
+};
+
+const handleReorderProjects = (orderedIds: string[]) => {
   if (!orderedIds.length) return;
-  reorderCharacters(orderedIds);
+  reorderProjects(orderedIds);
 };
 
 const handleToggleStar = (characterId: string, starred: boolean) => {

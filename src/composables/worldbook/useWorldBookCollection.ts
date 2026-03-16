@@ -24,26 +24,7 @@ export function useWorldBookCollection() {
   const loadInitialData = async () => {
     isLoading.value = true;
     try {
-      const collection = await worldBookService.getFullWorldBookCollection();
-
-      if (Object.keys(collection.books).length === 0) {
-        // 数据库为空，创建一本默认世界书
-        const newBookId = uuidv4();
-        const now = nowIso();
-        const defaultBook: StoredWorldBook = {
-          id: newBookId,
-          name: '我的第一个世界书',
-          createdAt: now,
-          updatedAt: now,
-          description: '在这里开始你的创作吧！',
-          order: 0,
-        };
-        await worldBookService.addBook(defaultBook);
-        // 创建后重新加载以确保状态一致
-        worldBookCollection.value = await worldBookService.getFullWorldBookCollection();
-      } else {
-        worldBookCollection.value = collection;
-      }
+      worldBookCollection.value = await worldBookService.getFullWorldBookCollection();
     } catch (error) {
       console.error('加载世界书数据失败:', error);
       ElMessage.error('加载世界书数据失败！');
@@ -142,11 +123,6 @@ export function useWorldBookCollection() {
     const book = worldBookCollection.value.books[bookId];
     if (!book) return;
 
-    if (Object.keys(worldBookCollection.value.books).length <= 1) {
-      ElMessage.warning('不能删除最后一个世界书');
-      return;
-    }
-
     try {
       await ElMessageBox.confirm(`确定要删除世界书 "${book.name}" 吗？此操作不可恢复！`, '删除世界书', {
         confirmButtonText: '确认删除',
@@ -162,6 +138,9 @@ export function useWorldBookCollection() {
         const newActiveId = Object.keys(worldBookCollection.value.books)[0] || null;
         worldBookCollection.value.activeBookId = newActiveId;
         worldBookService.setActiveBookId(newActiveId);
+      } else if (Object.keys(worldBookCollection.value.books).length === 0) {
+        worldBookCollection.value.activeBookId = null;
+        worldBookService.setActiveBookId(null);
       }
 
       ElMessage.success(`世界书 "${book.name}" 已删除`);

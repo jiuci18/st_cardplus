@@ -159,7 +159,7 @@
           >
             <div class="row-index">{{ index + 1 }}</div>
             <div class="row-name">{{ stage.name }}</div>
-            <div class="row-condition">{{ formatConditions(stage) }}</div>
+            <div class="row-condition">{{ formatStageConditions(stage) }}</div>
             <div class="row-status">
               <el-tag
                 v-if="isStageMatched(stage)"
@@ -185,8 +185,9 @@
 
 <script setup lang="ts">
 import { useEjsEditorStore } from '@/composables/ejs/ejsEditor';
+import { formatStageConditions, matchesStage } from '@/composables/ejs/stageConditions';
 import { useDevice } from '@/composables/useDevice';
-import type { Condition, ConditionGroup, Stage } from '@/types/ejs-editor';
+import type { Stage } from '@/types/ejs-editor';
 import { Delete, QuestionFilled, VideoPlay } from '@element-plus/icons-vue';
 import { computed, ref } from 'vue';
 
@@ -230,110 +231,8 @@ function removeVariable(path: string) {
   delete store.simulationValues[plainPath];
 }
 
-function formatSingleCondition(condition: Condition): string {
-  const { variableAlias, type, value, endValue } = condition;
-  const valStr = typeof value === 'string' ? `'${value}'` : value;
-
-  switch (type) {
-    case 'less':
-      return `${variableAlias || '变量'} < ${valStr}`;
-    case 'lessEqual':
-      return `${variableAlias || '变量'} <= ${valStr}`;
-    case 'equal':
-      return `${variableAlias || '变量'} == ${valStr}`;
-    case 'greater':
-      return `${variableAlias || '变量'} > ${valStr}`;
-    case 'greaterEqual':
-      return `${variableAlias || '变量'} >= ${valStr}`;
-    case 'range':
-      const endValStr = typeof endValue === 'string' ? `'${endValue}'` : endValue;
-      return `${variableAlias || '变量'} in [${valStr}, ${endValStr})`;
-    case 'is':
-      return `${variableAlias || '变量'} is ${valStr}`;
-    case 'isNot':
-      return `${variableAlias || '变量'} is not ${valStr}`;
-    default:
-      return '未知条件';
-  }
-}
-
-function formatConditions(stage: Stage): string {
-  if (!stage.conditionGroups || stage.conditionGroups.length === 0) {
-    return '无条件 (始终激活)';
-  }
-  const groupStrings = stage.conditionGroups
-    .map((group) => {
-      if (!group.conditions || group.conditions.length === 0) return null;
-      const conditionStrings = group.conditions.map(formatSingleCondition).join(' AND ');
-      return `(${conditionStrings})`;
-    })
-    .filter(Boolean);
-  if (groupStrings.length === 0) {
-    return '无条件 (始终激活)';
-  }
-  return groupStrings.join(' OR ');
-}
-
 function isStageMatched(stage: Stage): boolean {
-  if (!stage.conditionGroups || stage.conditionGroups.length === 0) {
-    return true; // No conditions means it always matches in this context
-  }
-
-  const checkCondition = (cond: Condition): boolean => {
-    const flatVariable = store.flatVariables.find((v) => v.id === cond.variablePath);
-    const readablePath = flatVariable ? flatVariable.readablePath : cond.variablePath;
-    const fullPath = `stat_data.${readablePath}`;
-    const simValue = store.simulationValues[fullPath] || store.simulationValues[readablePath];
-    if (simValue === undefined) return false; // Variable not simulated
-
-    const condValue = cond.value;
-    const condEndValue = cond.endValue;
-
-    const numSimValue = Number(simValue);
-    const numCondValue = Number(condValue);
-    if (!isNaN(numSimValue) && !isNaN(numCondValue)) {
-      const numCondEndValue = Number(condEndValue);
-      switch (cond.type) {
-        case 'less':
-          return numSimValue < numCondValue;
-        case 'lessEqual':
-          return numSimValue <= numCondValue;
-        case 'equal':
-          return numSimValue == numCondValue; // Use == for loose equality
-        case 'greater':
-          return numSimValue > numCondValue;
-        case 'greaterEqual':
-          return numSimValue >= numCondValue;
-        case 'range':
-          if (isNaN(numCondEndValue)) return false;
-          return numSimValue >= numCondValue && numSimValue < numCondEndValue;
-        case 'is':
-          return simValue === condValue; // Strict equality for 'is'
-        case 'isNot':
-          return simValue !== condValue; // Strict inequality for 'isNot'
-      }
-    }
-
-    const strSimValue = String(simValue);
-    const strCondValue = String(condValue);
-    switch (cond.type) {
-      case 'equal':
-        return strSimValue == strCondValue;
-      case 'is':
-        return strSimValue === strCondValue;
-      case 'isNot':
-        return strSimValue !== strCondValue;
-      default:
-        return false; // Other types require numeric values
-    }
-  };
-
-  const checkGroup = (group: ConditionGroup): boolean => {
-    if (!group.conditions || group.conditions.length === 0) return true; // Empty group is true
-    return group.conditions.every(checkCondition); // Conditions within a group are ANDed
-  };
-
-  return stage.conditionGroups.some(checkGroup);
+  return matchesStage(stage, store.simulationValues);
 }
 </script>
 

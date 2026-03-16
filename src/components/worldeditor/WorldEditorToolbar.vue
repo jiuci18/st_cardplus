@@ -17,7 +17,7 @@
       @node-click="handleNodeClick"
     >
       <template #header-actions>
-        <div class="header-actions">
+        <div class="split-create-actions">
           <el-tooltip
             content="新增地标"
             placement="top"
@@ -27,7 +27,7 @@
           >
             <button
               @click="emit('add', 'landmark')"
-              class="btn-adv btn-primary-adv action-button"
+              class="btn-adv btn-primary-adv sidebar-header-button split-create-main"
             >
               <Icon icon="ph:map-pin-duotone" />
             </button>
@@ -37,7 +37,7 @@
             placement="bottom-end"
             @command="handleAddCommand"
           >
-            <button class="btn-adv btn-primary-adv action-button action-button-split">
+            <button class="btn-adv btn-primary-adv sidebar-header-button split-create-toggle">
               <Icon icon="ph:caret-down-duotone" />
             </button>
             <template #dropdown>
@@ -45,28 +45,28 @@
                 <el-dropdown-item command="project">
                   <Icon
                     icon="ph:folder-plus-duotone"
-                    class="dropdown-item-icon"
+                    class="split-create-item-icon"
                   />
                   新增项目
                 </el-dropdown-item>
                 <el-dropdown-item command="landmark">
                   <Icon
                     icon="ph:map-pin-duotone"
-                    class="dropdown-item-icon"
+                    class="split-create-item-icon"
                   />
                   新增地标
                 </el-dropdown-item>
                 <el-dropdown-item command="region">
                   <Icon
                     icon="ph:squares-four-duotone"
-                    class="dropdown-item-icon"
+                    class="split-create-item-icon"
                   />
                   新增区域
                 </el-dropdown-item>
                 <el-dropdown-item command="force">
                   <Icon
                     icon="ph:flag-duotone"
-                    class="dropdown-item-icon"
+                    class="split-create-item-icon"
                   />
                   新增势力
                 </el-dropdown-item>
@@ -172,7 +172,7 @@ import type {
   EnhancedRegion,
   ProjectIntegration,
 } from '../../types/world-editor';
-import { getLandmarkTypeIcon } from '@/utils/worldeditor/landmarkMeta';
+import { getLandmarkTypeIcon } from '@/utils/worldeditor/typeMeta';
 import { getParentLandmarkId } from '@/utils/worldeditor/landmarkHierarchy';
 
 type SelectableItem = Project | EnhancedLandmark | EnhancedForce | EnhancedRegion | ProjectIntegration;
@@ -397,26 +397,10 @@ const handleAddCommand = (command: 'project' | 'landmark' | 'region' | 'force') 
 </script>
 
 <style scoped>
+@import '@/styles/split-create-actions.css';
+
 .toolbar-container {
   height: 100%;
-}
-
-.header-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.action-button {
-  font-size: 16px;
-}
-
-.action-button-split {
-  padding: 0 6px;
-}
-
-.dropdown-item-icon {
-  margin-right: 8px;
-  font-size: 16px;
 }
 
 .controls-section {

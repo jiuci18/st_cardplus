@@ -1,0 +1,80 @@
+name: Bug 反馈
+description: 提交一个问题反馈，帮助定位和修复缺陷
+title: "[Bug] "
+labels:
+  - bug
+body:
+  - type: dropdown
+    id: device_type
+    attributes:
+      label: 什么设备
+      description: 请选择出现问题的设备或运行环境
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Android
+        - iPhone / iPad
+        - 其他
+    validations:
+      required: true
+
+  - type: dropdown
+    id: bug_part
+    attributes:
+      label: 什么部分的 Bug
+      description: 请选择最接近的页面、模块或功能
+      options:
+        - 首页 / 导航 / 布局
+        - 角色卡管理器
+        - 角色信息
+        - 世界地标
+        - 世界书
+        - EJS 模板编辑器
+        - 正则编辑器
+        - 预设管理器
+        - 工具箱 - JSON 格式化
+        - 工具箱 - 元数据分离器
+        - 工具箱 - 世界书转换器
+        - 工具箱 - 简繁转换器
+        - 工具箱 - 旧版世界编辑器
+        - 设置 - 应用设置
+        - 设置 - 个性化 / 侧边栏
+        - 设置 - 数据管理 / 同步
+        - 桌面端能力（文件读写 / 导入导出 / 系统集成）
+        - 其他
+    validations:
+      required: true
+
+  - type: input
+    id: bug_part_detail
+    attributes:
+      label: 模块补充说明
+      description: 如果上面的分类不够准确，请补充具体页面、按钮、弹窗或流程
+      placeholder: 例如：角色卡管理器 > 图片面板 > 上传封面
+
+  - type: dropdown
+    id: bug_type
+    attributes:
+      label: 什么类型的 Bug
+      description: 请选择最接近的问题类型
+      options:
+        - 崩溃 / 闪退
+        - 功能异常
+        - UI 显示异常
+        - 交互异常
+        - 性能问题
+        - 数据错误
+        - 兼容性问题
+        - 其他
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: 问题描述
+      description: 简要说明问题现象
+      placeholder: 请描述你遇到的问题
+    validations:
+      required: true

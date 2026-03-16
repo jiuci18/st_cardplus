@@ -42,11 +42,10 @@ const editorView = ref<EditorView>();
 const isUpdatingFromStore = ref(false);
 const isUpdatingFromEditor = ref(false);
 const isEditorLocked = ref(false);
-const debounceTimer = ref<NodeJS.Timeout | null>(null);
+const debounceTimer = ref<ReturnType<typeof setTimeout> | null>(null);
 const initError = ref<string>('');
 
-onErrorCaptured((err, _instance, info) => {
-  console.error('TemplateEditor 组件错误:', err, info);
+onErrorCaptured((err) => {
   initError.value = `组件错误: ${err instanceof Error ? err.message : '未知错误'}`;
   return false;
 });
@@ -62,10 +61,7 @@ function createEditorState(content: string) {
         {
           key: 'Ctrl-s',
           preventDefault: true,
-          run: () => {
-            console.log('保存快捷键触发');
-            return true;
-          },
+          run: () => true,
         },
         {
           key: 'Ctrl-g',
@@ -106,8 +102,6 @@ function createEditorState(content: string) {
               store.ejsTemplate = newValue;
               store.previewCode = newValue;
             }
-          } catch (error) {
-            console.error('编辑器内容同步失败:', error);
           } finally {
             isUpdatingFromEditor.value = false;
           }
@@ -135,11 +129,8 @@ async function initializeEditor(content = store.ejsTemplate || '') {
       state: createEditorState(content),
       parent: editorContainer.value,
     });
-
-    console.log('CodeMirror 编辑器初始化成功');
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : '未知错误';
-    console.error('CodeMirror 初始化失败:', error);
     initError.value = `初始化失败: ${errorMsg}`;
   }
 }
@@ -199,7 +190,6 @@ watch(
         },
       });
     } catch (error) {
-      console.error('CodeMirror 状态更新失败:', error);
       initError.value = '编辑器状态同步失败，请点击重新初始化';
     } finally {
       isUpdatingFromStore.value = false;

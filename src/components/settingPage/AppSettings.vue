@@ -17,15 +17,6 @@
       </a>
     </template>
   </el-alert>
-  <el-alert
-    type="warning"
-    show-icon
-    :closable="false"
-    style="margin-bottom: 20px"
-  >
-    <template #title>所有兼容性项目将在 0.2.0 新版本到来前被逐步移除</template>
-    <template #default>0.2.0 将在所有页面完成重构后到来</template>
-  </el-alert>
   <div class="app-settings">
     <div
       v-for="setting in settings"
@@ -65,8 +56,19 @@
               <span class="interval-unit">{{ setting.unit }}</span>
             </div>
           </template>
+          <template v-else-if="setting.type === 'passwordInput'">
+            <el-input
+              v-model="setting.model.value"
+              @input="setting.handler"
+              type="password"
+              show-password
+              clearable
+              :placeholder="setting.placeholder"
+              class="setting-password-input"
+            />
+          </template>
         </div>
-        <p class="setting-description">{{ setting.description }}</p>
+        <p class="setting-description" v-html="setting.description"></p>
       </div>
     </div>
   </div>
@@ -80,8 +82,10 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { computed, onMounted, ref } from 'vue';
 
 const betaFeaturesEnabled = ref(false);
+const umamiEnabled = ref(true);
 const autoSaveInterval = ref(5);
 const autoSaveDebounce = ref(1.5);
+const imgbbApiKey = ref('');
 
 const onBetaFeaturesToggle = (value: boolean) => {
   if (value) {
@@ -136,28 +140,47 @@ const onAutoSaveDebounceChange = (value: number | undefined) => {
   window.dispatchEvent(new CustomEvent('autoSaveDebounceChange', { detail: value }));
 };
 
+const onUmamiToggle = (value: boolean) => {
+  setSetting('umamiEnabled', value);
+  window.dispatchEvent(new CustomEvent('umamiToggle', { detail: value }));
+};
+
+const onImgbbApiKeyChange = (value: string) => {
+  setSetting('imgbbApiKey', value);
+};
+
 const settings = computed(() =>
   getAppSettings(
     {
       betaFeaturesEnabled,
+      umamiEnabled,
       autoSaveInterval,
       autoSaveDebounce,
+      imgbbApiKey,
     },
     {
       onBetaFeaturesToggle,
+      onUmamiToggle,
       onAutoSaveIntervalChange,
       onAutoSaveDebounceChange,
+      onImgbbApiKeyChange,
     }
   )
 );
 
 onMounted(() => {
   betaFeaturesEnabled.value = getSetting('betaFeaturesEnabled');
+  umamiEnabled.value = getSetting('umamiEnabled');
   autoSaveInterval.value = getSetting('autoSaveInterval');
   autoSaveDebounce.value = getSetting('autoSaveDebounce');
+  imgbbApiKey.value = getSetting('imgbbApiKey');
 });
 </script>
 
 <style scoped>
 /* 使用全局 settings.css 中定义的通用样式 */
+
+.setting-password-input {
+  width: min(320px, 100%);
+}
 </style>

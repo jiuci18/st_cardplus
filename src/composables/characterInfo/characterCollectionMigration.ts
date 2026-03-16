@@ -22,7 +22,7 @@ const migrateLegacyCharacterCard = (character: unknown): { card: CharacterCard; 
 
   const fallback = createDefaultCharacterCard();
   const raw = (character || {}) as Record<string, unknown>;
-  const { id, order, starred, meta, data, ...legacyData } = raw;
+  const { id, order, starred, projectId, meta, data, ...legacyData } = raw;
 
   return {
     card: {
@@ -30,6 +30,7 @@ const migrateLegacyCharacterCard = (character: unknown): { card: CharacterCard; 
         id: typeof id === 'string' ? id : undefined,
         order: typeof order === 'number' ? order : undefined,
         starred: typeof starred === 'boolean' ? starred : undefined,
+        projectId: typeof projectId === 'string' ? projectId : undefined,
       },
       data: {
         ...fallback.data,

@@ -1,7 +1,7 @@
 <template>
   <div class="editor-panel">
     <div class="panel-header">
-      <h3>主要编辑区</h3>
+      <h3>{{ panelTitle }}</h3>
       <div class="header-actions">
         <el-button :icon="CopyDocument" size="small" @click="$emit('add-clipboard')" :disabled="!selectedPrompt">
           加入剪贴板
@@ -171,21 +171,16 @@
             </div>
           </el-form>
         </el-tab-pane>
-        <el-tab-pane label="条目编辑" name="prompt" :disabled="!selectedPrompt">
+        <el-tab-pane label="条目编辑" name="prompt" :disabled="!hasPromptItems">
           <el-form label-position="top">
             <el-alert v-if="lockedTip" :title="lockedTip" type="info" :closable="false" class="mb-2" />
             <el-form-item label="条目名称">
               <div class="prompt-name-row">
                 <el-input v-model="localEditorState.promptName" placeholder="请输入条目名称" :disabled="isFullyLocked" />
-                <span> | </span>
+                <span>|</span>
                 <el-switch v-model="localEditorState.promptEnabled" active-text="激活" :disabled="isFullyLocked" />
                 <el-tooltip content="也可以在左侧列表双击条目，快速激活/取消激活" placement="top" :show-arrow="false">
-                  <button
-                    type="button"
-                    class="prompt-hint-trigger"
-                    aria-label="激活玩法提示"
-                    :disabled="isFullyLocked"
-                  >
+                  <button type="button" class="prompt-hint-trigger" aria-label="激活玩法提示" :disabled="isFullyLocked">
                     <Icon icon="ph:info-duotone" />
                   </button>
                 </el-tooltip>
@@ -302,6 +297,46 @@
             </el-collapse>
           </el-form>
         </el-tab-pane>
+        <el-tab-pane label="正则编辑" name="regex" :disabled="!activePreset">
+          <div class="regex-tab-content">
+            <div class="regex-tab-toolbar">
+              <el-select :model-value="selectedRegexIndex" placeholder="从侧边栏选择或在此切换" clearable style="width: 100%"
+                @update:model-value="handleRegexSelect">
+                <el-option v-for="(script, index) in regexScripts" :key="script.id || `regex-${index}`"
+                  :label="script.scriptName || `正则脚本 ${index + 1}`" :value="index" />
+              </el-select>
+              <el-button type="primary" plain @click="emit('add-regex')" :disabled="!activePreset">
+                新增脚本
+              </el-button>
+              <el-button type="danger" plain @click="handleRegexDelete" :disabled="selectedRegexIndex === null">
+                删除脚本
+              </el-button>
+            </div>
+            <div v-if="regexScripts.length === 0" class="regex-empty">
+              <el-empty description="当前预设没有正则脚本">
+                <el-button type="primary" @click="emit('add-regex')">
+                  创建第一个脚本
+                </el-button>
+              </el-empty>
+            </div>
+            <div v-else-if="!selectedRegexScript" class="regex-empty">
+              <el-empty description="请在左侧正则文件夹选择一个脚本" :image-size="100" />
+            </div>
+            <el-form v-else label-position="top" class="regex-form">
+              <RegexEditorCore v-model:script-name="selectedRegexScript.scriptName"
+                v-model:find-regex="selectedRegexScript.findRegex"
+                v-model:replace-string="selectedRegexScript.replaceString" v-model:trim-strings="trimStringsText"
+                v-model:substitute-regex="selectedRegexScript.substituteRegex" />
+              <el-divider content-position="left">智能生成</el-divider>
+              <SmartRegexGenerator v-model:input-text="regexSmartInputText" @regex-generated="handleRegexGenerated" />
+              <RegexAdvancedSettings v-model="selectedRegexScript" />
+              <el-divider />
+              <RegexSimulatorPanel v-model:test-string="regexTestString" v-model:render-html="regexRenderHtml"
+                v-model:user-macro-value="regexUserMacro" v-model:char-macro-value="regexCharMacro"
+                :simulated-result="regexSimulatedResult" />
+            </el-form>
+          </div>
+        </el-tab-pane>
         <el-tab-pane name="nav-separator" label="|" disabled />
         <el-tab-pane name="nav-prev" label="上一个" :disabled="!canGoPrevious" />
         <el-tab-pane name="nav-separator" label="·" disabled />
@@ -318,6 +353,12 @@ import { ElScrollbar, ElTooltip } from 'element-plus';
 import { Icon } from '@iconify/vue';
 import type { StoredPresetFile } from '@/database/db';
 import type { PresetPrompt } from '@/composables/preset/usePresetStore';
+import RegexAdvancedSettings from '@/components/regex/RegexAdvancedSettings.vue';
+import RegexEditorCore from '@/components/regex/RegexEditorCore.vue';
+import RegexSimulatorPanel from '@/components/regex/RegexSimulatorPanel.vue';
+import SmartRegexGenerator from '@/components/regex/Selector/SmartRegexGenerator.vue';
+import { useRegexSimulator } from '@/composables/regex/useRegexSimulator';
+import { SUBSTITUTE_FIND_REGEX, type RegexScript, type SillyTavernRegexScript } from '@/composables/regex/types';
 
 export interface PresetEditorState {
   presetName: string;
@@ -331,6 +372,7 @@ export interface PresetEditorState {
   promptEnabled: boolean;
   promptOrder: number | null;
   promptExtraJson: string;
+  regexSnapshot: string;
 }
 
 export interface PresetHeaderForm {
@@ -371,7 +413,8 @@ interface Props {
   hasNextPreset?: boolean;
   hasPreviousPrompt?: boolean;
   hasNextPrompt?: boolean;
-  activeTab: 'header' | 'prompt';
+  selectedRegexIndex: number | null;
+  activeTab: 'header' | 'prompt' | 'regex';
   editorState: PresetEditorState;
   saveStatus?: 'idle' | 'saving' | 'saved' | 'error';
   autoSaveMode?: 'auto' | 'watch' | 'manual';
@@ -380,8 +423,12 @@ interface Props {
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
-  (e: 'update:activeTab', value: 'header' | 'prompt'): void;
+  (e: 'update:activeTab', value: 'header' | 'prompt' | 'regex'): void;
   (e: 'update:editorState', value: PresetEditorState): void;
+  (e: 'open-first-prompt'): void;
+  (e: 'select-regex', presetId: string, regexIndex?: number): void;
+  (e: 'add-regex'): void;
+  (e: 'delete-regex', regexIndex: number): void;
   (e: 'save'): void;
   (e: 'toggle-mode'): void;
   (e: 'add-clipboard'): void;
@@ -449,9 +496,11 @@ const getTooltipText = () => {
   }
 };
 
+const panelTitle = computed(() => props.activePreset?.name?.trim() || '主要编辑区');
+
 const localActiveTab = computed({
   get: () => props.activeTab,
-  set: (value: 'header' | 'prompt') => emit('update:activeTab', value),
+  set: (value: 'header' | 'prompt' | 'regex') => emit('update:activeTab', value),
 });
 
 const localEditorState = computed({
@@ -459,11 +508,25 @@ const localEditorState = computed({
   set: (value: PresetEditorState) => emit('update:editorState', value),
 });
 const canGoPrevious = computed(() =>
-  localActiveTab.value === 'header' ? Boolean(props.hasPreviousPreset) : Boolean(props.hasPreviousPrompt)
+  localActiveTab.value === 'header'
+    ? Boolean(props.hasPreviousPreset)
+    : localActiveTab.value === 'prompt'
+      ? Boolean(props.hasPreviousPrompt)
+      : false
 );
 const canGoNext = computed(() =>
-  localActiveTab.value === 'header' ? Boolean(props.hasNextPreset) : Boolean(props.hasNextPrompt)
+  localActiveTab.value === 'header'
+    ? Boolean(props.hasNextPreset)
+    : localActiveTab.value === 'prompt'
+      ? Boolean(props.hasNextPrompt)
+      : false
 );
+const hasPromptItems = computed(() => {
+  if (!props.activePreset) return false;
+  const prompts = (props.activePreset.data as Record<string, any>).prompts;
+  return Array.isArray(prompts) && prompts.length > 0;
+});
+
 const handleBeforeTabLeave = (nextName: string | number) => {
   if (nextName === 'nav-prev') {
     if (canGoPrevious.value) emit('go-previous');
@@ -471,6 +534,10 @@ const handleBeforeTabLeave = (nextName: string | number) => {
   }
   if (nextName === 'nav-next') {
     if (canGoNext.value) emit('go-next');
+    return false;
+  }
+  if (nextName === 'prompt' && !props.selectedPrompt && hasPromptItems.value) {
+    emit('open-first-prompt');
     return false;
   }
   if (nextName === 'nav-separator') return false;
@@ -605,6 +672,62 @@ watch(
   },
   { deep: true }
 );
+
+const regexScripts = computed<SillyTavernRegexScript[]>(() => {
+  if (!props.activePreset) return [];
+  return (props.activePreset.data.extensions as Record<string, any>).regex_scripts as SillyTavernRegexScript[];
+});
+
+const selectedRegexScript = computed<SillyTavernRegexScript | null>(() => {
+  if (props.selectedRegexIndex === null || props.selectedRegexIndex < 0) return null;
+  return regexScripts.value[props.selectedRegexIndex] || null;
+});
+
+const trimStringsText = computed({
+  get: () => (selectedRegexScript.value?.trimStrings || []).join('\n'),
+  set: (value: string) => {
+    if (!selectedRegexScript.value) return;
+    selectedRegexScript.value.trimStrings = value
+      .split('\n')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  },
+});
+
+const handleRegexSelect = (value: number | null | undefined) => {
+  if (!props.activePreset) return;
+  emit('select-regex', props.activePreset.id, typeof value === 'number' ? value : undefined);
+};
+
+const handleRegexDelete = () => {
+  if (props.selectedRegexIndex === null) return;
+  emit('delete-regex', props.selectedRegexIndex);
+};
+
+const regexRenderHtml = ref(false);
+const regexUserMacro = ref('用户');
+const regexCharMacro = ref('角色');
+const regexSmartInputText = ref('');
+
+const regexSimulatorScript = computed<RegexScript>(() => ({
+  findRegex: selectedRegexScript.value?.findRegex || '',
+  replaceString: selectedRegexScript.value?.replaceString || '',
+  trimStrings: selectedRegexScript.value?.trimStrings || [],
+  macros: {
+    '{{user}}': regexUserMacro.value,
+    '{{char}}': regexCharMacro.value,
+  },
+  substituteRegex: selectedRegexScript.value?.substituteRegex ?? SUBSTITUTE_FIND_REGEX.NONE,
+}));
+
+const { testString: regexTestString, simulatedResult: regexSimulatedResult } = useRegexSimulator(regexSimulatorScript);
+
+const handleRegexGenerated = ({ regex, replaceString }: { regex: string; replaceString: string }) => {
+  if (!selectedRegexScript.value) return;
+  selectedRegexScript.value.findRegex = regex;
+  selectedRegexScript.value.replaceString = replaceString;
+  regexTestString.value = regexSmartInputText.value;
+};
 </script>
 
 <style scoped>
@@ -781,5 +904,28 @@ watch(
   display: grid;
   grid-template-columns: 1fr;
   gap: 0;
+}
+
+.regex-tab-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.regex-tab-toolbar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.regex-empty {
+  padding: 12px 0;
+}
+
+@media (max-width: 768px) {
+  .regex-tab-toolbar {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

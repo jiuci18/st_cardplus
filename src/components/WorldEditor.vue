@@ -202,7 +202,7 @@ import { useWorldEditor } from '@/composables/worldeditor/useWorldEditor';
 import { useWorldEditorUI } from '@/composables/worldeditor/useWorldEditorUI';
 import { useDragAndDrop } from '@/composables/worldeditor/useDragAndDrop';
 import { collectDescendantIds, removeLandmarkFromHierarchy } from '@/utils/worldeditor/landmarkHierarchy';
-import { removeLandmarkLinksForIds } from '@/composables/worldeditor/worldGraphLinks';
+import { removeLandmarkLinksForIds } from '@/composables/worldeditor/graph/worldGraphLinks';
 
 const activeTab = ref('list');
 const graphProjectId = ref<string | null>(null);

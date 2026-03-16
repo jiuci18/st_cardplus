@@ -3,6 +3,7 @@
     title="角色列表"
     :tree-data="treeData"
     :tree-props="treeProps"
+    :default-expanded-keys="defaultExpandedKeys"
     :current-node-key="activeCharacterId ?? undefined"
     :draggable="true"
     :allow-drag="allowDrag"
@@ -11,28 +12,53 @@
     @node-click="handleNodeClick"
   >
     <template #header-actions>
-      <el-tooltip
-        content="从文件导入角色"
-        placement="top"
-      >
-        <button
-          @click="triggerFileInput"
-          class="btn-adv btn-primary-adv sidebar-header-button"
+      <div class="split-create-actions">
+        <el-tooltip
+          content="创建新角色"
+          placement="top"
         >
-          <Icon icon="ph:upload-simple-bold" />
-        </button>
-      </el-tooltip>
-      <el-tooltip
-        content="创建新角色"
-        placement="top"
-      >
-        <button
-          @click="emit('create')"
-          class="btn-adv btn-primary-adv sidebar-header-button"
+          <button
+            @click="emit('create')"
+            class="btn-adv btn-primary-adv sidebar-header-button split-create-main"
+          >
+            <Icon icon="ph:user-plus-duotone" />
+          </button>
+        </el-tooltip>
+        <el-dropdown
+          trigger="click"
+          placement="bottom-end"
+          @command="handleHeaderCommand"
         >
-          <Icon icon="ph:plus-bold" />
-        </button>
-      </el-tooltip>
+          <button class="btn-adv btn-primary-adv sidebar-header-button split-create-toggle">
+            <Icon icon="ph:caret-down-duotone" />
+          </button>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="character">
+                <Icon
+                  icon="ph:user-plus-duotone"
+                  class="split-create-item-icon"
+                />
+                创建新角色
+              </el-dropdown-item>
+              <el-dropdown-item command="project">
+                <Icon
+                  icon="ph:folder-plus-duotone"
+                  class="split-create-item-icon"
+                />
+                创建新项目
+              </el-dropdown-item>
+              <el-dropdown-item command="import">
+                <Icon
+                  icon="ph:upload-simple-duotone"
+                  class="split-create-item-icon"
+                />
+                从文件导入角色
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+      </div>
       <input
         type="file"
         ref="fileInput"
@@ -46,12 +72,15 @@
       <div class="sidebar-tree-node">
         <div class="sidebar-tree-node-main">
           <Icon
-            icon="ph:user-circle-duotone"
+            :icon="data.icon"
             class="sidebar-tree-node-icon"
           />
           <span class="sidebar-tree-node-label">{{ node.label }}</span>
         </div>
-        <div class="sidebar-tree-node-star">
+        <div
+          v-if="data.nodeType === 'character'"
+          class="sidebar-tree-node-star"
+        >
           <el-tooltip
             :content="data.raw.meta.starred ? '取消星标' : '设为星标'"
             placement="top"
@@ -65,7 +94,10 @@
             </button>
           </el-tooltip>
         </div>
-        <div class="sidebar-tree-node-actions">
+        <div
+          v-if="data.nodeType === 'character'"
+          class="sidebar-tree-node-actions"
+        >
           <el-tooltip
             content="删除角色"
             placement="top"
@@ -85,42 +117,48 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { ElTooltip } from 'element-plus';
-import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
+import { ElTooltip, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus';
 import { Icon } from '@iconify/vue';
 import SidebarTreePanel from '../common/SidebarTreePanel.vue';
-import type { CharacterCard } from '../../types/character';
+import type { CharacterCard, CharacterProject } from '../../types/character';
+import { useCharacterProjectTree, type CharacterOrderPatch } from '../../composables/characterInfo/useCharacterProjectTree';
 
 interface Props {
   characters: CharacterCard[];
+  projects: CharacterProject[];
   activeCharacterId: string | null;
 }
 
 const emit = defineEmits<{
   (e: 'select', id: string): void;
+  (e: 'create-project'): void;
   (e: 'create'): void;
   (e: 'delete', id: string): void;
   (e: 'import', file: File): void;
-  (e: 'reorder', orderedIds: string[]): void;
+  (e: 'reorder', patches: CharacterOrderPatch[]): void;
+  (e: 'reorder-projects', orderedIds: string[]): void;
   (e: 'toggle-star', id: string, starred: boolean): void;
 }>();
 
 const fileInput = ref<HTMLInputElement | null>(null);
 const props = defineProps<Props>();
+const defaultExpandedKeys = computed<Array<string | number>>(() =>
+  props.projects.map((project) => `project:${project.id}`)
+);
 
-const treeProps = {
-  children: 'children',
-  label: 'label',
-};
-
-const treeData = computed(() => {
-  return props.characters
-    .filter((character) => !!character.meta.id)
-    .map((character) => ({
-      id: character.meta.id as string,
-      label: character.data.chineseName || '未命名角色',
-      raw: character,
-    }));
+const {
+  treeProps,
+  treeData,
+  allowDrag,
+  allowDrop,
+  handleNodeDrop,
+  handleNodeClick,
+} = useCharacterProjectTree({
+  characters: computed(() => props.characters),
+  projects: computed(() => props.projects),
+  onReorderCharacters: (patches) => emit('reorder', patches),
+  onReorderProjects: (orderedIds) => emit('reorder-projects', orderedIds),
+  onSelectCharacter: (id) => emit('select', id),
 });
 
 const triggerFileInput = () => {
@@ -136,47 +174,24 @@ const handleFileImport = (event: Event) => {
   }
 };
 
-const allowDrag = (draggingNode: any) => {
-  return !!draggingNode?.data?.id;
-};
-
-const allowDrop = (draggingNode: any, dropNode: any, type: AllowDropType) => {
-  if (!draggingNode?.data || !dropNode?.data) return false;
-  if (type === 'inner') return false;
-  return Boolean(draggingNode.data.raw?.meta?.starred) === Boolean(dropNode.data.raw?.meta?.starred);
-};
-
-const handleNodeDrop = (draggingNode: any, dropNode: any, type: Exclude<NodeDropType, 'none'>) => {
-  if (!draggingNode?.data || !dropNode?.data) return false;
-  if (type === 'inner') return false;
-
-  const draggingId = draggingNode.data.id as string | undefined;
-  const dropId = dropNode.data.id as string | undefined;
-  if (!draggingId || !dropId) return false;
-
-  const currentIds = props.characters.map((character) => character.meta.id).filter((id): id is string => !!id);
-
-  const fromIndex = currentIds.indexOf(draggingId);
-  const toIndex = currentIds.indexOf(dropId);
-  if (fromIndex === -1 || toIndex === -1) return false;
-
-  currentIds.splice(fromIndex, 1);
-  const normalizedToIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
-  const insertIndex = type === 'before' ? normalizedToIndex : normalizedToIndex + 1;
-  currentIds.splice(insertIndex, 0, draggingId);
-
-  emit('reorder', currentIds);
-  return true;
-};
-
-const handleNodeClick = (data: any) => {
-  if (data?.id) {
-    emit('select', data.id);
+const handleHeaderCommand = (command: string) => {
+  if (command === 'character') {
+    emit('create');
+    return;
+  }
+  if (command === 'project') {
+    emit('create-project');
+    return;
+  }
+  if (command === 'import') {
+    triggerFileInput();
   }
 };
 </script>
 
 <style scoped>
+@import '@/styles/split-create-actions.css';
+
 .sidebar-tree-node-star {
   display: flex;
   align-items: center;

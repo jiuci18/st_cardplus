@@ -125,7 +125,7 @@ import { computed } from 'vue';
 import { Handle, Position } from '@vue-flow/core';
 import { Icon } from '@iconify/vue';
 import { ElTooltip } from 'element-plus';
-import { getLandmarkTypeIcon } from '@/utils/worldeditor/landmarkMeta';
+import { getLandmarkTypeIcon } from '@/utils/worldeditor/typeMeta';
 import type { LandmarkNodeData } from '@/types/worldeditor/worldGraphNodes';
 
 const props = defineProps<{

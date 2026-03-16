@@ -4,12 +4,14 @@
 
 ## 下载最新版本
 
-**获取最新构建版本请前往 [Actions](../../actions) 页面下载：**
+**获取`main`分支最后一次成功构建版本（稳定版）：**
 
-- 🌐 **Web版本** - 下载 `web-build` 构建产物，解压后可直接部署
-- 🐧 **Linux APP Image** - 下载 `linux-appimage` 构建产物，双击运行
-- 💻 **Windows应用（NSIS）** - 下载 `windows-nsis-installer` 构建产物（`.exe` 安装器）
-- 💻 **Windows应用（MSI）** - 下载 `windows-msi-installer` 构建产物（`.msi` 安装器）
+- 🌐 **Web版本** - [下载 `web-build`](https://nightly.link/awaae001/st_cardplus/workflows/build/main/web-build.zip)，解压后可直接部署
+- 🐧 **Linux APP Image** - [下载 `linux-appimage`](https://nightly.link/awaae001/st_cardplus/workflows/build/main/linux-appimage.zip)，双击运行
+- 💻 **Windows应用（NSIS）** - [下载 `windows-nsis-installer`](https://nightly.link/awaae001/st_cardplus/workflows/build/main/windows-nsis-installer.zip)（`.exe` 安装器）
+- 💻 **Windows应用（MSI）** - [下载 `windows-msi-installer`](https://nightly.link/awaae001/st_cardplus/workflows/build/main/windows-msi-installer.zip)（`.msi` 安装器）
+
+**获取最新版本：** 请前往 [Actions](../../actions) 页面下载最新工作流产物。
 
 > 每次代码推送后会自动构建最新版本，确保您使用的是最新功能和修复
 

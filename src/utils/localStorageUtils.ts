@@ -14,8 +14,10 @@ export type { MenuItemConfig, MenuItemType, SidebarConfig };
 
 interface AppSettings {
   betaFeaturesEnabled: boolean;
+  umamiEnabled: boolean;
   autoSaveInterval: number;
   autoSaveDebounce: number;
+  imgbbApiKey: string;
   useOldWorldEditor: boolean;
   autoExpandSidebar: boolean;
   sidebarConfig: SidebarConfig;
@@ -93,11 +95,11 @@ export const restoreLocalStorageSnapshot = (
 
   clearAllLocalStorage();
 
-  Object.entries(preserved).forEach(([key, value]) => {
+  Object.entries(snapshot).forEach(([key, value]) => {
     if (value !== null) setLocalStorageItem(key, value);
   });
 
-  Object.entries(snapshot).forEach(([key, value]) => {
+  Object.entries(preserved).forEach(([key, value]) => {
     if (value !== null) setLocalStorageItem(key, value);
   });
 };
@@ -189,8 +191,10 @@ export const writeSessionStorageJSON = (key: string, value: unknown): void => {
 // 使用统一配置文件中的默认配置
 const defaultSettings: AppSettings = {
   betaFeaturesEnabled: false,
+  umamiEnabled: true,
   autoSaveInterval: 5,
   autoSaveDebounce: 1.5,
+  imgbbApiKey: '',
   useOldWorldEditor: false,
   autoExpandSidebar: true,
   sidebarConfig: createDefaultSidebarConfig(),
@@ -209,6 +213,9 @@ const normalizeSettingValue = <K extends AppSettingsKey>(key: K, value: AppSetti
     const safeDebounce = Number.isFinite(debounce) ? debounce : fallback;
     return Math.max(0.1, Math.min(10, safeDebounce)) as AppSettings[K];
   }
+  if (key === 'imgbbApiKey') {
+    return String(value ?? '').trim() as AppSettings[K];
+  }
   return value;
 };
 
@@ -221,26 +228,44 @@ const getSettings = (): AppSettings => {
     const savedSettings = getLocalStorageItem(SETTINGS_KEY);
     if (savedSettings) {
       const parsed = JSON.parse(savedSettings);
+      const currentImgbbApiKey = typeof parsed.imgbbApiKey === 'string' ? parsed.imgbbApiKey.trim() : '';
+      const legacyImgbbApiKey = currentImgbbApiKey ? '' : (getLocalStorageItem('imgbb-api-key')?.trim() ?? '');
 
-      // 处理导航栏配置的迁移和验证
       let sidebarConfig = parsed.sidebarConfig;
       if (!sidebarConfig || !validateMenuConfig(sidebarConfig)) {
         console.log('导航栏配置无效或不存在，使用默认配置');
         sidebarConfig = createDefaultSidebarConfig();
       } else {
-        // 尝试迁移配置以确保包含所有新功能
         sidebarConfig = migrateMenuConfig(sidebarConfig);
       }
-      return {
+      const mergedSettings = {
         ...defaultSettings,
         ...parsed,
+        ...(legacyImgbbApiKey ? { imgbbApiKey: legacyImgbbApiKey } : {}),
         sidebarConfig,
       };
+
+      if (legacyImgbbApiKey) {
+        setLocalStorageItem(SETTINGS_KEY, JSON.stringify(mergedSettings));
+        removeLocalStorageItem('imgbb-api-key');
+      }
+
+      return mergedSettings;
+    }
+
+    const legacyImgbbApiKey = getLocalStorageItem('imgbb-api-key')?.trim() ?? '';
+    if (legacyImgbbApiKey) {
+      const migratedSettings = {
+        ...defaultSettings,
+        imgbbApiKey: legacyImgbbApiKey,
+      };
+      setLocalStorageItem(SETTINGS_KEY, JSON.stringify(migratedSettings));
+      removeLocalStorageItem('imgbb-api-key');
+      return migratedSettings;
     }
   } catch (error) {
     console.error('从本地存储加载设置失败:', error);
   }
-  // Return a copy of default settings
   return { ...defaultSettings };
 };
 

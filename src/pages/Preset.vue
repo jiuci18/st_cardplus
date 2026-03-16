@@ -9,6 +9,7 @@
         v-model:editor-state="editorState"
         :active-preset="activePreset"
         :selected-prompt="selectedPrompt"
+        :selected-regex-index="selectedRegexIndex"
         :has-previous-preset="hasPreviousPreset"
         :has-next-preset="hasNextPreset"
         :has-previous-prompt="hasPreviousPrompt"
@@ -18,6 +19,10 @@
         @save="handleManualSave"
         @toggle-mode="presetAutoSave.toggleAutoSaveMode"
         @add-clipboard="addEditorToClipboard"
+        @open-first-prompt="handleOpenFirstPrompt"
+        @select-regex="selectRegex"
+        @add-regex="handleAddRegexFromEditor"
+        @delete-regex="handleDeleteRegexFromEditor"
         @go-previous="goToPrevious"
         @go-next="goToNext"
       />
@@ -116,21 +121,24 @@
                 :presets="presets"
                 :active-preset-id="activePresetId"
                 :selected-prompt-index="selectedPromptIndex"
+                :selected-regex-index="selectedRegexIndex"
                 :selected-is-header="selectedIsHeader"
                 :multi-selected-node-keys="multiSelectedNodeKeys"
                 :drag-drop-handlers="dragDropHandlers"
                 @create-preset="createPreset"
-                @create-blank="createBlankPreset"
                 @rename-preset="handleRenamePreset"
                 @delete-preset="handleDeletePreset"
                 @select-preset="handleSelectPreset"
                 @select-header="handleSelectHeader"
                 @select-prompt="handleSelectPrompt"
+                @select-regex="handleSelectRegex"
                 @toggle-prompt-enabled="togglePromptEnabled"
                 @toggle-node-selection="handleToggleNodeSelection"
                 @add-prompt="addPrompt"
+                @add-regex="addRegexScript"
                 @duplicate-prompt="duplicatePrompt"
                 @delete-prompt="removePrompt"
+                @delete-regex="removeRegexScript"
                 @export-preset="handleExportPreset"
                 @import-preset="handleImportPreset"
               />
@@ -177,21 +185,24 @@
           :presets="presets"
           :active-preset-id="activePresetId"
           :selected-prompt-index="selectedPromptIndex"
+          :selected-regex-index="selectedRegexIndex"
           :selected-is-header="selectedIsHeader"
           :multi-selected-node-keys="multiSelectedNodeKeys"
           :drag-drop-handlers="dragDropHandlers"
           @create-preset="createPreset"
-          @create-blank="createBlankPreset"
           @rename-preset="handleRenamePreset"
           @delete-preset="handleDeletePreset"
           @select-preset="handleSelectPreset"
           @select-header="handleSelectHeader"
           @select-prompt="handleSelectPrompt"
+          @select-regex="handleSelectRegex"
           @toggle-prompt-enabled="togglePromptEnabled"
           @toggle-node-selection="handleToggleNodeSelection"
           @add-prompt="addPrompt"
+          @add-regex="addRegexScript"
           @duplicate-prompt="duplicatePrompt"
           @delete-prompt="removePrompt"
+          @delete-regex="removeRegexScript"
           @export-preset="handleExportPreset"
           @import-preset="handleImportPreset"
         />
@@ -206,6 +217,7 @@
           v-model:editor-state="editorState"
           :active-preset="activePreset"
           :selected-prompt="selectedPrompt"
+          :selected-regex-index="selectedRegexIndex"
           :has-previous-preset="hasPreviousPreset"
           :has-next-preset="hasNextPreset"
           :has-previous-prompt="hasPreviousPrompt"
@@ -215,6 +227,10 @@
           @save="handleManualSave"
           @toggle-mode="presetAutoSave.toggleAutoSaveMode"
           @add-clipboard="addEditorToClipboard"
+          @open-first-prompt="handleOpenFirstPrompt"
+          @select-regex="selectRegex"
+          @add-regex="handleAddRegexFromEditor"
+          @delete-regex="handleDeleteRegexFromEditor"
           @go-previous="goToPrevious"
           @go-next="goToNext"
         />
@@ -287,14 +303,16 @@ const {
   activePreset,
   selected,
   selectedPrompt,
+  selectRegex,
   selectPreset,
   selectHeader,
   selectPrompt,
   createPreset,
-  createBlankPreset,
   renamePreset,
   removePreset,
   addPrompt,
+  addRegexScript,
+  removeRegexScript,
   importPreset,
   duplicatePrompt,
   removePrompt,
@@ -318,6 +336,9 @@ const {
 const rightPanelTab = ref<'clipboard' | 'preview'>('clipboard');
 const selectedIsHeader = computed(() => selected.value?.type === 'header');
 const selectedPromptIndex = computed(() => selected.value?.promptIndex ?? null);
+const selectedRegexIndex = computed(() =>
+  selected.value?.type === 'regex' ? (selected.value.regexIndex ?? null) : null
+);
 
 const { activeEditorTab, editorState, presetAutoSave, handleManualSave } = usePresetEditorState({
   activePreset,
@@ -335,6 +356,7 @@ const { multiSelectedNodeKeys, handleToggleNodeSelection, dragDropHandlers } = u
   updatePromptOrder,
 });
 
+
 const {
   mobileDrawerVisible,
   mobilePanelTab,
@@ -345,6 +367,7 @@ const {
   handleSelectPreset,
   handleSelectHeader,
   handleSelectPrompt,
+  handleSelectRegex,
   hasPreviousPreset,
   hasNextPreset,
   hasPreviousPrompt,
@@ -361,9 +384,11 @@ const {
   selectPreset,
   selectHeader,
   selectPrompt,
+  selectRegex,
   renamePreset,
   removePreset,
 });
+
 
 const handleExportPreset = async () => {
   if (!activePreset.value) {
@@ -428,13 +453,30 @@ const replaceEditor = (content: string) => {
   editorState.value = { ...editorState.value, promptContent: content };
 };
 
+const handleAddRegexFromEditor = () => {
+  if (!activePresetId.value) return;
+  addRegexScript(activePresetId.value);
+};
+
+const handleDeleteRegexFromEditor = (regexIndex: number) => {
+  if (!activePresetId.value) return;
+  removeRegexScript(activePresetId.value, regexIndex);
+};
+
+const handleOpenFirstPrompt = () => {
+  if (!activePresetId.value) return;
+  const prompts = (activePreset.value?.data?.prompts as Record<string, any>[]) || [];
+  if (prompts.length === 0) return;
+  selectPrompt(activePresetId.value, 0);
+};
+
 watch(
   [activePresetId, selected, activePreset],
   ([presetId, currentSelected, preset]) => {
-    if (!presetId || currentSelected?.promptIndex !== undefined) return;
+    if (!presetId || currentSelected) return;
     const prompts = (preset?.data?.prompts as Record<string, any>[]) || [];
     if (prompts.length === 0) return;
-    selected.value = { type: 'header', promptIndex: 0 };
+    selected.value = { type: 'header' };
   },
   { immediate: true }
 );

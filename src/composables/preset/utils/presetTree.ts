@@ -4,6 +4,8 @@ import { getPromptOrderIdentifiers } from '@/composables/preset/utils/presetProm
 export const getHeaderNodeKey = (presetId: string) => `${presetId}:header`;
 export const getUninsertedNodeKey = (presetId: string) => `${presetId}:uninserted`;
 export const getPromptNodeKey = (presetId: string, identifier: string) => `${presetId}:prompt:${identifier}`;
+export const getRegexFolderNodeKey = (presetId: string) => `${presetId}:regex-folder`;
+export const getRegexNodeKey = (presetId: string, scriptId: string) => `${presetId}:regex:${scriptId}`;
 
 const getPromptIdentifier = (prompt: Record<string, any>, index: number) => {
   if (typeof prompt?.identifier === 'string' && prompt.identifier.trim()) {
@@ -69,6 +71,24 @@ const buildPromptNodes = (preset: StoredPresetFile) => {
   ];
 };
 
+const buildRegexNodes = (preset: StoredPresetFile) => {
+  const scripts = (preset.data.extensions as Record<string, any>).regex_scripts as Record<string, any>[];
+  return scripts.map((script, index) => {
+    const scriptId = script.id as string;
+    return {
+      id: scriptId,
+      nodeKey: getRegexNodeKey(preset.id, scriptId),
+      label: script.scriptName || `正则脚本 ${index + 1}`,
+      icon: 'ph:code-duotone',
+      isRegexScript: true,
+      presetId: preset.id,
+      regexIndex: index,
+      raw: script,
+      disabled: Boolean(script.disabled),
+    };
+  });
+};
+
 export const buildPresetTreeData = (presets: StoredPresetFile[]) => {
   return presets
     .slice()
@@ -87,6 +107,15 @@ export const buildPresetTreeData = (presets: StoredPresetFile[]) => {
           icon: 'ph:sliders-duotone',
           isHeader: true,
           presetId: preset.id,
+        },
+        {
+          id: 'regex-folder',
+          nodeKey: getRegexFolderNodeKey(preset.id),
+          label: '正则',
+          icon: 'ph:folder-simple-dashed-duotone',
+          isRegexFolder: true,
+          presetId: preset.id,
+          children: buildRegexNodes(preset),
         },
         ...buildPromptNodes(preset),
       ],

@@ -1,11 +1,5 @@
 <template>
   <div class="card-worldbook-panel">
-    <!-- 提示条 -->
-    <div class="panel-notice">
-      <Icon icon="ph:info-duotone" />
-      <span>正在编辑角色卡「{{ character.name }}」的世界书</span>
-    </div>
-
     <!-- 未绑定世界书的提示 -->
     <div
       v-if="!hasWorldBook"
@@ -51,17 +45,25 @@
             min-size="10"
             max-size="30"
           >
-            <WorldBookList
-              :collection="mockCollection"
-              :active-book-id="mockActiveBookId"
-              @select-entry="onListSelectEntry"
-              @add-entry="onListAddEntry"
-              @duplicate-entry="onListDuplicateEntry"
-              @delete-entry="onListDeleteEntry"
-              :selected-entry="selectedEntry"
-              :drag-drop-handlers="dragDropHandlers"
-              :hide-book-selector="true"
-            />
+          <WorldBookList
+            :collection="mockCollection"
+            :active-book-id="worldbookDraft?.id || null"
+            @select-book="handleSelectCurrentBook"
+            @select-entry="onListSelectEntry"
+            @create-book="handleCreateBookFromList"
+            @rename-book="handleRenameCurrentWorldBook"
+            @delete-book="handleDeleteCurrentWorldBook"
+            @add-entry="onListAddEntry"
+            @duplicate-entry="onListDuplicateEntry"
+            @delete-entry="onListDeleteEntry"
+            @copy-book="copyWorldBookToClipboard"
+            @export-json="exportToJson"
+            @import-book-file="handleUnsupportedImportBook"
+            @clear-all="handleClearAllEntries"
+            :selected-entry="selectedEntry"
+            :drag-drop-handlers="dragDropHandlers"
+            :hide-book-selector="true"
+          />
           </Pane>
           <Pane
             size="85"
@@ -157,11 +159,19 @@
           >
             <WorldBookList
               :collection="mockCollection"
-              :active-book-id="mockActiveBookId"
+              :active-book-id="worldbookDraft?.id || null"
+              @select-book="handleSelectCurrentBook"
               @select-entry="handleMobileSelectEntry"
+              @create-book="handleCreateBookFromList"
+              @rename-book="handleRenameCurrentWorldBook"
+              @delete-book="handleDeleteCurrentWorldBook"
               @add-entry="onListAddEntry"
               @duplicate-entry="onListDuplicateEntry"
               @delete-entry="onListDeleteEntry"
+              @copy-book="copyWorldBookToClipboard"
+              @export-json="exportToJson"
+              @import-book-file="handleUnsupportedImportBook"
+              @clear-all="handleClearAllEntries"
               :selected-entry="selectedEntry"
               :drag-drop-handlers="dragDropHandlers"
               :hide-book-selector="true"
@@ -315,14 +325,44 @@ interface Props {
 
 interface Emits {
   (e: 'worldbookChanged'): void;
+  (e: 'update:characterBook', value: CharacterCardV3['data']['character_book']): void;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
 
+const updateCharacterBook = (characterBook: CharacterCardV3['data']['character_book']) => {
+  emit('update:characterBook', characterBook);
+  emit('worldbookChanged');
+};
+
+const normalizeCharacterBook = (
+  characterBook: CharacterCardV3['data']['character_book']
+): CharacterBook | null => {
+  if (!characterBook || Array.isArray(characterBook)) {
+    return null;
+  }
+
+  return {
+    ...characterBook,
+    extensions: characterBook.extensions ?? {},
+    entries: characterBook.entries ?? [],
+  };
+};
+
+const getCharacterBookSnapshot = (characterBook: CharacterCardV3['data']['character_book']) => {
+  const normalizedBook = normalizeCharacterBook(characterBook);
+  return normalizedBook ? JSON.stringify(normalizedBook) : '';
+};
+
+const cloneWorldBook = (book: WorldBook): WorldBook => JSON.parse(JSON.stringify(book)) as WorldBook;
+
 const showWorldBookSelector = ref(false);
 const showReplaceWorldBookSelector = ref(false);
 const confirmDialogRef = ref<InstanceType<typeof ConfirmDialog>>();
+const worldbookDraft = ref<WorldBook | null>(null);
+const worldbookDraftVersion = ref(0);
+const lastCommittedSnapshot = ref('');
 
 // 确认对话框配置
 const confirmConfig = ref({
@@ -337,38 +377,53 @@ const confirmConfig = ref({
 
 // 计算属性：是否有世界书
 const hasWorldBook = computed(() => {
-  const book = props.character.data.character_book;
-  return !!(book && !Array.isArray(book) && book.entries && book.entries.length >= 0);
+  return !!worldbookDraft.value;
 });
 
-// 本地可编辑的 WorldBook 状态（从 character_book 转换而来）
-const mockActiveBook = ref<WorldBook | null>(null);
+const assignWorldBookDraft = (book: WorldBook | null) => {
+  if (!book) {
+    worldbookDraft.value = null;
+    return;
+  }
 
-// 同步：当角色卡内的 character_book 变化时，刷新本地 worldbook 状态
+  worldbookDraftVersion.value += 1;
+  const nextDraft = cloneWorldBook(book);
+  nextDraft.id = `character-book-${props.character.id || 'draft'}-${worldbookDraftVersion.value}`;
+  worldbookDraft.value = nextDraft;
+};
+
+const initializeWorldBookDraft = (characterBook: CharacterCardV3['data']['character_book']) => {
+  const normalizedBook = normalizeCharacterBook(characterBook);
+  lastCommittedSnapshot.value = normalizedBook ? JSON.stringify(normalizedBook) : '';
+
+  if (!normalizedBook) {
+    worldbookDraft.value = null;
+    return;
+  }
+
+  assignWorldBookDraft(convertCharacterBookToWorldBook(normalizedBook, 'character-book'));
+};
+
+const commitWorldBookDraft = () => {
+  if (!worldbookDraft.value) return;
+
+  const characterBook = convertWorldBookToCharacterBook(worldbookDraft.value);
+  lastCommittedSnapshot.value = getCharacterBookSnapshot(characterBook);
+  updateCharacterBook(characterBook);
+};
+
 watch(
-  () => props.character.data.character_book,
-  (charBook) => {
-    if (!charBook || Array.isArray(charBook)) {
-      mockActiveBook.value = null;
-      return;
-    }
-    // 使用转换器确保编辑器使用 WorldBookEntry 结构
-    const normalizedCharBook: CharacterBook = {
-      ...charBook,
-      extensions: charBook.extensions ?? {},
-      entries: charBook.entries ?? [],
-    };
-    const wb = convertCharacterBookToWorldBook(normalizedCharBook, 'character-book');
-    mockActiveBook.value = wb;
+  () => getCharacterBookSnapshot(props.character.data.character_book),
+  (snapshot) => {
+    if (snapshot === lastCommittedSnapshot.value) return;
+    initializeWorldBookDraft(props.character.data.character_book);
   },
-  { immediate: true, deep: true }
+  { immediate: true }
 );
-
-const mockActiveBookId = 'character-book';
 
 // 创建一个模拟的 collection，只包含当前角色卡的世界书
 const mockCollection = computed<WorldBookCollection>(() => {
-  if (!mockActiveBook.value) {
+  if (!worldbookDraft.value) {
     return {
       books: {} as Record<string, WorldBook>,
       activeBookId: null,
@@ -377,9 +432,9 @@ const mockCollection = computed<WorldBookCollection>(() => {
 
   return {
     books: {
-      'character-book': mockActiveBook.value,
+      [worldbookDraft.value.id]: worldbookDraft.value,
     },
-    activeBookId: mockActiveBookId,
+    activeBookId: worldbookDraft.value.id,
   };
 });
 
@@ -397,42 +452,36 @@ const {
   autoSaveMode,
   hasUnsavedChanges,
   toggleAutoSaveMode,
-} = useWorldBookEntry(mockActiveBook as any, {
+  exportToJson,
+  copyWorldBookToClipboard,
+} = useWorldBookEntry(worldbookDraft as any, {
   updateEntries: async (entries: WorldBookEntry[]) => {
-    // 更新本地 worldbook，再转换为 character_book 写回
-    if (mockActiveBook.value) {
-      mockActiveBook.value.entries = entries;
-      const characterBook = convertWorldBookToCharacterBook(mockActiveBook.value);
-      props.character.data.character_book = characterBook;
-      emit('worldbookChanged');
+    if (worldbookDraft.value) {
+      worldbookDraft.value.entries = entries;
+      commitWorldBookDraft();
     }
   },
   updateEntry: async (entry: WorldBookEntry) => {
-    // 更新本地 worldbook 的单个条目，再写回 character_book
-    if (mockActiveBook.value) {
-      const idx = mockActiveBook.value.entries.findIndex((e) => e.uid === entry.uid);
-      if (idx !== -1) mockActiveBook.value.entries[idx] = entry;
-      const characterBook = convertWorldBookToCharacterBook(mockActiveBook.value);
-      props.character.data.character_book = characterBook;
-      emit('worldbookChanged');
+    if (worldbookDraft.value) {
+      const idx = worldbookDraft.value.entries.findIndex((e) => e.uid === entry.uid);
+      if (idx !== -1) {
+        worldbookDraft.value.entries[idx] = entry;
+      }
+      commitWorldBookDraft();
     }
   },
   addEntry: async (entry: WorldBookEntry) => {
-    if (!mockActiveBook.value) return null;
-    mockActiveBook.value.entries.push(entry);
-    const characterBook = convertWorldBookToCharacterBook(mockActiveBook.value);
-    props.character.data.character_book = characterBook;
-    emit('worldbookChanged');
+    if (!worldbookDraft.value) return null;
+    worldbookDraft.value.entries.push(entry);
+    commitWorldBookDraft();
     return entry;
   },
   deleteEntry: async (entryId: number) => {
-    if (!mockActiveBook.value) return false;
-    const index = mockActiveBook.value.entries.findIndex((e) => e.uid === entryId);
+    if (!worldbookDraft.value) return false;
+    const index = worldbookDraft.value.entries.findIndex((e) => e.uid === entryId);
     if (index !== -1) {
-      mockActiveBook.value.entries.splice(index, 1);
-      const characterBook = convertWorldBookToCharacterBook(mockActiveBook.value);
-      props.character.data.character_book = characterBook;
-      emit('worldbookChanged');
+      worldbookDraft.value.entries.splice(index, 1);
+      commitWorldBookDraft();
       return true;
     }
     return false;
@@ -449,11 +498,9 @@ const dragDropHandlers = useWorldBookDragDrop(
   },
   // updateBookEntries
   (_bookId: string, entries: WorldBookEntry[]) => {
-    if (mockActiveBook.value) {
-      mockActiveBook.value.entries = entries;
-      const characterBook = convertWorldBookToCharacterBook(mockActiveBook.value);
-      props.character.data.character_book = characterBook;
-      emit('worldbookChanged');
+    if (worldbookDraft.value) {
+      worldbookDraft.value.entries = entries;
+      commitWorldBookDraft();
     }
   },
   // updateBookOrder（无实际作用，单本书）
@@ -468,9 +515,9 @@ const dragDropHandlers = useWorldBookDragDrop(
 
 // 计算属性
 const allKeywords = computed(() => {
-  if (!mockActiveBook.value) return [];
+  if (!worldbookDraft.value) return [];
   const keywords = new Set<string>();
-  mockActiveBook.value.entries.forEach((entry) => {
+  worldbookDraft.value.entries.forEach((entry) => {
     if (entry.key && Array.isArray(entry.key)) {
       entry.key.forEach((k) => keywords.add(k));
     }
@@ -482,12 +529,12 @@ const allKeywords = computed(() => {
 });
 
 const currentEntryIndex = computed(() => {
-  if (!mockActiveBook.value || !selectedEntry.value) return -1;
-  return mockActiveBook.value.entries.findIndex((e) => e.uid === selectedEntry.value!.uid);
+  if (!worldbookDraft.value || !selectedEntry.value) return -1;
+  return worldbookDraft.value.entries.findIndex((e) => e.uid === selectedEntry.value!.uid);
 });
 
 const totalEntries = computed(() => {
-  return mockActiveBook.value?.entries.length || 0;
+  return worldbookDraft.value?.entries.length || 0;
 });
 
 const saveStatusType = computed(() => {
@@ -528,6 +575,10 @@ const onListSelectEntry = (_bookId: string, entryIndex: number) => {
   selectEntry(String(entryIndex));
 };
 
+const handleSelectCurrentBook = () => {
+  selectEntry(null);
+};
+
 const saveCurrentEntry = () => {
   saveEntry();
 };
@@ -564,27 +615,138 @@ const onListDeleteEntry = async (_bookId: string, entryIndex: number) => {
 };
 
 const goToPreviousEntry = () => {
-  if (currentEntryIndex.value > 0 && mockActiveBook.value) {
+  if (currentEntryIndex.value > 0 && worldbookDraft.value) {
     const prevIndex = currentEntryIndex.value - 1;
     selectEntry(String(prevIndex));
   }
 };
 
 const goToNextEntry = () => {
-  if (mockActiveBook.value && currentEntryIndex.value < mockActiveBook.value.entries.length - 1) {
+  if (worldbookDraft.value && currentEntryIndex.value < worldbookDraft.value.entries.length - 1) {
     const nextIndex = currentEntryIndex.value + 1;
     selectEntry(String(nextIndex));
   }
 };
 
 const handleCreateNewWorldBook = () => {
-  props.character.data.character_book = {
+  initializeWorldBookDraft({
     name: `${props.character.name}的世界书`,
     entries: [],
     extensions: {},
-  };
-  emit('worldbookChanged');
+  });
+  commitWorldBookDraft();
   ElMessage.success('已创建新世界书');
+};
+
+const clearWorldBookBinding = () => {
+  worldbookDraft.value = null;
+  lastCommittedSnapshot.value = '';
+  updateCharacterBook(undefined);
+};
+
+const handleCreateBookFromList = async () => {
+  if (!hasWorldBook.value) {
+    handleCreateNewWorldBook();
+    return;
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `这会用一个新的空世界书替换当前绑定的「${worldbookDraft.value?.name || '未命名世界书'}」，当前内容将丢失。确定继续吗？`,
+      '新建世界书',
+      {
+        confirmButtonText: '确认替换',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+    handleCreateNewWorldBook();
+  } catch {
+    // 用户取消
+  }
+};
+
+const handleRenameCurrentWorldBook = async () => {
+  if (!worldbookDraft.value) {
+    ElMessage.warning('当前没有可重命名的世界书');
+    return;
+  }
+
+  try {
+    const renameBookResult = await ElMessageBox.prompt('请输入新的世界书名称：', '重命名世界书', {
+      confirmButtonText: '确认',
+      cancelButtonText: '取消',
+      inputValue: worldbookDraft.value.name,
+      inputPattern: /.+/,
+      inputErrorMessage: '名称不能为空',
+    });
+    const { value: newBookName } = renameBookResult as { value: string };
+
+    worldbookDraft.value.name = newBookName;
+    commitWorldBookDraft();
+    ElMessage.success('世界书已重命名');
+  } catch {
+    // 用户取消
+  }
+};
+
+const handleDeleteCurrentWorldBook = async () => {
+  if (!worldbookDraft.value) {
+    ElMessage.warning('当前角色卡未绑定世界书');
+    return;
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要移除当前角色卡绑定的世界书「${worldbookDraft.value.name || '未命名世界书'}」吗？此操作会清空角色卡内置世界书内容。`,
+      '移除世界书绑定',
+      {
+        confirmButtonText: '确认移除',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+
+    clearWorldBookBinding();
+    ElMessage.success('已移除当前角色卡的世界书绑定');
+  } catch {
+    // 用户取消
+  }
+};
+
+const handleUnsupportedImportBook = (_file: File) => {
+  ElMessage.error('内嵌世界书编辑器不支持从文件直接导入为新世界书，请到世界书页面操作');
+};
+
+const handleClearAllEntries = async () => {
+  if (!worldbookDraft.value) {
+    ElMessage.warning('当前角色卡未绑定世界书');
+    return;
+  }
+
+  if (worldbookDraft.value.entries.length === 0) {
+    ElMessage.info('当前世界书没有可清空的条目');
+    return;
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要清空世界书「${worldbookDraft.value.name || '未命名世界书'}」中的所有条目吗？此操作不可恢复。`,
+      '清空所有条目',
+      {
+        confirmButtonText: '确认清空',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+
+    selectEntry(null);
+    worldbookDraft.value.entries = [];
+    commitWorldBookDraft();
+    ElMessage.success('已清空当前世界书的所有条目');
+  } catch {
+    // 用户取消
+  }
 };
 
 const handleBindExistingWorldBook = () => {
@@ -596,10 +758,8 @@ const handleBindWorldBook = async (bookId: string) => {
     const collection = await worldBookService.getFullWorldBookCollection();
     const book = collection.books[bookId];
     if (book) {
-      // 转换为 CharacterBook 写回角色卡
-      const characterBook = convertWorldBookToCharacterBook(book);
-      props.character.data.character_book = characterBook;
-      emit('worldbookChanged');
+      assignWorldBookDraft(book);
+      commitWorldBookDraft();
       ElMessage.success(`已绑定世界书: ${book.name}`);
     } else {
       ElMessage.error('未找到选中的世界书');
@@ -633,39 +793,34 @@ const handleMobileActionCommand = (command: string) => {
 
 // 添加到 DB
 const handleAddToDB = async () => {
-  if (!mockActiveBook.value) {
+  if (!worldbookDraft.value) {
     ElMessage.error('没有可添加的世界书');
     return;
   }
 
-  const characterBook = props.character.data.character_book;
-  // 类型守卫：确保 characterBook 不是数组且有 extensions 字段
-  if (!characterBook || Array.isArray(characterBook)) {
-    ElMessage.error('角色卡世界书数据格式不正确');
-    return;
-  }
+  const characterBook = convertWorldBookToCharacterBook(worldbookDraft.value);
 
   try {
     // 检查是否已存在同名世界书
     const collection = await worldBookService.getFullWorldBookCollection();
-    const existingBook = Object.values(collection.books).find((book) => book.name === mockActiveBook.value?.name);
+    const existingBook = Object.values(collection.books).find((book) => book.name === worldbookDraft.value?.name);
 
     if (existingBook) {
       // 如果存在同名世界书，询问用户
       confirmConfig.value = {
         title: '世界书已存在',
-        message: `数据库中已存在名为「${mockActiveBook.value.name}」的世界书。\n是否要更新该世界书的内容？`,
+        message: `数据库中已存在名为「${worldbookDraft.value.name}」的世界书。\n是否要更新该世界书的内容？`,
         type: 'warning',
         confirmText: '更新',
         cancelText: '取消',
         onConfirm: async () => {
           try {
-            const charBook = props.character.data.character_book;
-            if (mockActiveBook.value && charBook && !Array.isArray(charBook)) {
+            if (worldbookDraft.value) {
+              const draftCharacterBook = convertWorldBookToCharacterBook(worldbookDraft.value);
               // updateBookFromCharacterCard 只需要 bookId, characterBook, characterName 三个参数
               await worldBookService.updateBookFromCharacterCard(
                 existingBook.id,
-                charBook as CharacterBook,
+                draftCharacterBook,
                 props.character.name
               );
               ElMessage.success('已更新世界书到数据库');
@@ -701,7 +856,7 @@ const handleReplaceFromDB = () => {
   // 显示确认对话框
   confirmConfig.value = {
     title: '确认替换世界书',
-    message: `此操作将用数据库中的世界书完全替换当前角色卡的世界书。\n当前世界书「${mockActiveBook.value?.name || '未命名世界书'}」的所有内容将被覆盖且无法恢复。\n\n确定要继续吗？`,
+    message: `此操作将用数据库中的世界书完全替换当前角色卡的世界书。\n当前世界书「${worldbookDraft.value?.name || '未命名世界书'}」的所有内容将被覆盖且无法恢复。\n\n确定要继续吗？`,
     type: 'danger',
     confirmText: '确认替换',
     cancelText: '取消',
@@ -723,10 +878,8 @@ const handleConfirmReplace = async (bookId: string) => {
     const collection = await worldBookService.getFullWorldBookCollection();
     const book = collection.books[bookId];
     if (book) {
-      // 转换为 CharacterBook 写回角色卡
-      const characterBook = convertWorldBookToCharacterBook(book);
-      props.character.data.character_book = characterBook;
-      emit('worldbookChanged');
+      assignWorldBookDraft(book);
+      commitWorldBookDraft();
       ElMessage.success(`已替换为世界书: ${book.name}`);
     } else {
       ElMessage.error('未找到选中的世界书');
@@ -741,7 +894,8 @@ const handleConfirmReplace = async (bookId: string) => {
 defineExpose({
   handleAddToDB,
   handleReplaceFromDB,
-  currentWorldBookName: computed(() => mockActiveBook.value?.name || '未命名世界书'),
+  handleRemoveWorldBook: handleDeleteCurrentWorldBook,
+  currentWorldBookName: computed(() => worldbookDraft.value?.name || '未命名世界书'),
   hasWorldBook,
 });
 </script>

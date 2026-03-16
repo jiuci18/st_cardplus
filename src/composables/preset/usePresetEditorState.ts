@@ -58,7 +58,15 @@ const buildHeaderForm = (data?: Record<string, any>): PresetHeaderForm => {
 
 const buildEmptyPromptState = (): Pick<
   PresetEditorState,
-  'promptName' | 'promptIdentifier' | 'promptRole' | 'promptContent' | 'promptSystem' | 'promptMarker' | 'promptEnabled' | 'promptOrder' | 'promptExtraJson'
+  | 'promptName'
+  | 'promptIdentifier'
+  | 'promptRole'
+  | 'promptContent'
+  | 'promptSystem'
+  | 'promptMarker'
+  | 'promptEnabled'
+  | 'promptOrder'
+  | 'promptExtraJson'
 > => ({
   promptName: '',
   promptIdentifier: '',
@@ -70,6 +78,12 @@ const buildEmptyPromptState = (): Pick<
   promptOrder: null,
   promptExtraJson: '{}',
 });
+
+const buildRegexSnapshot = (preset: StoredPresetFile | null) => {
+  if (!preset) return '[]';
+  const scripts = (preset.data.extensions as Record<string, any>).regex_scripts;
+  return JSON.stringify(scripts);
+};
 
 const extractExtras = (prompt: PresetPrompt) => {
   const baseKeys = ['identifier', 'name', 'role', 'content', 'system_prompt', 'marker', 'enabled', 'order'];
@@ -84,7 +98,15 @@ const buildPromptStateFromPrompt = (
   prompt: PresetPrompt | null
 ): Pick<
   PresetEditorState,
-  'promptName' | 'promptIdentifier' | 'promptRole' | 'promptContent' | 'promptSystem' | 'promptMarker' | 'promptEnabled' | 'promptOrder' | 'promptExtraJson'
+  | 'promptName'
+  | 'promptIdentifier'
+  | 'promptRole'
+  | 'promptContent'
+  | 'promptSystem'
+  | 'promptMarker'
+  | 'promptEnabled'
+  | 'promptOrder'
+  | 'promptExtraJson'
 > => {
   if (!prompt) return buildEmptyPromptState();
   return {
@@ -101,15 +123,17 @@ const buildPromptStateFromPrompt = (
 };
 
 export function usePresetEditorState(options: UsePresetEditorStateOptions) {
-  const { activePreset, activePresetId, selected, selectedPrompt, selectedPromptIndex, updateHeader, updatePrompt } = options;
+  const { activePreset, activePresetId, selected, selectedPrompt, selectedPromptIndex, updateHeader, updatePrompt } =
+    options;
 
-  const activeEditorTab = ref<'header' | 'prompt'>('header');
+  const activeEditorTab = ref<'header' | 'prompt' | 'regex'>('header');
   const isLoadingData = ref(false);
 
   const editorState = ref<PresetEditorState>({
     presetName: '',
     headerForm: buildHeaderForm(),
     ...buildEmptyPromptState(),
+    regexSnapshot: '[]',
   });
 
   const syncSnapshotAfterLoad = (autoSave: ReturnType<typeof usePresetAutoSave>) => {
@@ -185,6 +209,7 @@ export function usePresetEditorState(options: UsePresetEditorStateOptions) {
           ...editorState.value,
           presetName: '',
           headerForm: buildHeaderForm(),
+          regexSnapshot: '[]',
         };
         syncSnapshotAfterLoad(presetAutoSave);
         return;
@@ -194,6 +219,7 @@ export function usePresetEditorState(options: UsePresetEditorStateOptions) {
         ...editorState.value,
         presetName: preset.name,
         headerForm: buildHeaderForm(preset.data as Record<string, any>),
+        regexSnapshot: buildRegexSnapshot(preset),
       };
       syncSnapshotAfterLoad(presetAutoSave);
     },
@@ -216,10 +242,25 @@ export function usePresetEditorState(options: UsePresetEditorStateOptions) {
   watch(selected, (val) => {
     if (val?.type === 'prompt') {
       activeEditorTab.value = 'prompt';
+    } else if (val?.type === 'regex') {
+      activeEditorTab.value = 'regex';
     } else {
       activeEditorTab.value = 'header';
     }
   });
+
+  watch(
+    () => buildRegexSnapshot(activePreset.value),
+    (snapshot) => {
+      if (editorState.value.regexSnapshot === snapshot) return;
+      isLoadingData.value = true;
+      editorState.value = {
+        ...editorState.value,
+        regexSnapshot: snapshot,
+      };
+      syncSnapshotAfterLoad(presetAutoSave);
+    }
+  );
 
   return {
     activeEditorTab,
