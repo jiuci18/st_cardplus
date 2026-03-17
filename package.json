@@ -3,7 +3,7 @@
   "author": "awaae001",
   "description": "快速卡片格式化工具",
   "private": true,
-  "version": "0.1.17",
+  "version": "0.1.18",
   "type": "module",
   "scripts": {
     "dev": "tauri dev",

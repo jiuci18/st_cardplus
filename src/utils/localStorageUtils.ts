@@ -18,7 +18,6 @@ interface AppSettings {
   autoSaveInterval: number;
   autoSaveDebounce: number;
   imgbbApiKey: string;
-  useOldWorldEditor: boolean;
   autoExpandSidebar: boolean;
   sidebarConfig: SidebarConfig;
 }
@@ -195,7 +194,6 @@ const defaultSettings: AppSettings = {
   autoSaveInterval: 5,
   autoSaveDebounce: 1.5,
   imgbbApiKey: '',
-  useOldWorldEditor: false,
   autoExpandSidebar: true,
   sidebarConfig: createDefaultSidebarConfig(),
 };

@@ -26,35 +26,21 @@
         </el-button>
       </div>
 
-      <p class="nav-card-description">拖拽排序导航菜单项，或使用开关控制显示/隐藏</p>
+      <p class="nav-card-description">管理 PC 侧边栏与移动端快捷入口，支持拖拽排序和显示控制</p>
 
       <!-- 标签栏 -->
       <div class="tab-container">
         <button
-          @click="activeTab = 'visible'"
+          @click="activeTab = 'desktop'"
           class="tab-button"
-          :class="{ active: activeTab === 'visible' }"
+          :class="{ active: activeTab === 'desktop' }"
         >
           <Icon
-            icon="heroicons:eye"
+            icon="heroicons:computer-desktop"
             width="20"
             height="20"
           />
-          <span class="tab-text">导航栏</span>
-          <span class="tab-badge">{{ visibleItems.length }}</span>
-        </button>
-        <button
-          @click="activeTab = 'hidden'"
-          class="tab-button"
-          :class="{ active: activeTab === 'hidden' }"
-        >
-          <Icon
-            icon="heroicons:eye-slash"
-            width="20"
-            height="20"
-          />
-          <span class="tab-text">工具箱</span>
-          <span class="tab-badge hidden-badge">{{ hiddenItems.length }}</span>
+          <span class="tab-text">PC 视图</span>
         </button>
         <button
           @click="activeTab = 'tabbar'"
@@ -66,176 +52,183 @@
             width="20"
             height="20"
           />
-          <span class="tab-text">快捷入口</span>
-          <span class="tab-badge tabbar-badge">{{ tabBarItems.length }}</span>
+          <span class="tab-text">移动视图</span>
         </button>
       </div>
 
       <!-- 内容区域 -->
       <div class="nav-card-content">
-        <!-- 导航栏 -->
         <div
-          v-show="activeTab === 'visible'"
-          class="menu-list"
+          v-show="activeTab === 'desktop'"
+          class="pc-view-grid"
         >
-          <draggable
-            v-model="localVisibleItems"
-            item-key="id"
-            handle=".drag-handle"
-            :animation="150"
-            :move="checkMove"
-            ghost-class="sortable-ghost"
-            chosen-class="sortable-chosen"
-            drag-class="sortable-drag"
-            :force-fallback="true"
-            :fallback-class="'sortable-fallback'"
-            :fallback-on-body="true"
-            :touch-start-threshold="3"
-            @end="handleDragEnd"
-          >
-            <template #item="{ element: item }">
-              <div
-                class="menu-item"
-                :class="{ 'is-fixed': item.fixed }"
+          <section class="view-panel">
+            <div class="view-panel-header">
+              <h3 class="view-panel-title">导航栏</h3>
+            </div>
+
+            <div class="menu-list">
+              <draggable
+                v-model="localVisibleItems"
+                item-key="id"
+                handle=".drag-handle"
+                :animation="150"
+                :move="checkMove"
+                ghost-class="sortable-ghost"
+                chosen-class="sortable-chosen"
+                drag-class="sortable-drag"
+                :force-fallback="true"
+                :fallback-class="'sortable-fallback'"
+                :fallback-on-body="true"
+                :touch-start-threshold="3"
+                @end="handleDragEnd"
               >
-                <div class="item-content">
-                  <Icon
-                    :icon="getIconName(item.icon)"
-                    width="20"
-                    height="20"
-                    class="item-icon"
-                  />
-                  <div class="item-info">
-                    <div class="item-main-line">
-                      <span class="item-title">{{ item.title }}</span>
-                      <div class="item-tags">
+                <template #item="{ element: item }">
+                  <div
+                    class="menu-item"
+                    :class="{ 'is-fixed': item.fixed }"
+                  >
+                    <div class="item-content">
+                      <Icon
+                        :icon="getIconName(item.icon)"
+                        width="20"
+                        height="20"
+                        class="item-icon"
+                      />
+                      <div class="item-info">
+                        <div class="item-main-line">
+                          <span class="item-title">{{ item.title }}</span>
+                          <div class="item-tags">
+                            <span
+                              v-if="item.type === 'tool'"
+                              class="item-type"
+                            >
+                              工具
+                            </span>
+                            <span
+                              v-if="item.beta"
+                              class="item-type beta"
+                            >
+                              测试版
+                            </span>
+                          </div>
+                        </div>
                         <span
-                          v-if="item.type === 'tool'"
-                          class="item-type"
+                          v-if="item.description"
+                          class="item-description"
                         >
-                          工具
-                        </span>
-                        <span
-                          v-if="item.beta"
-                          class="item-type beta"
-                        >
-                          测试版
+                          {{ item.description }}
                         </span>
                       </div>
                     </div>
-                    <span
-                      v-if="item.description"
-                      class="item-description"
-                    >
-                      {{ item.description }}
-                    </span>
+                    <div class="item-actions">
+                      <el-switch
+                        :model-value="true"
+                        :disabled="item.fixed"
+                        @change="toggleItemVisibility(item.id, false)"
+                        size="small"
+                      />
+                      <Icon
+                        icon="material-symbols:drag-indicator"
+                        width="20"
+                        height="20"
+                        class="drag-handle"
+                        :class="{ disabled: item.fixed }"
+                      />
+                    </div>
                   </div>
-                </div>
-                <div class="item-actions">
-                  <el-switch
-                    :model-value="true"
-                    :disabled="item.fixed"
-                    @change="toggleItemVisibility(item.id, false)"
-                    size="small"
-                  />
-                  <Icon
-                    icon="material-symbols:drag-indicator"
-                    width="20"
-                    height="20"
-                    class="drag-handle"
-                    :class="{ disabled: item.fixed }"
-                  />
-                </div>
-              </div>
-            </template>
-          </draggable>
+                </template>
+              </draggable>
 
-          <div
-            v-if="visibleItems.length === 0"
-            class="empty-state"
-          >
-            <Icon
-              icon="heroicons:inbox"
-              width="32"
-              height="32"
-            />
-            <p>暂无导航栏项目</p>
-          </div>
-        </div>
-
-        <!-- 工具箱 -->
-        <div
-          v-show="activeTab === 'hidden'"
-          class="menu-list"
-          ref="hiddenListRef"
-        >
-          <TransitionGroup
-            name="list"
-            tag="div"
-            class="menu-list-inner"
-          >
-            <div
-              v-for="item in hiddenItems"
-              :key="item.id"
-              class="menu-item hidden-item"
-            >
-              <div class="item-content">
+              <div
+                v-if="visibleItems.length === 0"
+                class="empty-state"
+              >
                 <Icon
-                  :icon="getIconName(item.icon)"
-                  width="20"
-                  height="20"
-                  class="item-icon"
+                  icon="heroicons:inbox"
+                  width="32"
+                  height="32"
                 />
-                <div class="item-info">
-                  <div class="item-main-line">
-                    <span class="item-title">{{ item.title }}</span>
-                    <div class="item-tags">
+                <p>暂无导航栏项目</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="view-panel">
+            <div class="view-panel-header">
+              <h3 class="view-panel-title">工具箱</h3>
+            </div>
+
+            <div class="menu-list">
+              <TransitionGroup
+                name="list"
+                tag="div"
+                class="menu-list-inner"
+              >
+                <div
+                  v-for="item in hiddenItems"
+                  :key="item.id"
+                  class="menu-item hidden-item"
+                >
+                  <div class="item-content">
+                    <Icon
+                      :icon="getIconName(item.icon)"
+                      width="20"
+                      height="20"
+                      class="item-icon"
+                    />
+                    <div class="item-info">
+                      <div class="item-main-line">
+                        <span class="item-title">{{ item.title }}</span>
+                        <div class="item-tags">
+                          <span
+                            v-if="item.type === 'tool'"
+                            class="item-type"
+                          >
+                            工具
+                          </span>
+                          <span
+                            v-if="item.beta"
+                            class="item-type beta"
+                          >
+                            测试版
+                          </span>
+                        </div>
+                      </div>
                       <span
-                        v-if="item.type === 'tool'"
-                        class="item-type"
+                        v-if="item.description"
+                        class="item-description"
                       >
-                        工具
-                      </span>
-                      <span
-                        v-if="item.beta"
-                        class="item-type beta"
-                      >
-                        测试版
+                        {{ item.description }}
                       </span>
                     </div>
                   </div>
-                  <span
-                    v-if="item.description"
-                    class="item-description"
-                  >
-                    {{ item.description }}
-                  </span>
+                  <div class="item-actions">
+                    <el-switch
+                      :model-value="false"
+                      @change="toggleItemVisibility(item.id, true)"
+                      size="small"
+                    />
+                  </div>
                 </div>
-              </div>
-              <div class="item-actions">
-                <el-switch
-                  :model-value="false"
-                  @change="toggleItemVisibility(item.id, true)"
-                  size="small"
+              </TransitionGroup>
+
+              <div
+                v-if="hiddenItems.length === 0"
+                class="empty-state empty-state-success"
+              >
+                <Icon
+                  icon="heroicons:check-circle"
+                  width="32"
+                  height="32"
                 />
+                <p>所有项目都已在导航栏中</p>
               </div>
             </div>
-          </TransitionGroup>
-
-          <div
-            v-if="hiddenItems.length === 0"
-            class="empty-state empty-state-success"
-          >
-            <Icon
-              icon="heroicons:check-circle"
-              width="32"
-              height="32"
-            />
-            <p>所有项目都已在导航栏中</p>
-          </div>
+          </section>
         </div>
 
-        <!-- TabBar配置 -->
+        <!-- 移动视图配置 -->
         <div
           v-show="activeTab === 'tabbar'"
           class="menu-list"
@@ -324,8 +317,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import draggable from 'vuedraggable';
 
 const sidebarConfig = ref(getSidebarConfig());
-const activeTab = ref<'visible' | 'hidden' | 'tabbar'>('visible');
-
+const activeTab = ref<'desktop' | 'tabbar'>('desktop');
 const localVisibleItems = ref<MenuItemConfig[]>([]);
 
 const visibleItems = computed(() =>
@@ -334,12 +326,6 @@ const visibleItems = computed(() =>
 
 const hiddenItems = computed(() =>
   sidebarConfig.value.items.filter((item) => !item.visible).sort((a, b) => a.order - b.order)
-);
-
-const tabBarItems = computed(() =>
-  sidebarConfig.value.items
-    .filter((item) => item.visible && item.showInTabBar === true)
-    .sort((a, b) => a.order - b.order)
 );
 
 watch(
@@ -402,8 +388,6 @@ const toggleTabBarVisibility = (itemId: string, showInTabBar: boolean) => {
   updateMenuItemTabBar(itemId, showInTabBar);
 
   sidebarConfig.value = getSidebarConfig();
-
-  window.dispatchEvent(new CustomEvent('sidebarConfigChange'));
 
   ElMessage.success(showInTabBar ? '已添加到移动端快捷入口' : '已从快捷入口移除');
 };
@@ -584,30 +568,6 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-.tab-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.25rem;
-  height: 1.25rem;
-  padding-left: 0.375rem;
-  padding-right: 0.375rem;
-  font-size: 0.75rem;
-  line-height: 1rem;
-  border-radius: 9999px;
-  color: white;
-  flex-shrink: 0;
-  background-color: var(--el-color-primary);
-}
-
-.tab-badge.hidden-badge {
-  background-color: var(--el-text-color-disabled);
-}
-
-.tab-badge.tabbar-badge {
-  background-color: var(--el-color-success);
-}
-
 /* TabBar 配置提示 */
 .tabbar-tips {
   display: flex;
@@ -637,11 +597,45 @@ onUnmounted(() => {
   padding: 1rem;
 }
 
+.pc-view-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.view-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.view-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1rem 0.75rem;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+
+.view-panel-title {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+}
+
 .menu-list {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   min-height: 12rem;
+  padding: 1rem;
 }
 
 .menu-list-inner {
@@ -782,6 +776,18 @@ onUnmounted(() => {
 }
 
 @media (max-width: 768px) {
+  .pc-view-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .view-panel-header {
+    padding: 0.875rem 0.875rem 0.75rem;
+  }
+
+  .menu-list {
+    padding: 0.875rem;
+  }
+
   .drag-handle {
     width: 2.5rem;
     height: 2.5rem;
