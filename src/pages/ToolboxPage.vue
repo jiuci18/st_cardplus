@@ -105,7 +105,7 @@ onUnmounted(() => {
             width="20"
             height="20"
           />
-          来自导航栏 ({{ hiddenSidebarItems.length }})
+          来自导航栏
         </h2>
         <p class="section-description">这些项目已从导航栏隐藏，可在此快速访问</p>
 

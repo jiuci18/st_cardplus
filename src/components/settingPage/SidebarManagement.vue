@@ -25,9 +25,6 @@
           重置默认
         </el-button>
       </div>
-
-      <p class="nav-card-description">管理 PC 侧边栏与移动端快捷入口，支持拖拽排序和显示控制</p>
-
       <!-- 标签栏 -->
       <div class="tab-container">
         <button
@@ -77,9 +74,9 @@
                 ghost-class="sortable-ghost"
                 chosen-class="sortable-chosen"
                 drag-class="sortable-drag"
-                :force-fallback="true"
+                :force-fallback="isMobileOrTablet"
                 :fallback-class="'sortable-fallback'"
-                :fallback-on-body="true"
+                :fallback-on-body="isMobileOrTablet"
                 :touch-start-threshold="3"
                 @end="handleDragEnd"
               >
@@ -302,6 +299,7 @@
 
 <script setup lang="ts">
 import { getIconifyIconName } from '@/config/menuConfig';
+import { useDevice } from '@/composables/useDevice';
 import {
   type MenuItemConfig,
   getSidebarConfig,
@@ -316,6 +314,7 @@ import { ElMessage } from 'element-plus';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import draggable from 'vuedraggable';
 
+const { isMobileOrTablet } = useDevice();
 const sidebarConfig = ref(getSidebarConfig());
 const activeTab = ref<'desktop' | 'tabbar'>('desktop');
 const localVisibleItems = ref<MenuItemConfig[]>([]);
@@ -492,17 +491,6 @@ onUnmounted(() => {
 
 .title-icon {
   color: var(--el-color-primary);
-}
-
-.nav-card-description {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
-  line-height: 1.25rem;
-  margin: 0;
-  border-bottom: 1px solid;
-  color: var(--el-text-color-secondary);
-  background-color: var(--el-fill-color-light);
-  border-color: var(--el-border-color-lighter);
 }
 
 /* 标签栏 */
@@ -936,6 +924,7 @@ onUnmounted(() => {
 
 /* 拖拽中的元素 */
 .sidebar-management .sortable-drag {
-  opacity: 0 !important;
+  opacity: 0.96 !important;
+  transform: rotate(1deg) scale(1.01);
 }
 </style>
