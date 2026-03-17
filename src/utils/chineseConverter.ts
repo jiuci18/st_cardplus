@@ -107,16 +107,9 @@ function convertObjectStrings<T>(obj: T, converter: (text: string) => string): T
  * @returns 转换后的 JSON 字符串
  */
 function convertCharacterCardJson(jsonData: any | string, config: ConversionConfig): string {
-  // 解析 JSON（如果是字符串）
   const cardData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
-
-  // 创建转换器
   const converter = OpenCC.Converter({ from: 'cn', to: config });
-
-  // 递归转换所有字符串字段
   const convertedData = convertObjectStrings(cardData, converter);
-
-  // 返回 JSON 字符串
   return JSON.stringify(convertedData);
 }
 
@@ -132,7 +125,6 @@ async function convertPngCharacterCard(file: File, config: ConversionConfig): Pr
     const arrayBuffer = await file.arrayBuffer();
     const imageData = new Uint8Array(arrayBuffer);
 
-    // 提取 PNG 中的角色卡 JSON 数据
     let jsonString: string;
     try {
       jsonString = read(imageData);

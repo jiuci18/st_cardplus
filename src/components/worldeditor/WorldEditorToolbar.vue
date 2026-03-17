@@ -397,7 +397,7 @@ const handleAddCommand = (command: 'project' | 'landmark' | 'region' | 'force') 
 </script>
 
 <style scoped>
-@import '@/styles/split-create-actions.css';
+@import '@/css/split-create-actions.css';
 
 .toolbar-container {
   height: 100%;

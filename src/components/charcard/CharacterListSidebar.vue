@@ -110,6 +110,22 @@
             </button>
           </el-tooltip>
         </div>
+        <div
+          v-if="data.nodeType === 'project'"
+          class="sidebar-tree-node-actions"
+        >
+          <el-tooltip
+            content="重命名项目"
+            placement="top"
+          >
+            <button
+              @click.stop="emit('rename-project', data.raw.id)"
+              class="sidebar-tree-node-action-button"
+            >
+              <Icon icon="ph:pencil-duotone" />
+            </button>
+          </el-tooltip>
+        </div>
       </div>
     </template>
   </SidebarTreePanel>
@@ -138,6 +154,7 @@ const emit = defineEmits<{
   (e: 'reorder', patches: CharacterOrderPatch[]): void;
   (e: 'reorder-projects', orderedIds: string[]): void;
   (e: 'toggle-star', id: string, starred: boolean): void;
+  (e: 'rename-project', id: string): void;
 }>();
 
 const fileInput = ref<HTMLInputElement | null>(null);
@@ -190,7 +207,7 @@ const handleHeaderCommand = (command: string) => {
 </script>
 
 <style scoped>
-@import '@/styles/split-create-actions.css';
+@import '@/css/split-create-actions.css';
 
 .sidebar-tree-node-star {
   display: flex;

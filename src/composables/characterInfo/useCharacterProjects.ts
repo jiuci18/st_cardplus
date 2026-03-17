@@ -107,10 +107,44 @@ export function useCharacterProjects<T extends ProjectState>(characterCollection
     } as T;
   };
 
+  const handleRenameProject = async (projectId: string) => {
+    const project = characterCollection.value.projects[projectId];
+    if (!project) return;
+
+    try {
+      const renameProjectResult = await ElMessageBox.prompt('请输入项目的新名称：', '重命名项目', {
+        confirmButtonText: '保存',
+        cancelButtonText: '取消',
+        inputPattern: /.+/,
+        inputErrorMessage: '名称不能为空',
+        inputValue: project.name,
+      });
+      const { value: projectName } = renameProjectResult as { value: string };
+
+      characterCollection.value = {
+        ...characterCollection.value,
+        projects: {
+          ...characterCollection.value.projects,
+          [projectId]: {
+            ...project,
+            name: projectName,
+          },
+        },
+      } as T;
+
+      ElMessage.success(`项目 "${project.name}" 已重命名为 "${projectName}"！`);
+    } catch (error) {
+      if (error !== 'cancel') {
+        ElMessage.info('重命名操作已取消');
+      }
+    }
+  };
+
   return {
     projects,
     ensureProjects,
     handleCreateProject,
     reorderProjects,
+    handleRenameProject,
   };
 }

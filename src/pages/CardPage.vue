@@ -29,6 +29,7 @@
             @reorder="handleReorderCharacterPatches"
             @reorder-projects="handleReorderProjects"
             @toggle-star="handleToggleStar"
+            @rename-project="handleRenameProject"
           />
         </el-tab-pane>
         <el-tab-pane
@@ -85,6 +86,7 @@
             @reorder="handleReorderCharacterPatches"
             @reorder-projects="handleReorderProjects"
             @toggle-star="handleToggleStar"
+            @rename-project="handleRenameProject"
           />
         </Pane>
         <Pane size="85">
@@ -138,6 +140,7 @@ const {
   activeCharacter,
   handleSelectCharacter,
   handleCreateProject,
+  handleRenameProject,
   handleCreateCharacter,
   handleDeleteCharacter,
   handleImportCharacter,

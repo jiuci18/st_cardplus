@@ -365,7 +365,7 @@ const isFullyLockedPrompt = (prompt: Record<string, any> | undefined) => {
 </script>
 
 <style scoped>
-@import '@/styles/split-create-actions.css';
+@import '@/css/split-create-actions.css';
 
 .preset-footer-actions {
   display: flex;
