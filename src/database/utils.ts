@@ -1,5 +1,4 @@
 import { db } from './db';
-
 const textEncoder = new TextEncoder();
 
 export function estimateEncodedSize(value: unknown): number {
