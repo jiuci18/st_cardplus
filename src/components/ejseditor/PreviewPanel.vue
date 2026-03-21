@@ -109,10 +109,10 @@
 
 <script setup lang="ts">
 import { useEjsEditorStore } from '@/composables/ejs/ejsEditor';
+import { copyToClipboard } from '@/utils/clipboard';
 import { formatDateTime } from '@/utils/datetime';
 import { useDevice } from '@/composables/useDevice';
 import { CopyDocument, RefreshRight } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
 import { computed, ref, watch } from 'vue';
 
 const store = useEjsEditorStore();
@@ -147,16 +147,10 @@ watch(
 
 async function copyCode() {
   if (!store.previewCode) {
-    ElMessage.warning('没有可复制的代码');
     return;
   }
 
-  try {
-    await navigator.clipboard.writeText(store.previewCode);
-    ElMessage.success('代码已复制到剪贴板');
-  } catch (error) {
-    ElMessage.error('复制失败');
-  }
+  await copyToClipboard(store.previewCode, '代码已复制到剪贴板', '复制失败');
 }
 
 function formatTimestamp(timestamp: number): string {

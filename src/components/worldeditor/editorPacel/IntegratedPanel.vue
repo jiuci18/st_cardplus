@@ -210,6 +210,7 @@ import type {
   Project,
 } from '@/types/world-editor';
 import { formatRoadLinkLabel, getRoadConnectionLengthText } from '@/composables/worldeditor/graph/worldGraphLinks';
+import { copyToClipboard } from '@/utils/clipboard';
 import { cleanObject, removeEmptyFields } from '@/utils/objectUtils';
 import { saveFile } from '@/utils/fileSave';
 import { getParentLandmarkId } from '@/utils/worldeditor/landmarkHierarchy';
@@ -492,16 +493,13 @@ const saveJson = async (jsonData: string, fileName: string, successMessage: stri
 
 const copyText = async (text: string, successMessage: string, emptyMessage: string) => {
   if (!text) {
-    ElMessage.warning(emptyMessage);
+    if (emptyMessage) {
+      ElMessage.warning(emptyMessage);
+    }
     return;
   }
 
-  try {
-    await navigator.clipboard.writeText(text);
-    ElMessage.success(successMessage);
-  } catch (error) {
-    ElMessage.error('复制到剪贴板失败');
-  }
+  await copyToClipboard(text, successMessage, '复制到剪贴板失败');
 };
 
 // 导出方法

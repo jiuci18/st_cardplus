@@ -179,6 +179,7 @@
 
 <script setup lang="ts">
 import { useSmartRegexGenerator, type TextSelection } from '@/composables/regex/useSmartRegexGenerator';
+import { copyToClipboard } from '@/utils/clipboard';
 import { CopyDocument as CopyIcon, Delete } from '@element-plus/icons-vue';
 import { Icon } from '@iconify/vue';
 import { ElMessage } from 'element-plus';
@@ -392,10 +393,9 @@ const getSelectionLabel = (type: string) => {
   }
 };
 
-const copyRegex = () => {
+const copyRegex = async () => {
   if (generatedRegex.value) {
-    navigator.clipboard.writeText(generatedRegex.value);
-    ElMessage.success('正则表达式已复制到剪贴板');
+    await copyToClipboard(generatedRegex.value, '正则表达式已复制到剪贴板', '复制失败');
   }
 };
 
