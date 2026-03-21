@@ -3,19 +3,10 @@
     <template v-if="!isMobile">
       <AppSidebar />
 
-      <main
-        class="desktop-main"
-        :class="{ 'overflow-hidden': isOverflowHidden }"
-      >
+      <main class="desktop-main">
         <RouterView v-slot="{ Component, route: currentRoute }">
-          <transition
-            name="fade"
-            mode="out-in"
-          >
-            <component
-              :is="Component"
-              :key="currentRoute.path"
-            />
+          <transition name="fade" mode="out-in">
+            <component :is="Component" :key="currentRoute.path" />
           </transition>
         </RouterView>
       </main>
@@ -26,14 +17,8 @@
 
       <main class="mobile-main">
         <RouterView v-slot="{ Component, route: currentRoute }">
-          <transition
-            name="fade"
-            mode="out-in"
-          >
-            <component
-              :is="Component"
-              :key="currentRoute.path"
-            />
+          <transition name="fade" mode="out-in">
+            <component :is="Component" :key="currentRoute.path" />
           </transition>
         </RouterView>
       </main>
@@ -44,22 +29,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { RouterView, useRoute } from 'vue-router';
+import { computed, onMounted, onUnmounted, ref} from 'vue';
+import { RouterView } from 'vue-router';
 
 import AppSidebar from '@/components/layout/AppSidebar.vue';
 import MobileDrawer from '@/components/layout/MobileDrawer.vue';
 import MobileTabBar from '@/components/layout/MobileTabBar.vue';
 import { useAppUpdate } from '@/composables/useAppUpdate';
 import { provideNavigation } from '@/composables/useNavigation';
-import { provideOverflowControl } from '@/composables/useOverflowControl';
 import { usePersonalization } from '@/composables/usePersonalization';
 import { syncUmamiTelemetry } from '@/composables/useUmamiTelemetry';
 
 import { getSetting } from '@/utils/localStorageUtils';
 
-const { isOverflowHidden, setOverflowHidden } = provideOverflowControl();
-const route = useRoute();
 const { sidebarConfig, refreshSidebarConfig } = usePersonalization();
 const { checkForAppUpdate } = useAppUpdate();
 const betaFeaturesEnabled = ref(false);
@@ -77,23 +59,6 @@ const mainMenuItems = computed(() => {
     .sort((a, b) => a.order - b.order);
 });
 const { isMobile } = provideNavigation(mainMenuItems);
-
-watch(
-  [() => route.path, isMobile],
-  ([newPath, mobile]) => {
-    if (mobile) {
-      setOverflowHidden(false);
-      return;
-    }
-    const overflowHiddenRoutes = ['/worldbook', '/ejs-editor', '/world', '/regex-editor'];
-    if (overflowHiddenRoutes.includes(newPath)) {
-      setOverflowHidden(true);
-    } else {
-      setOverflowHidden(false);
-    }
-  },
-  { immediate: true }
-);
 
 const handleBetaFeaturesToggle = (event: Event) => {
   betaFeaturesEnabled.value = (event as CustomEvent<boolean>).detail;
@@ -160,7 +125,8 @@ onUnmounted(() => {
 .mobile-main {
   flex: 1 1 0%;
   overflow: auto;
-  padding-bottom: calc(48px + env(safe-area-inset-bottom, 0)); /* 48px = 混合式 TabBar 高度 */
+  padding-bottom: calc(48px + env(safe-area-inset-bottom, 0));
+  /* 48px = 混合式 TabBar 高度 */
 }
 </style>
 

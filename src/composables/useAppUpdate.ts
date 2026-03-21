@@ -2,10 +2,10 @@ import { getSetting, setSetting } from '@/utils/localStorageUtils';
 import { computed, readonly, ref } from 'vue';
 
 type AppChannel = 'stable' | 'dev';
+type UpdateKind = 'version' | 'commit';
 
 interface UpdateMetadata {
   version?: string;
-  channel?: string;
   commitHash?: string;
   updateTitle?: string;
   updateDescription?: string;
@@ -25,6 +25,8 @@ const UPDATE_GUIDE_URLS: Record<AppChannel, string> = {
 const currentVersion = __APP_SEMVER__;
 const currentCommitHash = __APP_VERSION__;
 const currentChannel: AppChannel = __APP_CHANNEL__ === 'stable' ? 'stable' : 'dev';
+const updateGuideUrl = UPDATE_GUIDE_URLS[currentChannel];
+
 const latestVersion = ref('');
 const latestCommitHash = ref('');
 const latestBuildTime = ref('');
@@ -34,16 +36,18 @@ const detectedUpdateAvailable = ref(false);
 const hasCheckedForUpdate = ref(false);
 const isCheckingForUpdate = ref(false);
 const updateCheckError = ref<string | null>(null);
-const updateKind = ref<'version' | 'commit' | null>(null);
+const updateKind = ref<UpdateKind | null>(null);
 const ignoredUntil = ref(getSetting('updateIgnoreUntil'));
+
 const isUpdateIgnored = computed(() => {
   if (ignoredUntil.value === 'permanent') return true;
   if (!ignoredUntil.value) return false;
   const ignoredUntilTime = new Date(ignoredUntil.value).getTime();
   return Number.isFinite(ignoredUntilTime) && ignoredUntilTime > Date.now();
 });
+
 const updateAvailable = computed(() => detectedUpdateAvailable.value && !isUpdateIgnored.value);
-const updateGuideUrl = UPDATE_GUIDE_URLS[currentChannel];
+
 const updateBannerText = computed(() => {
   if (updateKind.value === 'version') {
     return latestVersion.value ? `请更新（v${latestVersion.value}）` : '请更新';
@@ -62,6 +66,30 @@ const updateNoteText = computed(() => {
 });
 
 let inFlightCheck: Promise<void> | null = null;
+
+const setIgnoredUntil = (value: string) => {
+  ignoredUntil.value = value;
+  setSetting('updateIgnoreUntil', value);
+};
+
+const applyRemoteMetadata = (metadata: UpdateMetadata) => {
+  const remoteVersion = metadata.version?.trim();
+
+  if (!remoteVersion) {
+    throw new Error('metadata version is missing');
+  }
+
+  latestVersion.value = remoteVersion;
+  latestCommitHash.value = metadata.commitHash?.trim() ?? '';
+  latestBuildTime.value = metadata.buildTime?.trim() ?? '';
+  latestUpdateTitle.value = metadata.updateTitle?.trim() ?? '';
+  latestUpdateDescription.value = metadata.updateDescription?.trim() ?? '';
+
+  return {
+    remoteVersion,
+    remoteCommitHash: latestCommitHash.value,
+  };
+};
 
 const compareVersions = (remoteVersion: string, localVersion: string) => {
   const remoteParts = remoteVersion.split('.');
@@ -83,49 +111,42 @@ const compareVersions = (remoteVersion: string, localVersion: string) => {
   return 0;
 };
 
+const resolveUpdateKind = (remoteVersion: string, remoteCommitHash: string): UpdateKind | null => {
+  const comparisonResult = compareVersions(remoteVersion, currentVersion);
+
+  if (comparisonResult > 0) {
+    return 'version';
+  }
+
+  if (comparisonResult === 0 && remoteCommitHash && remoteCommitHash !== currentCommitHash) {
+    return 'commit';
+  }
+
+  return null;
+};
+
+const setDetectedUpdate = (kind: UpdateKind | null) => {
+  updateKind.value = kind;
+  detectedUpdateAvailable.value = kind !== null;
+};
+
 const runUpdateCheck = async () => {
   isCheckingForUpdate.value = true;
   updateCheckError.value = null;
-  const metadataUrl = UPDATE_METADATA_URLS[currentChannel];
 
   try {
-    const response = await fetch(metadataUrl, { cache: 'no-store' });
+    const response = await fetch(UPDATE_METADATA_URLS[currentChannel], { cache: 'no-store' });
 
     if (!response.ok) {
       throw new Error(`metadata request failed with status ${response.status}`);
     }
 
     const metadata = (await response.json()) as UpdateMetadata;
-    const remoteVersion = metadata.version?.trim();
-    const remoteCommitHash = metadata.commitHash?.trim() ?? '';
-    const remoteBuildTime = metadata.buildTime?.trim() ?? '';
-    const remoteUpdateTitle = metadata.updateTitle?.trim() ?? '';
-    const remoteUpdateDescription = metadata.updateDescription?.trim() ?? '';
-
-    if (!remoteVersion) {
-      throw new Error('metadata version is missing');
-    }
-
-    latestVersion.value = remoteVersion;
-    latestCommitHash.value = remoteCommitHash;
-    latestBuildTime.value = remoteBuildTime;
-    latestUpdateTitle.value = remoteUpdateTitle;
-    latestUpdateDescription.value = remoteUpdateDescription;
-    const comparisonResult = compareVersions(remoteVersion, currentVersion);
-    if (comparisonResult > 0) {
-      updateKind.value = 'version';
-      detectedUpdateAvailable.value = true;
-    } else if (comparisonResult === 0 && remoteCommitHash && remoteCommitHash !== currentCommitHash) {
-      updateKind.value = 'commit';
-      detectedUpdateAvailable.value = true;
-    } else {
-      updateKind.value = null;
-      detectedUpdateAvailable.value = false;
-    }
+    const { remoteVersion, remoteCommitHash } = applyRemoteMetadata(metadata);
+    setDetectedUpdate(resolveUpdateKind(remoteVersion, remoteCommitHash));
   } catch (error) {
     updateCheckError.value = error instanceof Error ? error.message : 'unknown error';
-    updateKind.value = null;
-    detectedUpdateAvailable.value = false;
+    setDetectedUpdate(null);
   } finally {
     hasCheckedForUpdate.value = true;
     isCheckingForUpdate.value = false;
@@ -146,45 +167,42 @@ const checkForAppUpdate = async () => {
 
 const ignoreAppUpdateForDays = (days: number) => {
   if (days < 0) {
-    ignoredUntil.value = 'permanent';
-    setSetting('updateIgnoreUntil', 'permanent');
+    setIgnoredUntil('permanent');
     return;
   }
 
   const safeDays = Math.max(1, Math.min(365, Math.floor(days)));
   const expiresAt = new Date(Date.now() + safeDays * 24 * 60 * 60 * 1000).toISOString();
-  ignoredUntil.value = expiresAt;
-  setSetting('updateIgnoreUntil', expiresAt);
+  setIgnoredUntil(expiresAt);
 };
 
 const clearIgnoredAppUpdate = () => {
-  ignoredUntil.value = '';
-  setSetting('updateIgnoreUntil', '');
+  setIgnoredUntil('');
 };
 
-export const useAppUpdate = () => {
-  return {
-    currentVersion,
-    currentCommitHash,
-    currentChannel,
-    updateGuideUrl,
-    latestVersion: readonly(latestVersion),
-    latestCommitHash: readonly(latestCommitHash),
-    latestBuildTime: readonly(latestBuildTime),
-    latestUpdateTitle: readonly(latestUpdateTitle),
-    latestUpdateDescription: readonly(latestUpdateDescription),
-    detectedUpdateAvailable: readonly(detectedUpdateAvailable),
-    updateAvailable: readonly(updateAvailable),
-    updateKind: readonly(updateKind),
-    updateBannerText: readonly(updateBannerText),
-    updateNoteText: readonly(updateNoteText),
-    ignoredUntil: readonly(ignoredUntil),
-    isUpdateIgnored: readonly(isUpdateIgnored),
-    hasCheckedForUpdate: readonly(hasCheckedForUpdate),
-    isCheckingForUpdate: readonly(isCheckingForUpdate),
-    updateCheckError: readonly(updateCheckError),
-    checkForAppUpdate,
-    ignoreAppUpdateForDays,
-    clearIgnoredAppUpdate,
-  };
+const appUpdate = {
+  currentVersion,
+  currentCommitHash,
+  currentChannel,
+  updateGuideUrl,
+  latestVersion: readonly(latestVersion),
+  latestCommitHash: readonly(latestCommitHash),
+  latestBuildTime: readonly(latestBuildTime),
+  latestUpdateTitle: readonly(latestUpdateTitle),
+  latestUpdateDescription: readonly(latestUpdateDescription),
+  detectedUpdateAvailable: readonly(detectedUpdateAvailable),
+  updateAvailable: readonly(updateAvailable),
+  updateKind: readonly(updateKind),
+  updateBannerText: readonly(updateBannerText),
+  updateNoteText: readonly(updateNoteText),
+  ignoredUntil: readonly(ignoredUntil),
+  isUpdateIgnored: readonly(isUpdateIgnored),
+  hasCheckedForUpdate: readonly(hasCheckedForUpdate),
+  isCheckingForUpdate: readonly(isCheckingForUpdate),
+  updateCheckError: readonly(updateCheckError),
+  checkForAppUpdate,
+  ignoreAppUpdateForDays,
+  clearIgnoredAppUpdate,
 };
+
+export const useAppUpdate = () => appUpdate;
