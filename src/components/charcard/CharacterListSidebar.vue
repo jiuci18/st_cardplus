@@ -135,7 +135,7 @@
 import { computed, ref } from 'vue';
 import { ElTooltip, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus';
 import { Icon } from '@iconify/vue';
-import SidebarTreePanel from '../common/SidebarTreePanel.vue';
+import SidebarTreePanel from '@/components/layout/common/SidebarTreePanel.vue';
 import type { CharacterCard, CharacterProject } from '../../types/character';
 import { useCharacterProjectTree, type CharacterOrderPatch } from '../../composables/characterInfo/useCharacterProjectTree';
 

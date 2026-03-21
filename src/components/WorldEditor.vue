@@ -194,7 +194,7 @@ import type {
   EnhancedRegion,
   ProjectIntegration,
 } from '@/types/world-editor';
-import WorldEditorToolbar from './worldeditor/WorldEditorToolbar.vue';
+import WorldEditorToolbar from '@/componentes/worldeditor/common/WorldEditorToolbar.vue';
 import WorldEditorMainPanel from './worldeditor/WorldEditorMainPanel.vue';
 import WorldGraph from './worldeditor/WorldGraph.vue';
 import ProjectModal from './worldeditor/ProjectModal.vue';
