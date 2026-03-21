@@ -3,6 +3,9 @@ import vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import { execSync } from 'child_process';
+import { readFileSync, writeFileSync } from 'fs';
+
+type BuildChannel = 'stable' | 'dev';
 
 const getGitVersionInfo = () => {
   try {
@@ -15,9 +18,41 @@ const getGitVersionInfo = () => {
   }
 };
 
+const getPackageVersion = () => {
+  const packageJson = JSON.parse(readFileSync(path.resolve(__dirname, 'package.json'), 'utf-8')) as { version: string };
+  return packageJson.version;
+};
+
+const getBuildChannel = (): BuildChannel => {
+  const branchName = (process.env.CF_PAGES_BRANCH || process.env.GITHUB_REF_NAME || '').trim();
+  return branchName === 'main' ? 'stable' : 'dev';
+};
+
+const buildMetadataPlugin = () => {
+  let outDir = path.resolve(__dirname, 'dist');
+
+  return {
+    name: 'build-metadata-plugin',
+    configResolved(config: { build: { outDir: string } }) {
+      outDir = path.resolve(__dirname, config.build.outDir);
+    },
+    closeBundle() {
+      const metadata = {
+        version: appSemver,
+        channel: appChannel,
+        buildTime: new Date().toISOString(),
+      };
+
+      writeFileSync(path.join(outDir, 'metadata.json'), JSON.stringify(metadata, null, 2) + '\n', 'utf-8');
+    },
+  };
+};
+
 const { commitHash, commitCount } = getGitVersionInfo();
+const appSemver = getPackageVersion();
 const appVersion = process.env.CF_PAGES_COMMIT_SHA ? process.env.CF_PAGES_COMMIT_SHA.slice(0, 7) : commitHash;
 const appCommitCount = commitCount;
+const appChannel = getBuildChannel();
 
 export default defineConfig({
   server: {
@@ -28,6 +63,7 @@ export default defineConfig({
   plugins: [
     vue(),
     tailwindcss(),
+    buildMetadataPlugin(),
   ],
   resolve: { // 添加 resolve 配置
     alias: {
@@ -40,8 +76,10 @@ export default defineConfig({
   },
   define: {
     global: 'globalThis',
+    __APP_SEMVER__: JSON.stringify(appSemver),
     __APP_VERSION__: JSON.stringify(appVersion),
     __APP_COMMIT_COUNT__: JSON.stringify(appCommitCount),
+    __APP_CHANNEL__: JSON.stringify(appChannel),
     __VUE_OPTIONS_API__: true,
     __VUE_PROD_DEVTOOLS__: false,
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),

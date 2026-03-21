@@ -15,7 +15,7 @@
       <p class="hero-version">
         <code v-if="appCommitCount === '1'">在线版_{{ appVersion }}</code>
         <code v-else>dev_{{ appVersion }} ({{ appCommitCount }})</code>
-        <code class="version-tag">v0.1.18</code>
+        <code class="version-tag">v{{ appSemver }}</code>
       </p>
     </div>
 
@@ -227,6 +227,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 
 const appVersion = __APP_VERSION__;
 const appCommitCount = __APP_COMMIT_COUNT__;
+const appSemver = __APP_SEMVER__;
 const gitLogs = ref<any[]>([]);
 const page = ref(1);
 const hasMore = ref(true);

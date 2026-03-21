@@ -28,17 +28,28 @@
       </div>
       <p class="did-you-know-text">{{ randomTip }}</p>
     </div>
+
+    <div
+      v-if="updateAvailable"
+      class="update-notice"
+      role="status"
+      aria-live="polite"
+    >
+      {{ updateBannerText }}
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { QuestionFilled } from '@element-plus/icons-vue';
 import { onActivated, onMounted, ref } from 'vue';
+import { useAppUpdate } from '@/composables/useAppUpdate';
 
 const defaultDidYouKnowTips = ['提示加载失败，请点击“下一个”重试。'];
 const didYouKnowUrl = '/did-you-know.json';
 const didYouKnowTips = ref<string[]>([...defaultDidYouKnowTips]);
 const randomTip = ref('');
+const { updateAvailable, updateBannerText } = useAppUpdate();
 
 const normalizeTips = (input: unknown): string[] => {
   if (Array.isArray(input)) {
@@ -171,5 +182,31 @@ onActivated(() => {
 
 .did-you-know-next-btn {
   color: var(--el-text-color-secondary);
+}
+
+.update-notice {
+  position: fixed;
+  right: 1rem;
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  z-index: 40;
+  max-width: min(90vw, 22rem);
+  padding: 0.75rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--el-color-warning-light-5);
+  background: color-mix(in srgb, var(--el-color-warning-light-9) 90%, white 10%);
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.12),
+    0 4px 10px rgba(0, 0, 0, 0.08);
+  color: var(--el-color-warning-dark-2);
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+@media (min-width: 1024px) {
+  .update-notice {
+    right: 1.25rem;
+    bottom: 1.25rem;
+  }
 }
 </style>

@@ -50,6 +50,7 @@ import { RouterView, useRoute } from 'vue-router';
 import AppSidebar from '@/components/layout/AppSidebar.vue';
 import MobileDrawer from '@/components/layout/MobileDrawer.vue';
 import MobileTabBar from '@/components/layout/MobileTabBar.vue';
+import { useAppUpdate } from '@/composables/useAppUpdate';
 import { provideNavigation } from '@/composables/useNavigation';
 import { provideOverflowControl } from '@/composables/useOverflowControl';
 import { usePersonalization } from '@/composables/usePersonalization';
@@ -60,6 +61,7 @@ import { getSetting } from '@/utils/localStorageUtils';
 const { isOverflowHidden, setOverflowHidden } = provideOverflowControl();
 const route = useRoute();
 const { sidebarConfig, refreshSidebarConfig } = usePersonalization();
+const { checkForAppUpdate } = useAppUpdate();
 const betaFeaturesEnabled = ref(false);
 const umamiEnabled = ref(true);
 const drawerVisible = ref(false);
@@ -112,6 +114,7 @@ onMounted(() => {
   betaFeaturesEnabled.value = getSetting('betaFeaturesEnabled');
   umamiEnabled.value = getSetting('umamiEnabled');
   refreshSidebarConfig();
+  void checkForAppUpdate();
   void syncUmamiTelemetry(umamiEnabled.value).catch((error) => {
     console.error('初始化 Umami 遥测失败:', error);
   });
