@@ -18,6 +18,7 @@ interface AppSettings {
   autoSaveInterval: number;
   autoSaveDebounce: number;
   imgbbApiKey: string;
+  updateIgnoreUntil: string;
   autoExpandSidebar: boolean;
   sidebarConfig: SidebarConfig;
 }
@@ -194,6 +195,7 @@ const defaultSettings: AppSettings = {
   autoSaveInterval: 5,
   autoSaveDebounce: 1.5,
   imgbbApiKey: '',
+  updateIgnoreUntil: '',
   autoExpandSidebar: true,
   sidebarConfig: createDefaultSidebarConfig(),
 };
@@ -212,6 +214,9 @@ const normalizeSettingValue = <K extends AppSettingsKey>(key: K, value: AppSetti
     return Math.max(0.1, Math.min(10, safeDebounce)) as AppSettings[K];
   }
   if (key === 'imgbbApiKey') {
+    return String(value ?? '').trim() as AppSettings[K];
+  }
+  if (key === 'updateIgnoreUntil') {
     return String(value ?? '').trim() as AppSettings[K];
   }
   return value;

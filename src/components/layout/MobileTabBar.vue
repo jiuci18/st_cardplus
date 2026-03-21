@@ -8,11 +8,17 @@
       to="/"
       class="tab-logo"
     >
-      <img
-        src="/image/logo.png"
-        alt="Logo"
-        class="logo-img"
-      />
+      <span class="tab-logo-wrap">
+        <img
+          src="/image/logo.png"
+          alt="Logo"
+          class="logo-img"
+        />
+        <span
+          v-if="updateAvailable"
+          class="tab-logo-update-dot"
+        ></span>
+      </span>
     </router-link>
 
     <!-- 中间导航项 -->
@@ -45,6 +51,7 @@
 
 <script setup lang="ts">
 import { useNavigation } from '@/composables/useNavigation';
+import { useAppUpdate } from '@/composables/useAppUpdate';
 import { Menu } from '@element-plus/icons-vue';
 import { ElIcon } from 'element-plus';
 
@@ -53,6 +60,7 @@ defineEmits<{
 }>();
 
 const { isMobile, tabBarItems, isActive } = useNavigation();
+const { updateAvailable } = useAppUpdate();
 </script>
 
 <style scoped>
@@ -80,11 +88,27 @@ const { isMobile, tabBarItems, isActive } = useNavigation();
   flex-shrink: 0;
 }
 
+.tab-logo-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
 .logo-img {
   width: 1.75rem;
   height: 1.75rem;
   border-radius: 0.5rem;
   object-fit: contain;
+}
+
+.tab-logo-update-dot {
+  position: absolute;
+  top: -0.125rem;
+  right: -0.125rem;
+  width: 0.5625rem;
+  height: 0.5625rem;
+  border-radius: 9999px;
+  background: #f04438;
+  box-shadow: 0 0 0 2px var(--el-bg-color);
 }
 
 /* 中间导航容器 */

@@ -11,10 +11,12 @@ const getGitVersionInfo = () => {
   try {
     const commitHash = execSync('git rev-parse --short HEAD').toString().trim();
     const commitCount = execSync('git rev-list --count HEAD').toString().trim();
-    return { commitHash, commitCount };
+    const commitTitle = execSync('git log -1 --pretty=%s').toString().trim();
+    const commitBody = execSync('git log -1 --pretty=%b').toString().trim();
+    return { commitHash, commitCount, commitTitle, commitBody };
   } catch (e) {
     console.error('Failed to get git info:', e);
-    return { commitHash: 'unknown', commitCount: 'unknown' };
+    return { commitHash: 'unknown', commitCount: 'unknown', commitTitle: '', commitBody: '' };
   }
 };
 
@@ -40,6 +42,9 @@ const buildMetadataPlugin = () => {
       const metadata = {
         version: appSemver,
         channel: appChannel,
+        commitHash,
+        updateTitle: latestCommitTitle,
+        updateDescription: latestCommitDescription,
         buildTime: new Date().toISOString(),
       };
 
@@ -48,11 +53,13 @@ const buildMetadataPlugin = () => {
   };
 };
 
-const { commitHash, commitCount } = getGitVersionInfo();
+const { commitHash, commitCount, commitTitle, commitBody } = getGitVersionInfo();
 const appSemver = getPackageVersion();
 const appVersion = process.env.CF_PAGES_COMMIT_SHA ? process.env.CF_PAGES_COMMIT_SHA.slice(0, 7) : commitHash;
 const appCommitCount = commitCount;
 const appChannel = getBuildChannel();
+const latestCommitTitle = commitTitle;
+const latestCommitDescription = commitBody;
 
 export default defineConfig({
   server: {

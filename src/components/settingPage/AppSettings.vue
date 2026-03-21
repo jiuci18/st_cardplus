@@ -1,71 +1,95 @@
 <template>
-  <el-alert
-    type="info"
-    show-icon
-    :closable="false"
-    style="margin-bottom: 12px"
-  >
+  <el-alert type="info" show-icon :closable="false" style="margin-bottom: 12px">
     <template #title>想要贡献？来贡献文档吧！</template>
     <template #default>
       文档贡献地址：
-      <a
-        href="https://github.com/awaae001/doc"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <a href="https://github.com/awaae001/doc" target="_blank" rel="noopener noreferrer">
         https://github.com/awaae001/doc
       </a>
     </template>
   </el-alert>
   <div class="app-settings">
-    <div
-      v-for="setting in settings"
-      :key="setting.id"
-      class="setting-card"
-    >
+    <div class="setting-card update-card" :class="{ 'is-web-masked': showWebUpdateMask }">
+      <div class="setting-content">
+        <div class="update-header-row">
+          <p class="update-eyebrow">当前更新 - {{ updateStatusText }}</p>
+          <el-button type="primary" size="small" @click="openUpdateGuide">
+            前往更新
+          </el-button>
+        </div>
+
+        <div class="update-body">
+          <div class="update-body-content">
+            <p class="update-copy">
+              更新一般包括新的功能和历史问题的修复，或者 UI 更新，请时刻检查更新确保你使用的是最新的更新和修复
+            </p>
+
+            <div class="update-section">
+              <p class="update-section-label">元数据 / 提交内容</p>
+              <p class="update-metadata-text">{{ remoteMetadataText }}</p>
+              <p class="update-quote">「{{ updateContentText }}」</p>
+            </div>
+
+            <p v-if="updateCheckError" class="update-error-note">
+              检查失败：{{ updateCheckError }}
+            </p>
+          </div>
+        </div>
+        <div v-if="showWebUpdateMask" class="update-web-mask">
+          <div class="update-web-mask-content">
+            <div class="update-web-mask-text">
+              网页端滚动更新
+              <br />
+              记得备份
+            </div>
+            <div class="update-web-mask-actions">
+              <el-button type="primary" plain size="small" class="update-web-mask-action"
+                @click.stop="showWebUpdateMask = false">
+                窝就要看
+              </el-button>
+            </div>
+          </div>
+        </div>
+
+        <div class="update-footer">
+          <div class="update-location">
+            <span class="update-footer-label">你的位置：</span>
+            <span class="update-footer-text">{{ currentLocationText }}</span>
+          </div>
+          <div class="update-ignore-control">
+            <el-select v-model="ignoreUpdateDays" size="small" class="ignore-days-select">
+              <el-option v-for="day in ignoreDayOptions" :key="day" :label="day < 0 ? '永久' : `${day} 天`" :value="day" />
+            </el-select>
+            <el-button type="warning" plain @click="handleUpdateIgnoreAction">
+              {{ isUpdateIgnored ? '解除忽略' : `忽略更新（${ignoreUpdateDays < 0 ? '永久' : `${ignoreUpdateDays} 天`}` }}
+                </el-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-for="setting in settings" :key="setting.id" class="setting-card">
       <div class="setting-content">
         <div class="setting-header">
           <div class="setting-info">
             <span class="setting-label">{{ setting.label }}</span>
-            <Icon
-              :icon="setting.icon"
-              width="20"
-              height="20"
-              :style="{ marginLeft: '8px', color: setting.iconColor }"
-            />
+            <Icon :icon="setting.icon" width="20" height="20"
+              :style="{ marginLeft: '8px', color: setting.iconColor }" />
           </div>
           <template v-if="setting.type === 'switch'">
-            <el-switch
-              v-model="setting.model.value"
-              @change="setting.handler"
-              size="large"
-              :disabled="setting.disabled"
-            />
+            <el-switch v-model="setting.model.value" @change="setting.handler" size="large"
+              :disabled="setting.disabled" />
           </template>
           <template v-else-if="setting.type === 'numberInput'">
             <div class="interval-control">
-              <el-input-number
-                v-model="setting.model.value"
-                @change="setting.handler"
-                :min="setting.min"
-                :max="setting.max"
-                :step="setting.step"
-                size="small"
-                style="width: 100px"
-              />
+              <el-input-number v-model="setting.model.value" @change="setting.handler" :min="setting.min"
+                :max="setting.max" :step="setting.step" size="small" style="width: 100px" />
               <span class="interval-unit">{{ setting.unit }}</span>
             </div>
           </template>
           <template v-else-if="setting.type === 'passwordInput'">
-            <el-input
-              v-model="setting.model.value"
-              @input="setting.handler"
-              type="password"
-              show-password
-              clearable
-              :placeholder="setting.placeholder"
-              class="setting-password-input"
-            />
+            <el-input v-model="setting.model.value" @input="setting.handler" type="password" show-password clearable
+              :placeholder="setting.placeholder" class="setting-password-input" />
           </template>
         </div>
         <p class="setting-description" v-html="setting.description"></p>
@@ -76,6 +100,8 @@
 
 <script setup lang="ts">
 import { getAppSettings } from '@/composables/appSettings';
+import { useAppUpdate } from '@/composables/useAppUpdate';
+import { isTauriApp } from '@/utils/imageHosting';
 import { getSetting, setSetting } from '@/utils/localStorageUtils';
 import { Icon } from '@iconify/vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
@@ -86,6 +112,28 @@ const umamiEnabled = ref(true);
 const autoSaveInterval = ref(5);
 const autoSaveDebounce = ref(1.5);
 const imgbbApiKey = ref('');
+const ignoreUpdateDays = ref(7);
+const ignoreDayOptions = [-1, 1, 3, 7, 14, 30];
+const showWebUpdateMask = ref(!isTauriApp());
+const {
+  currentVersion,
+  currentCommitHash,
+  currentChannel,
+  updateGuideUrl,
+  latestVersion,
+  latestCommitHash,
+  latestBuildTime,
+  latestUpdateTitle,
+  latestUpdateDescription,
+  detectedUpdateAvailable,
+  updateAvailable,
+  hasCheckedForUpdate,
+  updateCheckError,
+  isUpdateIgnored,
+  checkForAppUpdate,
+  ignoreAppUpdateForDays,
+  clearIgnoredAppUpdate,
+} = useAppUpdate();
 
 const onBetaFeaturesToggle = (value: boolean) => {
   if (value) {
@@ -149,6 +197,63 @@ const onImgbbApiKeyChange = (value: string) => {
   setSetting('imgbbApiKey', value);
 };
 
+const formatMetadataDate = (value: string) => {
+  if (!value) return '---- -- --';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toISOString().slice(0, 10);
+};
+
+const remoteMetadataText = computed(() => {
+  if (!hasCheckedForUpdate.value) return '读取中……';
+  if (!latestVersion.value) return '暂时没有读到远端元数据';
+  return `${currentChannel}[${latestCommitHash.value || '----'}](V - ${latestVersion.value}) - ${formatMetadataDate(latestBuildTime.value)}`;
+});
+
+const updateStatusText = computed(() => {
+  if (isUpdateIgnored.value) return '已暂停';
+  if (updateAvailable.value) return '需要更新';
+  return '一切正常';
+});
+
+const updateContentText = computed(() => {
+  const title = latestUpdateTitle.value.trim();
+  const description = latestUpdateDescription.value.trim();
+  if (title && description) return `${title} / ${description}`;
+  if (title) return title;
+  if (description) return description;
+  if (detectedUpdateAvailable.value) return '这次更新没有附带额外说明。';
+  if (!hasCheckedForUpdate.value) return '正在读取提交内容……';
+  return '目前没有新的提交说明。';
+});
+
+const currentLocationText = computed(() => {
+  return `${currentChannel}[${currentCommitHash}](V - ${currentVersion})`;
+});
+
+const handleIgnoreUpdate = () => {
+  ignoreAppUpdateForDays(ignoreUpdateDays.value);
+  ElMessage.success(ignoreUpdateDays.value < 0 ? '已永久忽略更新提醒' : `已忽略更新提醒 ${ignoreUpdateDays.value} 天`);
+};
+
+const handleClearIgnoredUpdate = () => {
+  clearIgnoredAppUpdate();
+  ElMessage.success('已恢复更新提醒');
+};
+
+const handleUpdateIgnoreAction = () => {
+  if (isUpdateIgnored.value) {
+    handleClearIgnoredUpdate();
+    return;
+  }
+
+  handleIgnoreUpdate();
+};
+
+const openUpdateGuide = () => {
+  window.open(updateGuideUrl, '_blank', 'noopener,noreferrer');
+};
+
 const settings = computed(() =>
   getAppSettings(
     {
@@ -174,6 +279,7 @@ onMounted(() => {
   autoSaveInterval.value = getSetting('autoSaveInterval');
   autoSaveDebounce.value = getSetting('autoSaveDebounce');
   imgbbApiKey.value = getSetting('imgbbApiKey');
+  void checkForAppUpdate();
 });
 </script>
 
@@ -182,5 +288,164 @@ onMounted(() => {
 
 .setting-password-input {
   width: min(320px, 100%);
+}
+
+.update-card {
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.update-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.update-body {
+  position: relative;
+  margin-top: 0.65rem;
+}
+
+.update-body-content {
+  position: relative;
+  z-index: 1;
+}
+
+.update-card.is-web-masked .update-body-content {
+  filter: blur(10px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.update-web-mask {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(52px + 0.95rem);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  text-align: center;
+  background: color-mix(in srgb, var(--el-bg-color) 78%, transparent 22%);
+  backdrop-filter: blur(10px);
+}
+
+.update-web-mask-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.update-web-mask-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.update-web-mask-text {
+  font-size: 0.92rem;
+  line-height: 1.7;
+  font-weight: 700;
+  color: var(--el-text-color-primary);
+}
+
+.update-web-mask-action {
+  pointer-events: auto;
+}
+
+.update-eyebrow {
+  margin: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--el-text-color-primary);
+}
+
+.update-copy {
+  margin: 0.45rem 0 0;
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: var(--el-text-color-secondary);
+}
+
+.update-section {
+  margin-top: 0.75rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 0.25rem;
+  background: var(--el-fill-color-light);
+}
+
+.update-section-label {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--el-text-color-secondary);
+}
+
+.update-metadata-text,
+.update-quote {
+  margin: 0.45rem 0 0;
+  font-size: 0.84rem;
+  line-height: 1.6;
+  color: var(--el-text-color-primary);
+  word-break: break-word;
+}
+
+.update-metadata-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.update-error-note {
+  margin: 0.9rem 0 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--el-color-danger);
+}
+
+.update-footer {
+  margin-top: 0.95rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--el-border-color-lighter);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.update-location {
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--el-text-color-secondary);
+}
+
+.update-footer-label {
+  font-weight: 700;
+}
+
+.update-footer-text {
+  margin-left: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--el-text-color-regular);
+  word-break: break-word;
+}
+
+.update-ignore-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ignore-days-select {
+  width: 96px;
 }
 </style>

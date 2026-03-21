@@ -328,8 +328,7 @@ watch(selectedBranch, (newBranch) => {
 <style scoped>
 .about-page {
   padding: 1rem;
-  margin-left: auto;
-  margin-right: auto;
+  margin-inline: auto;
   max-width: 48rem;
   width: 100%;
   min-height: 100%;
@@ -341,10 +340,7 @@ watch(selectedBranch, (newBranch) => {
 
 /* 头部信息卡片 */
 .hero-card {
-  border-radius: 0.25rem;
   padding: 1.25rem 1.5rem;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
 }
 
 .hero-title {
@@ -364,7 +360,6 @@ watch(selectedBranch, (newBranch) => {
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   font-weight: 600;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   background: var(--el-color-warning);
   color: white;
   letter-spacing: 0.05em;
@@ -386,7 +381,6 @@ watch(selectedBranch, (newBranch) => {
 }
 
 .hero-version code {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.8rem;
   padding: 0.125rem 0.5rem;
   border-radius: 0.25rem;
@@ -407,10 +401,7 @@ watch(selectedBranch, (newBranch) => {
 
 /* 链接区域 */
 .links-card {
-  border-radius: 0.25rem;
   padding: 1rem 1.5rem;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
 }
 
 .section-title {
@@ -457,10 +448,7 @@ watch(selectedBranch, (newBranch) => {
 
 /* 更新日志 */
 .changelog-card {
-  border-radius: 0.25rem;
   padding: 1rem 1.5rem;
-  background: var(--el-bg-color);
-  border: 1px solid var(--el-border-color-lighter);
 }
 
 .changelog-header {
@@ -535,7 +523,6 @@ watch(selectedBranch, (newBranch) => {
 }
 
 .commit-hash {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   background: var(--el-color-primary-light-9);
@@ -560,7 +547,6 @@ watch(selectedBranch, (newBranch) => {
 
 .commit-details pre {
   margin: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 0.75rem;
   line-height: 1.25rem;
   white-space: pre-wrap;
@@ -598,6 +584,21 @@ watch(selectedBranch, (newBranch) => {
 }
 .loading-icon {
   animation: spin 1s linear infinite;
+}
+
+.hero-card,
+.links-card,
+.changelog-card {
+  border-radius: 0.25rem;
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+}
+
+.dev-badge,
+.hero-version code,
+.commit-hash,
+.commit-details pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 @keyframes spin {

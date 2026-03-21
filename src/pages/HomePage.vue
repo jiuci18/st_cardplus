@@ -1,10 +1,6 @@
 <template>
   <div class="welcome-container">
-    <img
-      src="/image/logo.png"
-      alt="ST CardPlus"
-      class="logo"
-    />
+    <img src="/image/logo.png" alt="ST CardPlus" class="logo" />
     <h1 class="title">欢迎使用 ST CardPlus</h1>
     <p class="subtitle">你今天要创造些什么？</p>
     <p class="hint">请从导航栏选择要编辑的内容 · 或者随便试试？</p>
@@ -13,29 +9,24 @@
       <div class="did-you-know-head">
         <div class="did-you-know-title">
           你知道吗
-          <el-icon class="did-you-know-title-icon"><QuestionFilled /></el-icon>
+          <el-icon class="did-you-know-title-icon">
+            <QuestionFilled />
+          </el-icon>
         </div>
-        <el-button
-          size="small"
-          text
-          class="did-you-know-next-btn"
-          aria-label="下一条提示"
-          title="下一条提示"
-          @click="pickRandomTip"
-        >
+        <el-button size="small" text class="did-you-know-next-btn" aria-label="下一条提示" title="下一条提示"
+          @click="pickRandomTip">
           下一个
         </el-button>
       </div>
       <p class="did-you-know-text">{{ randomTip }}</p>
     </div>
 
-    <div
-      v-if="updateAvailable"
-      class="update-notice"
-      role="status"
-      aria-live="polite"
-    >
-      {{ updateBannerText }}
+    <div v-if="updateAvailable" class="update-notice" role="status" aria-live="polite" tabindex="0"
+      @click="goToSettings" @keydown.enter.prevent="goToSettings" @keydown.space.prevent="goToSettings">
+      <p class="update-notice-title">{{ updateBannerText }}</p>
+      <p v-if="updateNoteText" class="update-notice-note">
+        {{ updateNoteText }}
+      </p>
     </div>
   </div>
 </template>
@@ -43,13 +34,19 @@
 <script setup lang="ts">
 import { QuestionFilled } from '@element-plus/icons-vue';
 import { onActivated, onMounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAppUpdate } from '@/composables/useAppUpdate';
 
 const defaultDidYouKnowTips = ['提示加载失败，请点击“下一个”重试。'];
 const didYouKnowUrl = '/did-you-know.json';
 const didYouKnowTips = ref<string[]>([...defaultDidYouKnowTips]);
 const randomTip = ref('');
-const { updateAvailable, updateBannerText } = useAppUpdate();
+const router = useRouter();
+const { updateAvailable, updateBannerText, updateNoteText } = useAppUpdate();
+
+const goToSettings = () => {
+  router.push('/settings');
+};
 
 const normalizeTips = (input: unknown): string[] => {
   if (Array.isArray(input)) {
@@ -198,9 +195,40 @@ onActivated(() => {
     0 12px 24px rgba(0, 0, 0, 0.12),
     0 4px 10px rgba(0, 0, 0, 0.08);
   color: var(--el-color-warning-dark-2);
+  line-height: 1.45;
+  cursor: pointer;
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    border-color 150ms ease;
+}
+
+.update-notice:hover,
+.update-notice:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--el-color-warning);
+  box-shadow:
+    0 16px 28px rgba(0, 0, 0, 0.16),
+    0 6px 12px rgba(0, 0, 0, 0.1);
+  outline: none;
+}
+
+.update-notice-title,
+.update-notice-note {
+  margin: 0;
+}
+
+.update-notice-title {
   font-size: 0.9rem;
   font-weight: 600;
-  line-height: 1.45;
+}
+
+.update-notice-note {
+  margin-top: 0.35rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--el-text-color-regular);
+  word-break: break-word;
 }
 
 @media (min-width: 1024px) {
