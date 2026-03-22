@@ -30,7 +30,7 @@ export interface MenuItemConfig {
 }
 
 // Element Plus 图标映射
-export const iconMap = {
+const iconMap = {
   House: markRaw(House),
   EditPen: markRaw(EditPen),
   Location: markRaw(Location),
@@ -43,7 +43,7 @@ export const iconMap = {
 };
 
 // Iconify 图标映射
-export const iconifyIconMap: Record<string, string> = {
+const iconifyIconMap: Record<string, string> = {
   House: 'ep:house',
   EditPen: 'ep:edit-pen',
   Location: 'ep:location',
@@ -56,7 +56,7 @@ export const iconifyIconMap: Record<string, string> = {
 };
 
 // 主菜单项配置
-export const mainMenuItems: MenuItemConfig[] = [
+const mainMenuItems: MenuItemConfig[] = [
   {
     id: 'home',
     type: 'main',
@@ -155,7 +155,7 @@ export const mainMenuItems: MenuItemConfig[] = [
 ];
 
 // 工具箱小工具配置
-export const toolboxToolItems: MenuItemConfig[] = [
+const toolboxToolItems: MenuItemConfig[] = [
   {
     id: 'json-formatter',
     type: 'tool',
@@ -209,7 +209,7 @@ export const toolboxToolItems: MenuItemConfig[] = [
 ];
 
 // 获取所有默认菜单项配置
-export const getAllDefaultMenuItems = (): MenuItemConfig[] => {
+const getAllDefaultMenuItems = (): MenuItemConfig[] => {
   return [...mainMenuItems, ...toolboxToolItems];
 };
 

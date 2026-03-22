@@ -1,6 +1,6 @@
 const DEFAULT_MULTI_VALUE_DELIMITER = /[\n\r\t,，;；、]+/;
 
-export function splitDelimitedValues(
+function splitDelimitedValues(
   rawText: string,
   delimiterPattern: RegExp = DEFAULT_MULTI_VALUE_DELIMITER
 ): string[] {

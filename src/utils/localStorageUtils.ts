@@ -26,7 +26,7 @@ interface AppSettings {
 type LocalStorageSnapshot = Record<string, string | null>;
 export type AppSettingsKey = keyof AppSettings;
 
-export const getLocalStorageItem = (key: string): string | null => {
+const getLocalStorageItem = (key: string): string | null => {
   try {
     return localStorage.getItem(key);
   } catch (error) {
@@ -35,7 +35,7 @@ export const getLocalStorageItem = (key: string): string | null => {
   }
 };
 
-export const setLocalStorageItem = (key: string, value: string): void => {
+const setLocalStorageItem = (key: string, value: string): void => {
   try {
     localStorage.setItem(key, value);
   } catch (error) {
@@ -43,7 +43,7 @@ export const setLocalStorageItem = (key: string, value: string): void => {
   }
 };
 
-export const removeLocalStorageItem = (key: string): void => {
+const removeLocalStorageItem = (key: string): void => {
   try {
     localStorage.removeItem(key);
   } catch (error) {
@@ -51,7 +51,7 @@ export const removeLocalStorageItem = (key: string): void => {
   }
 };
 
-export const clearAllLocalStorage = (): void => {
+const clearAllLocalStorage = (): void => {
   try {
     localStorage.clear();
   } catch (error) {
@@ -59,7 +59,7 @@ export const clearAllLocalStorage = (): void => {
   }
 };
 
-export const getLocalStorageKeys = (): string[] => {
+const getLocalStorageKeys = (): string[] => {
   const keys: string[] = [];
   try {
     for (let i = 0; i < localStorage.length; i++) {
@@ -127,27 +127,6 @@ export const removeSessionStorageItem = (key: string): void => {
   } catch (error) {
     console.error('移除会话存储失败:', error);
   }
-};
-
-export const clearAllSessionStorage = (): void => {
-  try {
-    sessionStorage.clear();
-  } catch (error) {
-    console.error('清空会话存储失败:', error);
-  }
-};
-
-export const getSessionStorageKeys = (): string[] => {
-  const keys: string[] = [];
-  try {
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
-      if (key) keys.push(key);
-    }
-  } catch (error) {
-    console.error('读取会话存储键失败:', error);
-  }
-  return keys;
 };
 
 export const readLocalStorageJSON = <T>(key: string): T | null => {

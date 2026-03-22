@@ -71,6 +71,26 @@
     "vue-tsc": "^3.2.6",
     "wait-on": "^9.0.4"
   },
+  "knip": {
+    "ignoreFiles": [
+      "src/css/card-manager-panels.css",
+      "src/css/split-create-actions.css",
+      "src/polyfills/fs.js",
+      "src/polyfills/os.js",
+      "src/polyfills/path.js",
+      "src/shims-splitpanes.d.ts",
+      "src/types/png-modules.d.ts"
+    ],
+    "ignoreDependencies": [
+      "crc",
+      "exifreader",
+      "js-base64",
+      "concurrently",
+      "ts-node",
+      "wait-on"
+    ],
+    "ignoreExportsUsedInFile": true
+  },
   "pnpm": {
     "overrides": {
       "minimatch@>=9.0.0 <9.0.6": "9.0.6"

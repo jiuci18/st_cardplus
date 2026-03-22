@@ -28,7 +28,7 @@ export interface NavigationContext {
   navigateTo: (path: string) => void;
 }
 
-export const NavigationKey: InjectionKey<NavigationContext> = Symbol('navigation');
+const NavigationKey: InjectionKey<NavigationContext> = Symbol('navigation');
 
 /**
  * 提供导航上下文

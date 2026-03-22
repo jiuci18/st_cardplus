@@ -7,7 +7,7 @@ interface ProjectState {
   projects: Record<string, CharacterProject>;
 }
 
-export const normalizeProjectOrders = (projectsInput: Record<string, CharacterProject> = {}) => {
+const normalizeProjectOrders = (projectsInput: Record<string, CharacterProject> = {}) => {
   const projects = { ...projectsInput };
   const values = Object.values(projects);
   const hasAnyOrder = values.some((project) => typeof project.order === 'number');

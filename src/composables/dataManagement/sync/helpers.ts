@@ -5,32 +5,6 @@ export function formatErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
-export function collectLocalStorage(excludedKeys: string[]): Record<string, string | null> {
-  const data: Record<string, string | null> = {};
-  for (let i = 0; i < localStorage.length; i++) {
-    const key = localStorage.key(i);
-    if (!key || excludedKeys.includes(key)) continue;
-    data[key] = localStorage.getItem(key);
-  }
-  return data;
-}
-
-export function applyLocalStorageData(
-  data: Record<string, string | null>,
-  preserved: Record<string, string | null> = {}
-): void {
-  localStorage.clear();
-  for (const key of Object.keys(data)) {
-    localStorage.setItem(key, data[key] ?? '');
-  }
-  for (const key of Object.keys(preserved)) {
-    const value = preserved[key];
-    if (value != null) {
-      localStorage.setItem(key, value);
-    }
-  }
-}
-
 export function parseBackupData(provider: SyncProvider, payload: unknown): BackupData | null {
   if (provider === 'webdav') {
     return JSON.parse(String(payload)) as BackupData;

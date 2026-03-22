@@ -1,4 +1,3 @@
-import { ref } from 'vue';
 import type { CharacterCardV3 } from '@/types/character-card-v3';
 
 // 默认的角色卡数据结构，用于初始化和重置
@@ -76,12 +75,10 @@ export function normalizeCharacterCardData(newData: any): CharacterCardV3 {
   }
 
   if (isV2) {
-    console.log('useV3CharacterCard: Processing V2 data conversion');
     const extensions = newData.data?.extensions || {};
     mergedData.talkativeness = extensions.talkativeness ?? newData.talkativeness ?? defaultData.talkativeness;
     mergedData.fav = extensions.fav ?? newData.fav ?? defaultData.fav;
     mergedData.tags = newData.tags ?? newData.data?.tags ?? defaultData.tags;
-    console.log('useV3CharacterCard: V2 conversion completed');
   }
   mergedData.spec = 'chara_card_v3';
   mergedData.spec_version = '3.0';
@@ -116,33 +113,4 @@ export function normalizeCharacterCardData(newData: any): CharacterCardV3 {
   mergedData.tags = mergedData.data.tags;
 
   return mergedData;
-}
-
-export function useV3CharacterCard() {
-  const characterData = ref<CharacterCardV3>(createDefaultCharacterCardData());
-  const isLoadingData = ref(false);
-
-  const loadCharacter = (newData: any) => {
-    isLoadingData.value = true;
-    characterData.value = normalizeCharacterCardData(newData);
-
-    setTimeout(() => {
-      isLoadingData.value = false;
-    }, 0);
-  };
-
-  const resetCharacter = () => {
-    isLoadingData.value = true;
-    characterData.value = createDefaultCharacterCardData();
-    setTimeout(() => {
-      isLoadingData.value = false;
-    }, 0);
-  };
-
-  return {
-    characterData,
-    isLoadingData,
-    loadCharacter,
-    resetCharacter,
-  };
 }
