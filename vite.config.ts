@@ -72,7 +72,7 @@ export default defineConfig({
     tailwindcss(),
     buildMetadataPlugin(),
   ],
-  resolve: { // 添加 resolve 配置
+  resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
       'fs': path.resolve(__dirname, 'src/polyfills/fs.js'),

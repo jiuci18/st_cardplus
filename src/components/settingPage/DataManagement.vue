@@ -36,14 +36,12 @@
     <SyncCard />
     <LocalDataCard />
     <ClearDataCard />
-    <CleanCacheCard />
   </div>
 </template>
 
 <script setup lang="ts">
 import { syncInjectionKey, useSync } from '@/composables/dataManagement/useSync';
 import { onMounted, provide } from 'vue';
-import CleanCacheCard from './datamanage/CleanCacheCard.vue';
 import ClearDataCard from './datamanage/ClearDataCard.vue';
 import LocalDataCard from './datamanage/LocalDataCard.vue';
 import StorageInfoCard from './datamanage/StorageInfoCard.vue';

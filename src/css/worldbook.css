@@ -128,130 +128,9 @@
   font-size: 20px;
 }
 
-/* 条目列表 */
-.worldbook-entry-list-scrollbar {
-  border: 1px solid var(--el-border-color-lighter);
-  border-radius: 4px;
-  background: var(--el-bg-color);
-}
 
 .worldbook-empty-list {
   padding: 40px 20px;
-}
-
-.entry-menu {
-  border: none;
-}
-
-.entry-menu-item {
-  padding: 12px 16px;
-  margin: 0;
-  border-bottom: 1px solid var(--el-border-color-extra-light);
-  transition: opacity 0.3s;
-}
-
-.entry-menu-item.is-disabled {
-  opacity: 0.5;
-}
-
-.entry-menu-item-content {
-  width: 100%;
-}
-
-.entry-menu-item-main {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-}
-
-.entry-menu-item-tags {
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.entry-menu-item-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--el-text-color-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-}
-
-/* 拖拽相关样式 */
-.entry-menu-item-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.entry-drag-handle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  cursor: grab;
-  color: var(--el-text-color-placeholder);
-  transition: color 0.2s;
-  flex-shrink: 0;
-}
-
-.entry-drag-handle:hover {
-  color: var(--el-text-color-regular);
-}
-
-.entry-drag-handle:active {
-  cursor: grabbing;
-}
-
-.entry-drag-handle-icon {
-  font-size: 16px;
-}
-
-/* vuedraggable 拖拽状态样式 */
-.entry-chosen {
-  opacity: 0.8;
-  transform: scale(1.02);
-  background-color: var(--el-color-primary-light-9) !important;
-  border-color: var(--el-color-primary) !important;
-  transition: all 0.2s;
-}
-
-.entry-drag {
-  opacity: 0.6;
-  transform: rotate(2deg);
-  transition: all 0.2s;
-}
-
-.entry-ghost {
-  opacity: 0.3;
-  background-color: var(--el-color-primary-light-8);
-  border: 2px dashed var(--el-color-primary);
-}
-
-/* 拖拽过程中的视觉反馈 */
-.entry-menu-item:hover .entry-drag-handle {
-  color: var(--el-color-primary);
-}
-
-.sortable-chosen .entry-drag-handle {
-  color: var(--el-color-primary);
-  cursor: grabbing;
-}
-
-/* 底部面板 */
-.worldbook-bottom-panel-header {
-  margin-top: 16px;
-  margin-bottom: 0;
-  padding-top: 16px;
-  border-top: 1px solid var(--el-border-color-lighter);
-  border-bottom: none;
 }
 
 .worldbook-bottom-panel-buttons {
@@ -534,16 +413,6 @@
     height: 100vh;
   }
 
-  .worldbook-desktop-panel-left {
-    width: 320px;
-    background: var(--el-bg-color);
-    border-radius: 4px;
-    border: 1px solid var(--el-border-color-lighter);
-    padding: 16px;
-    display: flex;
-    flex-direction: column;
-  }
-
   .worldbook-desktop-panel-right {
     background: var(--el-bg-color);
     border-radius: 4px;
@@ -553,95 +422,6 @@
     flex-direction: column;
     height: 100%;
     box-sizing: border-box;
-  }
-
-  .worldbook-add-button-desktop {
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .worldbook-add-icon-desktop {
-    font-size: 20px;
-  }
-
-  .worldbook-empty-list-desktop {
-    padding: 60px 20px;
-    text-align: center;
-  }
-
-  .worldbook-bottom-panel-header-desktop {
-    margin-top: auto;
-    padding-top: 16px;
-    border-top: 1px solid var(--el-border-color-lighter);
-  }
-
-  .worldbook-bottom-panel-buttons-desktop {
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .worldbook-bottom-button-desktop {
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .worldbook-bottom-button-icon-desktop {
-    font-size: 16px;
-  }
-
-  .worldbook-bottom-button-icon-delete-desktop {
-    font-size: 16px;
-  }
-
-  .worldbook-button-divider-desktop {
-    width: 1px;
-    height: 20px;
-    background: var(--el-border-color-lighter);
-    margin: 0 4px;
-  }
-
-  .worldbook-editor-buttons-desktop {
-    display: flex;
-    gap: 8px;
-  }
-
-  .worldbook-editor-button-desktop {
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .worldbook-editor-button-icon-desktop {
-    font-size: 16px;
-  }
-
-  .worldbook-editor-button-icon-delete-desktop {
-    font-size: 16px;
-  }
-
-  .worldbook-editor-empty-state-desktop {
-    padding: 100px 20px;
-    text-align: center;
-  }
-
-  .worldbook-editor-form-desktop {
-    padding: 16px;
   }
 
   /* 桌面端网格布局 */
@@ -679,28 +459,21 @@
   }
 }
 
-/* 响应式优化 */
-@media (min-width: 1200px) {
-  .worldbook-desktop-panel-left {
-    width: 360px;
-  }
-}
-
 /* 滚动条美化 */
-:deep(.el-scrollbar__wrap) {
+.el-scrollbar__wrap {
   overflow-x: hidden;
 }
 
-:deep(.el-scrollbar__bar) {
+.el-scrollbar__bar {
   opacity: 0.6;
 }
 
 /* Element Plus组件微调 */
-:deep(.el-tabs__item) {
+.el-tabs__item {
   padding: 0 16px;
 }
 
-:deep(.el-menu-item) {
+.el-menu-item {
   height: auto;
   min-height: 56px;
   line-height: 1.4;
@@ -722,40 +495,40 @@
   background-color: var(--el-color-primary-light-8);
 }
 
-:deep(.el-form-item) {
+.el-form-item {
   margin-bottom: 16px;
 }
 
-:deep(.el-input__wrapper) {
+.el-input__wrapper {
   box-shadow: 0 0 0 1px var(--el-border-color) inset;
 }
 
-:deep(.el-input__wrapper:hover) {
+.el-input__wrapper:hover {
   box-shadow: 0 0 0 1px var(--el-border-color-hover) inset;
 }
 
-:deep(.el-input__wrapper.is-focus) {
+.el-input__wrapper.is-focus {
   box-shadow: 0 0 0 1px #409eff inset;
 }
 
-:deep(.el-textarea__inner) {
+.el-textarea__inner {
   box-shadow: 0 0 0 1px var(--el-border-color) inset;
 }
 
-:deep(.el-textarea__inner:hover) {
+.el-textarea__inner:hover {
   box-shadow: 0 0 0 1px var(--el-border-color-hover) inset;
 }
 
-:deep(.el-textarea__inner:focus) {
+.el-textarea__inner:focus {
   box-shadow: 0 0 0 1px #409eff inset;
 }
 
 /* 标签式输入框样式 */
-:deep(.el-select__tags-text) {
+.el-select__tags-text {
   color: var(--el-color-primary-dark-2);
 }
 
-:deep(.el-tag--info .el-select__tags-text) {
+.el-tag--info .el-select__tags-text {
   color: var(--el-color-info-dark-2);
 }
 .advanced-options-toggle {
@@ -781,11 +554,6 @@
   color: var(--el-text-color-placeholder);
 }
 
-.form-divider {
-  border: none;
-  border-top: 1px solid var(--el-border-color-lighter);
-  margin: 8px 0;
-}
 /* Splitpanes 主题覆盖 */
 .splitpanes.default-theme .splitpanes__pane {
   background-color: transparent;

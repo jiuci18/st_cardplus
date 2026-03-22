@@ -292,15 +292,17 @@ export const worldBookService = {
       ...entry,
       bookId,
     }));
+    const sanitizedUpdatedBook = sanitizeForIndexedDB(updatedBook);
+    const sanitizedStoredEntries = sanitizeForIndexedDB(storedEntries);
 
     // 在事务中更新书籍和替换条目
     await db.transaction('rw', db.books, db.entries, async () => {
-      await db.books.put(updatedBook);
+      await db.books.put(sanitizedUpdatedBook);
       // 删除旧条目
       await db.entries.where('bookId').equals(bookId).delete();
       // 添加新条目
-      if (storedEntries.length > 0) {
-        await db.entries.bulkAdd(storedEntries);
+      if (sanitizedStoredEntries.length > 0) {
+        await db.entries.bulkAdd(sanitizedStoredEntries);
       }
     });
   },
@@ -366,12 +368,14 @@ export const worldBookService = {
       ...entry,
       bookId: newBookId,
     }));
+    const sanitizedNewBook = sanitizeForIndexedDB(newBook);
+    const sanitizedStoredEntries = sanitizeForIndexedDB(storedEntries);
 
     // 在事务中同时添加书籍和条目
     await db.transaction('rw', db.books, db.entries, async () => {
-      await db.books.add(newBook);
-      if (storedEntries.length > 0) {
-        await db.entries.bulkAdd(storedEntries);
+      await db.books.add(sanitizedNewBook);
+      if (sanitizedStoredEntries.length > 0) {
+        await db.entries.bulkAdd(sanitizedStoredEntries);
       }
     });
 
