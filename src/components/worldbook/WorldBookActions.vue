@@ -12,12 +12,7 @@
         :offset="8"
         :hide-after="0"
       >
-        <el-upload
-          action="#"
-          :before-upload="handleBookUpload"
-          :show-file-list="false"
-          accept=".json"
-        >
+        <BrowserFilePicker accept=".json" @select-first="handleBookUpload">
           <button class="btn-adv btn-primary-adv worldbook-bottom-button-text worldbook-primary-import">
             <Icon
               icon="ph:book-open-duotone"
@@ -28,7 +23,7 @@
             <span class="worldbook-button-text-short">导入</span>
             <span class="worldbook-button-text-long">导入世界书</span>
           </button>
-        </el-upload>
+        </BrowserFilePicker>
       </el-tooltip>
       <el-dropdown
         trigger="click"
@@ -183,7 +178,8 @@
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
-import { ElDropdown, ElDropdownItem, ElDropdownMenu, ElTooltip, ElUpload } from 'element-plus';
+import { ElDropdown, ElDropdownItem, ElDropdownMenu, ElTooltip } from 'element-plus';
+import BrowserFilePicker from '@/components/common/BrowserFilePicker.vue';
 
 interface Props {
   context: 'list' | 'editor';
@@ -268,9 +264,8 @@ const emit = defineEmits<{
   (e: 'toggle-mode'): void;
 }>();
 
-const handleBookUpload = (file: File): boolean => {
+const handleBookUpload = (file: File) => {
   emit('import-book-file', file);
-  return false; // Prevent el-upload's default behavior
 };
 
 const handleListCommand = (command: string) => {

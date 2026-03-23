@@ -59,12 +59,11 @@
           </template>
         </el-dropdown>
       </div>
-      <input
-        type="file"
-        ref="fileInput"
-        @change="handleFileImport"
-        style="display: none"
+      <BrowserFilePicker
+        ref="filePickerRef"
         accept=".json"
+        :trigger-on-click="false"
+        @select-first="handleFileImport"
       />
     </template>
 
@@ -135,6 +134,7 @@
 import { computed, ref } from 'vue';
 import { ElTooltip, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus';
 import { Icon } from '@iconify/vue';
+import BrowserFilePicker from '@/components/common/BrowserFilePicker.vue';
 import SidebarTreePanel from '@/components/layout/common/SidebarTreePanel.vue';
 import type { CharacterCard, CharacterProject } from '../../types/character';
 import { useCharacterProjectTree, type CharacterOrderPatch } from '../../composables/characterInfo/useCharacterProjectTree';
@@ -157,7 +157,7 @@ const emit = defineEmits<{
   (e: 'rename-project', id: string): void;
 }>();
 
-const fileInput = ref<HTMLInputElement | null>(null);
+const filePickerRef = ref<InstanceType<typeof BrowserFilePicker> | null>(null);
 const props = defineProps<Props>();
 const defaultExpandedKeys = computed<Array<string | number>>(() =>
   props.projects.map((project) => `project:${project.id}`)
@@ -179,16 +179,11 @@ const {
 });
 
 const triggerFileInput = () => {
-  fileInput.value?.click();
+  filePickerRef.value?.open();
 };
 
-const handleFileImport = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  if (target.files && target.files[0]) {
-    const file = target.files[0];
-    emit('import', file);
-    target.value = '';
-  }
+const handleFileImport = (file: File) => {
+  emit('import', file);
 };
 
 const handleHeaderCommand = (command: string) => {

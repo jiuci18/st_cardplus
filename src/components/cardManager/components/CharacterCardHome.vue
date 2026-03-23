@@ -14,12 +14,11 @@
         >
           创建角色卡
         </el-button>
-        <el-button
-          @click="triggerImport"
-          :icon="FolderOpened"
-        >
-          导入文件
-        </el-button>
+        <BrowserFilePicker accept=".json,.png" multiple @select="handleFileChange">
+          <el-button :icon="FolderOpened">
+            导入文件
+          </el-button>
+        </BrowserFilePicker>
         <el-dropdown @command="handleMenuCommand">
           <el-button :icon="MoreFilled">更多操作</el-button>
           <template #dropdown>
@@ -40,14 +39,6 @@
             </el-dropdown-menu>
           </template>
         </el-dropdown>
-        <input
-          ref="fileInput"
-          type="file"
-          accept=".json,.png"
-          multiple
-          style="display: none"
-          @change="handleFileChange"
-        />
       </div>
     </div>
 
@@ -184,6 +175,7 @@
 </template>
 
 <script setup lang="ts">
+import BrowserFilePicker from '@/components/common/BrowserFilePicker.vue';
 import { formatDate, now, toDateSafe } from '@/utils/datetime';
 import type { CharacterCardCollection } from '@/types/character-card-collection';
 import { Delete, Download, FolderOpened, MoreFilled, Plus, Search } from '@element-plus/icons-vue';
@@ -221,7 +213,6 @@ const emit = defineEmits<{
 
 const searchQuery = ref('');
 const selectedTags = ref<string[]>([]);
-const fileInput = ref<HTMLInputElement>();
 
 // 计算所有卡片
 const allCards = computed(() => {
@@ -280,21 +271,10 @@ const handleCardClick = (cardId: string, cardName: string) => {
   emit('open-card', cardId, cardName);
 };
 
-// 触发文件导入
-const triggerImport = () => {
-  fileInput.value?.click();
-};
-
 // 文件选择变化
-const handleFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const files = target.files;
-  if (files && files.length > 0) {
-    for (let i = 0; i < files.length; i++) {
-      emit('import-file', files[i]);
-    }
-    // 清空文件输入，允许重复选择同一文件
-    target.value = '';
+const handleFileChange = (files: File[]) => {
+  if (files.length > 0) {
+    files.forEach((file) => emit('import-file', file));
   }
 };
 

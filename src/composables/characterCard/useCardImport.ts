@@ -18,30 +18,20 @@ export function useCardImport(
 ) {
   const isUploading = ref(false);
   const uploadProgress = ref('');
-  const fileInput = ref<HTMLInputElement | null>(null);
 
-  const triggerFileInput = () => {
-    fileInput.value?.click();
-  };
-
-  const handleFileSelected = async (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    if (!target.files || !target.files[0]) {
+  const handleFileSelected = async (file: File) => {
+    if (!file) {
       console.warn('useCardImport: No file selected');
       return;
     }
 
-    const file = target.files[0];
-
     if (!file.type.startsWith('image/')) {
       ElMessage.error('请选择有效的图片文件');
-      target.value = '';
       return;
     }
 
     if (!file.type.includes('png')) {
       ElMessage.error('智能导入功能仅支持PNG文件');
-      target.value = '';
       return;
     }
 
@@ -83,17 +73,12 @@ export function useCardImport(
     } finally {
       isUploading.value = false;
       uploadProgress.value = '';
-      if (target) {
-        target.value = '';
-      }
     }
   };
 
   return {
     isUploading,
     uploadProgress,
-    fileInput,
-    triggerFileInput,
     handleFileSelected,
   };
 }

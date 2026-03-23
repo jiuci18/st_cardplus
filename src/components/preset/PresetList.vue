@@ -200,12 +200,7 @@
           :offset="8"
           :hide-after="0"
         >
-          <el-upload
-            action="#"
-            :before-upload="handleImportPreset"
-            :show-file-list="false"
-            accept=".json"
-          >
+          <BrowserFilePicker accept=".json" @select-first="handleImportPreset">
             <button class="btn-adv btn-warning-adv preset-bottom-button-text">
               <Icon
                 icon="ph:file-text-duotone"
@@ -216,7 +211,7 @@
               <span class="preset-button-text-short">导入</span>
               <span class="preset-button-text-long">input</span>
             </button>
-          </el-upload>
+          </BrowserFilePicker>
         </el-tooltip>
       </div>
     </template>
@@ -225,9 +220,10 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { ElTooltip, ElUpload } from 'element-plus';
+import { ElTooltip } from 'element-plus';
 import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
 import { Icon } from '@iconify/vue';
+import BrowserFilePicker from '@/components/common/BrowserFilePicker.vue';
 import SidebarTreePanel from '@/components/layout/common/SidebarTreePanel.vue';
 import type { StoredPresetFile } from '@/database/db';
 import {
@@ -348,9 +344,8 @@ const isMultiSelected = (data: any) => {
   return props.multiSelectedNodeKeys.includes(nodeKey);
 };
 
-const handleImportPreset = (file: File): boolean => {
+const handleImportPreset = (file: File) => {
   emit('import-preset', file);
-  return false;
 };
 
 const isProtectedPrompt = (prompt: Record<string, any> | undefined) => {
