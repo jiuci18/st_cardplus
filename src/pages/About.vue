@@ -34,9 +34,8 @@
     <div class="links-card">
       <h2 class="section-title">链接</h2>
       <div class="links-row">
-        <a
+        <ExternalLink
           href="https://github.com/awaae001/st_cardplus"
-          target="_blank"
           class="link-item"
         >
           <Icon
@@ -48,10 +47,9 @@
             GitHub
             <small>查看源码与贡献</small>
           </span>
-        </a>
-        <a
+        </ExternalLink>
+        <ExternalLink
           href="https://doc.awaae001.top/"
-          target="_blank"
           class="link-item"
         >
           <Icon
@@ -63,10 +61,9 @@
             文档站
             <small>查看使用文档</small>
           </span>
-        </a>
-        <a
+        </ExternalLink>
+        <ExternalLink
           href="https://discord.gg/KH6rHAGBXD"
-          target="_blank"
           class="link-item"
         >
           <Icon
@@ -78,11 +75,10 @@
             Discord
             <small>获取帮助与反馈</small>
           </span>
-        </a>
+        </ExternalLink>
         <template v-if="isMainDomain">
-          <a
+          <ExternalLink
             href="https://autopatchcn.yuanshen.com/client_app/download/launcher/20241225164539_9oyGHAOXvzP4uaBW/mihoyo/yuanshen_setup_202412201736.exe"
-            target="_blank"
             class="link-item"
           >
             <Icon
@@ -94,10 +90,9 @@
               高级版
               <small>解锁更多功能</small>
             </span>
-          </a>
-          <a
+          </ExternalLink>
+          <ExternalLink
             href="https://dev.st-cardplus-1kl.pages.dev/"
-            target="_blank"
             class="link-item"
           >
             <Icon
@@ -109,7 +104,7 @@
               测试版
               <small>抢先体验新功能</small>
             </span>
-          </a>
+          </ExternalLink>
         </template>
       </div>
     </div>
@@ -175,14 +170,13 @@
               <div class="commit-main">
                 <span class="commit-message">{{ log.message }}</span>
                 <div class="commit-meta">
-                  <a
+                  <ExternalLink
                     :href="log.html_url"
-                    target="_blank"
                     class="commit-hash"
                     @click.stop
                   >
                     {{ log.sha.substring(0, 7) }}
-                  </a>
+                  </ExternalLink>
                   <span class="commit-date">{{ formatDate(log.date) }}</span>
                 </div>
               </div>
@@ -219,6 +213,7 @@
 </template>
 
 <script setup lang="ts">
+import ExternalLink from '@/components/common/ExternalLink.vue';
 import SystemBanner from '@/components/SystemBanner.vue';
 import { formatDate } from '@/utils/datetime';
 import { Icon } from '@iconify/vue';

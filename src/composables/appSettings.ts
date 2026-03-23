@@ -76,7 +76,8 @@ export const getAppSettings = (models: AppSettingsModels, handlers: AppSettingsH
       label: 'ImgBB API Key',
       icon: 'material-symbols:key-outline',
       iconColor: 'var(--el-color-primary)',
-      description: '用于上传图片到 ImgBB。你可以点击<a href="https://api.imgbb.com/" target="_blank" style="color: var(--el-color-primary);">这里</a>获取 API Key',
+      description:
+        '用于上传图片到 ImgBB。你可以点击<a href="https://api.imgbb.com/" target="_blank" rel="noopener noreferrer" data-external-link="true" style="color: var(--el-color-primary);">这里</a>获取 API Key',
       type: 'passwordInput',
       model: models.imgbbApiKey,
       handler: handlers.onImgbbApiKeyChange,

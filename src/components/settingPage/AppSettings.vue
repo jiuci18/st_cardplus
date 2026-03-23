@@ -8,13 +8,11 @@
     <template #title>想要贡献？来贡献文档吧！</template>
     <template #default>
       文档贡献地址：
-      <a
+      <ExternalLink
         href="https://github.com/awaae001/doc"
-        target="_blank"
-        rel="noopener noreferrer"
       >
         https://github.com/awaae001/doc
-      </a>
+      </ExternalLink>
     </template>
   </el-alert>
   <div class="app-settings">
@@ -189,8 +187,10 @@
 </template>
 
 <script setup lang="ts">
+import ExternalLink from '@/components/common/ExternalLink.vue';
 import { getAppSettings } from '@/composables/appSettings';
 import { useAppUpdate } from '@/composables/useAppUpdate';
+import { openExternalUrl } from '@/utils/externalLink';
 import { isTauriApp } from '@/utils/imageHosting';
 import { getSetting, setSetting } from '@/utils/localStorageUtils';
 import { Icon } from '@iconify/vue';
@@ -239,7 +239,7 @@ const onBetaFeaturesToggle = (value: boolean) => {
             <p>这些功能可能会在没有事先通知的情况下发生变化或被移除</p>
             <p>在一般情况下，测试版将会带来更多<b>破坏性更新</b>，这可能导致您的创意丢失或者难以寻回</p>
             <p><strong>使用测试版功能即表示您理解并接受这些风险</strong></p>
-            <p>我鼓励您通过 <a href="https://github.com/awaae001/st_cardplus/issues" target="_blank" style="color: var(--el-color-primary);">GitHub Issues</a> 反馈问题，但请注意，我可能无法提供即时支持 </p>
+            <p>我鼓励您通过 <a href="https://github.com/awaae001/st_cardplus/issues" target="_blank" rel="noopener noreferrer" data-external-link="true" style="color: var(--el-color-primary);">GitHub Issues</a> 反馈问题，但请注意，我可能无法提供即时支持 </p>
           </div>
         `,
       '启用测试版功能',
@@ -388,7 +388,9 @@ const handleUpdateIgnoreAction = () => {
 };
 
 const openUpdateGuide = () => {
-  window.open(updateGuideUrl, '_blank', 'noopener,noreferrer');
+  void openExternalUrl(updateGuideUrl).catch((error) => {
+    console.error('打开更新说明失败:', error);
+  });
 };
 
 const settings = computed(() =>

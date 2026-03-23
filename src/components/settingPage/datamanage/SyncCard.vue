@@ -58,10 +58,10 @@
           需要创建 Personal Access Token 并赋予
           <code>gist</code>
           权限
-          <a href="https://github.com/settings/tokens/new?scopes=gist&description=ST-CardPlus-Sync" target="_blank"
+          <ExternalLink href="https://github.com/settings/tokens/new?scopes=gist&description=ST-CardPlus-Sync"
             style="color: var(--el-color-primary)">
             创建 Token
-          </a>
+          </ExternalLink>
           <br />
           <span style="color: var(--el-color-info); font-size: 12px">
             💡 单文件最大 100MB, Gist 总计最大 1GB · 首次推送自动创建 Gist, 后续更新同一个 Gist
@@ -100,6 +100,7 @@
 
 <script setup lang="ts">
 import { syncInjectionKey } from '@/composables/dataManagement/useSync';
+import ExternalLink from '@/components/common/ExternalLink.vue';
 import { Icon } from '@iconify/vue';
 import { computed, inject } from 'vue';
 

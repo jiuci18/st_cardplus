@@ -25,6 +25,7 @@ import {
 import { useSyncProgress } from './sync/progress';
 import { applyBackupData, buildBackupData, readSnapshot, restoreFromSnapshot, saveSnapshot } from './sync/storage';
 import type { SyncProvider, TransferProgress, WebDAVConfig } from '@/types/dataSync';
+import { openExternalUrl } from '@/utils/externalLink';
 
 export function useSync() {
   const webdavConfig = ref<WebDAVConfig>({ url: '', username: '', password: '' });
@@ -71,7 +72,9 @@ export function useSync() {
   };
 
   const openGistTokenHelp = () => {
-    window.open('https://github.com/settings/tokens/new?scopes=gist&description=ST-CardPlus-Sync', '_blank');
+    void openExternalUrl('https://github.com/settings/tokens/new?scopes=gist&description=ST-CardPlus-Sync').catch((error) => {
+      console.error('打开 Gist Token 页面失败:', error);
+    });
   };
 
   const initialize = () => {

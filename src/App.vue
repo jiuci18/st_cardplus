@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref} from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { RouterView } from 'vue-router';
 
 import AppSidebar from '@/components/layout/AppSidebar.vue';
@@ -40,6 +40,7 @@ import { provideNavigation } from '@/composables/useNavigation';
 import { usePersonalization } from '@/composables/usePersonalization';
 import { syncUmamiTelemetry } from '@/composables/useUmamiTelemetry';
 
+import { installExternalLinkInterceptor } from '@/utils/externalLink';
 import { getSetting } from '@/utils/localStorageUtils';
 
 const { sidebarConfig, refreshSidebarConfig } = usePersonalization();
@@ -47,6 +48,7 @@ const { checkForAppUpdate } = useAppUpdate();
 const betaFeaturesEnabled = ref(false);
 const umamiEnabled = ref(true);
 const drawerVisible = ref(false);
+let removeExternalLinkInterceptor: (() => void) | null = null;
 
 
 const mainMenuItems = computed(() => {
@@ -83,12 +85,15 @@ onMounted(() => {
   void syncUmamiTelemetry(umamiEnabled.value).catch((error) => {
     console.error('初始化 Umami 遥测失败:', error);
   });
+  removeExternalLinkInterceptor = installExternalLinkInterceptor();
   window.addEventListener('betaFeaturesToggle', handleBetaFeaturesToggle);
   window.addEventListener('umamiToggle', handleUmamiToggle);
   window.addEventListener('sidebarConfigChange', handleSidebarConfigChange as EventListener);
 });
 
 onUnmounted(() => {
+  removeExternalLinkInterceptor?.();
+  removeExternalLinkInterceptor = null;
   window.removeEventListener('betaFeaturesToggle', handleBetaFeaturesToggle);
   window.removeEventListener('umamiToggle', handleUmamiToggle);
   window.removeEventListener('sidebarConfigChange', handleSidebarConfigChange as EventListener);

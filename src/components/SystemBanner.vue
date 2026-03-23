@@ -5,15 +5,13 @@
   >
     <span class="banner-message">{{ bannerMessage }}</span>
     <div class="banner-actions">
-      <a
+      <ExternalLink
         v-if="bannerLink"
         :href="bannerLink"
-        target="_blank"
-        rel="noopener noreferrer"
         class="banner-link"
       >
         {{ bannerLinkText }}
-      </a>
+      </ExternalLink>
       <button
         v-if="props.dismissible"
         class="banner-dismiss"
@@ -26,6 +24,7 @@
 </template>
 
 <script setup lang="ts">
+import ExternalLink from '@/components/common/ExternalLink.vue';
 import { now, toDateSafe } from '@/utils/datetime';
 import { onMounted, ref } from 'vue';
 
