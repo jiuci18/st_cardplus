@@ -1,19 +1,35 @@
 <template>
-  <el-alert type="info" show-icon :closable="false" style="margin-bottom: 12px">
+  <el-alert
+    type="info"
+    show-icon
+    :closable="false"
+    style="margin-bottom: 12px"
+  >
     <template #title>想要贡献？来贡献文档吧！</template>
     <template #default>
       文档贡献地址：
-      <a href="https://github.com/awaae001/doc" target="_blank" rel="noopener noreferrer">
+      <a
+        href="https://github.com/awaae001/doc"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         https://github.com/awaae001/doc
       </a>
     </template>
   </el-alert>
   <div class="app-settings">
-    <div class="setting-card update-card" :class="{ 'is-web-masked': showWebUpdateMask }">
+    <div
+      class="setting-card update-card"
+      :class="{ 'is-web-masked': showWebUpdateMask }"
+    >
       <div class="setting-content">
         <div class="update-header-row">
           <p class="update-eyebrow">当前更新 - {{ updateStatusText }}</p>
-          <el-button type="primary" size="small" @click="openUpdateGuide">
+          <el-button
+            type="primary"
+            size="small"
+            @click="openUpdateGuide"
+          >
             前往更新
           </el-button>
         </div>
@@ -27,15 +43,40 @@
             <div class="update-section">
               <p class="update-section-label">元数据 / 提交内容</p>
               <p class="update-metadata-text">{{ remoteMetadataText }}</p>
-              <p class="update-quote">「{{ updateContentText }}」</p>
+              <div
+                ref="updateQuoteRef"
+                class="update-quote-wrapper overflow-hidden transition-[max-height] duration-300 ease-out"
+                :class="{ 'is-collapsed': isUpdateContentOverflowing && !isUpdateContentExpanded }"
+                :style="{ maxHeight: updateQuoteMaxHeight }"
+              >
+                <p class="update-quote">「{{ updateContentText }}」</p>
+              </div>
+              <div
+                v-if="isUpdateContentOverflowing"
+                class="update-quote-actions"
+              >
+                <el-button
+                  link
+                  size="small"
+                  @click="isUpdateContentExpanded = !isUpdateContentExpanded"
+                >
+                  {{ isUpdateContentExpanded ? '收起' : '展开全文' }}
+                </el-button>
+              </div>
             </div>
 
-            <p v-if="updateCheckError" class="update-error-note">
+            <p
+              v-if="updateCheckError"
+              class="update-error-note"
+            >
               检查失败：{{ updateCheckError }}
             </p>
           </div>
         </div>
-        <div v-if="showWebUpdateMask" class="update-web-mask">
+        <div
+          v-if="showWebUpdateMask"
+          class="update-web-mask"
+        >
           <div class="update-web-mask-content">
             <div class="update-web-mask-text">
               网页端滚动更新
@@ -43,8 +84,13 @@
               记得备份
             </div>
             <div class="update-web-mask-actions">
-              <el-button type="primary" plain size="small" class="update-web-mask-action"
-                @click.stop="showWebUpdateMask = false">
+              <el-button
+                type="primary"
+                plain
+                size="small"
+                class="update-web-mask-action"
+                @click.stop="showWebUpdateMask = false"
+              >
                 窝就要看
               </el-button>
             </div>
@@ -57,42 +103,86 @@
             <span class="update-footer-text">{{ currentLocationText }}</span>
           </div>
           <div class="update-ignore-control">
-            <el-select v-model="ignoreUpdateDays" size="small" class="ignore-days-select">
-              <el-option v-for="day in ignoreDayOptions" :key="day" :label="day < 0 ? '永久' : `${day} 天`" :value="day" />
+            <el-select
+              v-model="ignoreUpdateDays"
+              size="small"
+              class="ignore-days-select"
+            >
+              <el-option
+                v-for="day in ignoreDayOptions"
+                :key="day"
+                :label="day < 0 ? '永久' : `${day} 天`"
+                :value="day"
+              />
             </el-select>
-            <el-button type="warning" plain @click="handleUpdateIgnoreAction">
-              {{ isUpdateIgnored ? '解除忽略' : `忽略更新（${ignoreUpdateDays < 0 ? '永久' : `${ignoreUpdateDays} 天`}` }}
-                </el-button>
+            <el-button
+              type="warning"
+              plain
+              @click="handleUpdateIgnoreAction"
+            >
+              {{
+                isUpdateIgnored ? '解除忽略' : `忽略更新（${ignoreUpdateDays < 0 ? '永久' : `${ignoreUpdateDays} 天`}`
+              }}
+            </el-button>
           </div>
         </div>
       </div>
     </div>
 
-    <div v-for="setting in settings" :key="setting.id" class="setting-card">
+    <div
+      v-for="setting in settings"
+      :key="setting.id"
+      class="setting-card"
+    >
       <div class="setting-content">
         <div class="setting-header">
           <div class="setting-info">
             <span class="setting-label">{{ setting.label }}</span>
-            <Icon :icon="setting.icon" width="20" height="20"
-              :style="{ marginLeft: '8px', color: setting.iconColor }" />
+            <Icon
+              :icon="setting.icon"
+              width="20"
+              height="20"
+              :style="{ marginLeft: '8px', color: setting.iconColor }"
+            />
           </div>
           <template v-if="setting.type === 'switch'">
-            <el-switch v-model="setting.model.value" @change="setting.handler" size="large"
-              :disabled="setting.disabled" />
+            <el-switch
+              v-model="setting.model.value"
+              @change="setting.handler"
+              size="large"
+              :disabled="setting.disabled"
+            />
           </template>
           <template v-else-if="setting.type === 'numberInput'">
             <div class="interval-control">
-              <el-input-number v-model="setting.model.value" @change="setting.handler" :min="setting.min"
-                :max="setting.max" :step="setting.step" size="small" style="width: 100px" />
+              <el-input-number
+                v-model="setting.model.value"
+                @change="setting.handler"
+                :min="setting.min"
+                :max="setting.max"
+                :step="setting.step"
+                size="small"
+                style="width: 100px"
+              />
               <span class="interval-unit">{{ setting.unit }}</span>
             </div>
           </template>
           <template v-else-if="setting.type === 'passwordInput'">
-            <el-input v-model="setting.model.value" @input="setting.handler" type="password" show-password clearable
-              :placeholder="setting.placeholder" class="setting-password-input" />
+            <el-input
+              v-model="setting.model.value"
+              @input="setting.handler"
+              type="password"
+              show-password
+              clearable
+              :placeholder="setting.placeholder"
+              class="setting-password-input"
+            />
           </template>
         </div>
-        <p class="setting-description" v-html="setting.description"></p>
+        <p
+          class="setting-description"
+          v-html="setting.description"
+        ></p>
       </div>
     </div>
   </div>
@@ -105,7 +195,7 @@ import { isTauriApp } from '@/utils/imageHosting';
 import { getSetting, setSetting } from '@/utils/localStorageUtils';
 import { Icon } from '@iconify/vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { computed, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const betaFeaturesEnabled = ref(false);
 const umamiEnabled = ref(true);
@@ -115,6 +205,11 @@ const imgbbApiKey = ref('');
 const ignoreUpdateDays = ref(7);
 const ignoreDayOptions = [-1, 1, 3, 7, 14, 30];
 const showWebUpdateMask = ref(!isTauriApp());
+const updateQuoteRef = ref<HTMLElement | null>(null);
+const updateQuoteMaxHeight = ref('none');
+const isUpdateContentExpanded = ref(false);
+const isUpdateContentOverflowing = ref(false);
+const UPDATE_CONTENT_COLLAPSED_LINES = 6;
 const {
   currentVersion,
   currentCommitHash,
@@ -231,6 +326,48 @@ const currentLocationText = computed(() => {
   return `${currentChannel}[${currentCommitHash}](V - ${currentVersion})`;
 });
 
+const resolveCollapsedUpdateContentHeight = (element: HTMLElement) => {
+  const computedStyle = window.getComputedStyle(element);
+  const lineHeight = Number.parseFloat(computedStyle.lineHeight);
+  const fontSize = Number.parseFloat(computedStyle.fontSize);
+  const resolvedLineHeight = Number.isFinite(lineHeight) ? lineHeight : fontSize * 1.6;
+
+  return resolvedLineHeight * UPDATE_CONTENT_COLLAPSED_LINES;
+};
+
+const measureUpdateContentOverflow = () => {
+  const element = updateQuoteRef.value;
+
+  if (!element) {
+    updateQuoteMaxHeight.value = 'none';
+    isUpdateContentOverflowing.value = false;
+    return;
+  }
+
+  const collapsedMaxHeight = resolveCollapsedUpdateContentHeight(element);
+  const fullHeight = element.scrollHeight;
+
+  isUpdateContentOverflowing.value = fullHeight > collapsedMaxHeight + 1;
+
+  if (!isUpdateContentOverflowing.value) {
+    isUpdateContentExpanded.value = false;
+  }
+
+  updateQuoteMaxHeight.value = `${Math.max(
+    0,
+    Math.ceil(isUpdateContentOverflowing.value && !isUpdateContentExpanded.value ? collapsedMaxHeight : fullHeight)
+  )}px`;
+};
+
+const syncUpdateContentOverflow = async () => {
+  await nextTick();
+  measureUpdateContentOverflow();
+};
+
+const handleUpdateContentResize = () => {
+  void syncUpdateContentOverflow();
+};
+
 const handleIgnoreUpdate = () => {
   ignoreAppUpdateForDays(ignoreUpdateDays.value);
   ElMessage.success(ignoreUpdateDays.value < 0 ? '已永久忽略更新提醒' : `已忽略更新提醒 ${ignoreUpdateDays.value} 天`);
@@ -279,7 +416,22 @@ onMounted(() => {
   autoSaveInterval.value = getSetting('autoSaveInterval');
   autoSaveDebounce.value = getSetting('autoSaveDebounce');
   imgbbApiKey.value = getSetting('imgbbApiKey');
+  window.addEventListener('resize', handleUpdateContentResize);
+  void syncUpdateContentOverflow();
   void checkForAppUpdate();
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleUpdateContentResize);
+});
+
+watch(updateContentText, () => {
+  isUpdateContentExpanded.value = false;
+  void syncUpdateContentOverflow();
+});
+
+watch(isUpdateContentExpanded, () => {
+  void syncUpdateContentOverflow();
 });
 </script>
 
@@ -404,7 +556,30 @@ onMounted(() => {
 }
 
 .update-quote {
+  margin-top: 0;
   white-space: pre-wrap;
+}
+
+.update-quote-wrapper {
+  position: relative;
+  margin-top: 0.45rem;
+}
+
+.update-quote-wrapper.is-collapsed::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2.8rem;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, var(--el-fill-color-light) 100%);
+}
+
+.update-quote-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.35rem;
 }
 
 .update-error-note {
