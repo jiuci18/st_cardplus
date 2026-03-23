@@ -218,6 +218,10 @@ onActivated(() => {
   margin: 0;
 }
 
+.update-notice-note {
+  white-space: pre-wrap;
+}
+
 .update-notice-title {
   font-size: 0.9rem;
   font-weight: 600;

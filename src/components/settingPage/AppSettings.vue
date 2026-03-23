@@ -219,7 +219,7 @@ const updateStatusText = computed(() => {
 const updateContentText = computed(() => {
   const title = latestUpdateTitle.value.trim();
   const description = latestUpdateDescription.value.trim();
-  if (title && description) return `${title} / ${description}`;
+  if (title && description) return `${title}\n${description}`;
   if (title) return title;
   if (description) return description;
   if (detectedUpdateAvailable.value) return '这次更新没有附带额外说明。';
@@ -401,6 +401,10 @@ onMounted(() => {
 
 .update-metadata-text {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.update-quote {
+  white-space: pre-wrap;
 }
 
 .update-error-note {
