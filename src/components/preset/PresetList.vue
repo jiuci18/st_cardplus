@@ -228,7 +228,7 @@ import { computed } from 'vue';
 import { ElTooltip, ElUpload } from 'element-plus';
 import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
 import { Icon } from '@iconify/vue';
-import SidebarTreePanel from '../common/SidebarTreePanel.vue';
+import SidebarTreePanel from '@/components/layout/common/SidebarTreePanel.vue';
 import type { StoredPresetFile } from '@/database/db';
 import {
   buildPresetTreeData,
@@ -365,7 +365,7 @@ const isFullyLockedPrompt = (prompt: Record<string, any> | undefined) => {
 </script>
 
 <style scoped>
-@import '@/styles/split-create-actions.css';
+@import '@/css/split-create-actions.css';
 
 .preset-footer-actions {
   display: flex;

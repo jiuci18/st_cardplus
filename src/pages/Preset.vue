@@ -1,170 +1,79 @@
 <template>
   <div class="preset-page">
-    <div
-      v-if="isMobileOrTablet"
-      class="preset-mobile-layout"
-    >
-      <PresetEditor
-        v-model:active-tab="activeEditorTab"
-        v-model:editor-state="editorState"
-        :active-preset="activePreset"
-        :selected-prompt="selectedPrompt"
-        :selected-regex-index="selectedRegexIndex"
-        :has-previous-preset="hasPreviousPreset"
-        :has-next-preset="hasNextPreset"
-        :has-previous-prompt="hasPreviousPrompt"
-        :has-next-prompt="hasNextPrompt"
-        :save-status="presetAutoSave.saveStatus.value"
-        :auto-save-mode="presetAutoSave.autoSaveMode.value"
-        @save="handleManualSave"
-        @toggle-mode="presetAutoSave.toggleAutoSaveMode"
-        @add-clipboard="addEditorToClipboard"
-        @open-first-prompt="handleOpenFirstPrompt"
-        @select-regex="selectRegex"
-        @add-regex="handleAddRegexFromEditor"
-        @delete-regex="handleDeleteRegexFromEditor"
-        @go-previous="goToPrevious"
-        @go-next="goToNext"
-      />
+    <div v-if="isMobileOrTablet" class="preset-mobile-layout">
+      <PresetEditor v-model:active-tab="activeEditorTab" v-model:editor-state="editorState"
+        :active-preset="activePreset" :selected-prompt="selectedPrompt" :selected-regex-index="selectedRegexIndex"
+        :has-previous-preset="hasPreviousPreset" :has-next-preset="hasNextPreset"
+        :has-previous-prompt="hasPreviousPrompt" :has-next-prompt="hasNextPrompt"
+        :save-status="presetAutoSave.saveStatus.value" :auto-save-mode="presetAutoSave.autoSaveMode.value"
+        @save="handleManualSave" @toggle-mode="presetAutoSave.toggleAutoSaveMode" @add-clipboard="addEditorToClipboard"
+        @open-first-prompt="handleOpenFirstPrompt" @select-regex="selectRegex" @add-regex="handleAddRegexFromEditor"
+        @delete-regex="handleDeleteRegexFromEditor" @go-previous="goToPrevious" @go-next="goToNext" />
 
       <div class="mobile-bookmark-group">
-        <button
-          type="button"
-          class="mobile-bookmark-btn"
-          :class="{ active: mobilePanelTab === 'list' && mobileDrawerVisible }"
-          @click="openMobilePanel('list')"
-        >
-          <Icon
-            icon="ph:tree-structure-duotone"
-            class="bookmark-icon"
-          />
+        <button type="button" class="mobile-bookmark-btn"
+          :class="{ active: mobilePanelTab === 'list' && mobileDrawerVisible }" @click="openMobilePanel('list')">
+          <Icon icon="ph:tree-structure-duotone" class="bookmark-icon" />
           预设
         </button>
-        <button
-          type="button"
-          class="mobile-bookmark-btn"
+        <button type="button" class="mobile-bookmark-btn"
           :class="{ active: mobilePanelTab === 'clipboard' && mobileDrawerVisible }"
-          @click="openMobilePanel('clipboard')"
-        >
-          <Icon
-            icon="ph:clipboard-text-duotone"
-            class="bookmark-icon"
-          />
+          @click="openMobilePanel('clipboard')">
+          <Icon icon="ph:clipboard-text-duotone" class="bookmark-icon" />
           剪贴
         </button>
-        <button
-          type="button"
-          class="mobile-bookmark-btn"
-          :class="{ active: mobilePanelTab === 'preview' && mobileDrawerVisible }"
-          @click="openMobilePanel('preview')"
-        >
-          <Icon
-            icon="ph:eye-duotone"
-            class="bookmark-icon"
-          />
+        <button type="button" class="mobile-bookmark-btn"
+          :class="{ active: mobilePanelTab === 'preview' && mobileDrawerVisible }" @click="openMobilePanel('preview')">
+          <Icon icon="ph:eye-duotone" class="bookmark-icon" />
           预览
         </button>
       </div>
 
-      <el-drawer
-        v-model="mobileDrawerVisible"
-        direction="rtl"
-        :with-header="false"
-        size="86%"
-        append-to-body
-        class="preset-mobile-drawer"
-      >
+      <el-drawer v-model="mobileDrawerVisible" direction="rtl" :with-header="false" size="86%" append-to-body
+        class="preset-mobile-drawer">
         <div class="mobile-drawer-inner">
           <div class="mobile-drawer-header">
             <div class="mobile-drawer-title">{{ mobilePanelTitle }}</div>
-            <el-button
-              size="small"
-              text
-              @click="mobileDrawerVisible = false"
-            >
+            <el-button size="small" text @click="mobileDrawerVisible = false">
               关闭
             </el-button>
           </div>
           <div class="mobile-drawer-tabs">
-            <button
-              type="button"
-              class="mobile-drawer-tab"
-              :class="{ active: mobilePanelTab === 'list' }"
-              @click="mobilePanelTab = 'list'"
-            >
+            <button type="button" class="mobile-drawer-tab" :class="{ active: mobilePanelTab === 'list' }"
+              @click="mobilePanelTab = 'list'">
               预设
             </button>
-            <button
-              type="button"
-              class="mobile-drawer-tab"
-              :class="{ active: mobilePanelTab === 'clipboard' }"
-              @click="mobilePanelTab = 'clipboard'"
-            >
+            <button type="button" class="mobile-drawer-tab" :class="{ active: mobilePanelTab === 'clipboard' }"
+              @click="mobilePanelTab = 'clipboard'">
               剪贴
             </button>
-            <button
-              type="button"
-              class="mobile-drawer-tab"
-              :class="{ active: mobilePanelTab === 'preview' }"
-              @click="mobilePanelTab = 'preview'"
-            >
+            <button type="button" class="mobile-drawer-tab" :class="{ active: mobilePanelTab === 'preview' }"
+              @click="mobilePanelTab = 'preview'">
               预览
             </button>
           </div>
 
           <div class="mobile-drawer-body">
-            <div
-              v-show="mobilePanelTab === 'list'"
-              class="mobile-drawer-pane"
-            >
-              <PresetList
-                :presets="presets"
-                :active-preset-id="activePresetId"
-                :selected-prompt-index="selectedPromptIndex"
-                :selected-regex-index="selectedRegexIndex"
-                :selected-is-header="selectedIsHeader"
-                :multi-selected-node-keys="multiSelectedNodeKeys"
-                :drag-drop-handlers="dragDropHandlers"
-                @create-preset="createPreset"
-                @rename-preset="handleRenamePreset"
-                @delete-preset="handleDeletePreset"
-                @select-preset="handleSelectPreset"
-                @select-header="handleSelectHeader"
-                @select-prompt="handleSelectPrompt"
-                @select-regex="handleSelectRegex"
-                @toggle-prompt-enabled="togglePromptEnabled"
-                @toggle-node-selection="handleToggleNodeSelection"
-                @add-prompt="addPrompt"
-                @add-regex="addRegexScript"
-                @duplicate-prompt="duplicatePrompt"
-                @delete-prompt="removePrompt"
-                @delete-regex="removeRegexScript"
-                @export-preset="handleExportPreset"
-                @import-preset="handleImportPreset"
-              />
+            <div v-show="mobilePanelTab === 'list'" class="mobile-drawer-pane">
+              <PresetList :presets="presets" :active-preset-id="activePresetId"
+                :selected-prompt-index="selectedPromptIndex" :selected-regex-index="selectedRegexIndex"
+                :selected-is-header="selectedIsHeader" :multi-selected-node-keys="multiSelectedNodeKeys"
+                :drag-drop-handlers="dragDropHandlers" @create-preset="createPreset" @rename-preset="handleRenamePreset"
+                @delete-preset="handleDeletePreset" @select-preset="handleSelectPreset"
+                @select-header="handleSelectHeader" @select-prompt="handleSelectPrompt"
+                @select-regex="handleSelectRegex" @toggle-prompt-enabled="togglePromptEnabled"
+                @toggle-node-selection="handleToggleNodeSelection" @add-prompt="addPrompt" @add-regex="addRegexScript"
+                @duplicate-prompt="duplicatePrompt" @delete-prompt="removePrompt" @delete-regex="removeRegexScript"
+                @export-preset="handleExportPreset" @import-preset="handleImportPreset" />
             </div>
 
-            <div
-              v-show="mobilePanelTab === 'clipboard'"
-              class="mobile-drawer-pane"
-            >
-              <PresetClipboardPanel
-                :items="clipboardItems"
-                :has-items="hasItems"
-                :can-edit="Boolean(selectedPrompt)"
-                @clear-all="clearAll"
-                @move-up="moveUp"
-                @move-down="moveDown"
-                @remove="removeClipboardItem"
-                @insert="insertToEditor"
-                @replace="replaceEditor"
-              />
+            <div v-show="mobilePanelTab === 'clipboard'" class="mobile-drawer-pane">
+              <PresetClipboardPanel :items="clipboardItems" :has-items="hasItems" :can-edit="Boolean(selectedPrompt)"
+                @clear-all="clearAll" @move-up="moveUp" @move-down="moveDown" @remove="removeClipboardItem"
+                @insert="insertToEditor" @replace="replaceEditor" />
             </div>
 
-            <div
-              v-show="mobilePanelTab === 'preview'"
-              class="mobile-drawer-pane"
-            >
+            <div v-show="mobilePanelTab === 'preview'" class="mobile-drawer-pane">
               <PresetPreviewPanel :active-preset="activePreset" />
             </div>
           </div>
@@ -172,98 +81,39 @@
       </el-drawer>
     </div>
 
-    <splitpanes
-      v-else
-      class="default-theme preset-split"
-      :horizontal="false"
-    >
-      <pane
-        min-size="18"
-        size="22"
-      >
-        <PresetList
-          :presets="presets"
-          :active-preset-id="activePresetId"
-          :selected-prompt-index="selectedPromptIndex"
-          :selected-regex-index="selectedRegexIndex"
-          :selected-is-header="selectedIsHeader"
-          :multi-selected-node-keys="multiSelectedNodeKeys"
-          :drag-drop-handlers="dragDropHandlers"
-          @create-preset="createPreset"
-          @rename-preset="handleRenamePreset"
-          @delete-preset="handleDeletePreset"
-          @select-preset="handleSelectPreset"
-          @select-header="handleSelectHeader"
-          @select-prompt="handleSelectPrompt"
-          @select-regex="handleSelectRegex"
-          @toggle-prompt-enabled="togglePromptEnabled"
-          @toggle-node-selection="handleToggleNodeSelection"
-          @add-prompt="addPrompt"
-          @add-regex="addRegexScript"
-          @duplicate-prompt="duplicatePrompt"
-          @delete-prompt="removePrompt"
-          @delete-regex="removeRegexScript"
-          @export-preset="handleExportPreset"
-          @import-preset="handleImportPreset"
-        />
+    <splitpanes v-else class="default-theme preset-split" :horizontal="false">
+      <pane min-size="18" size="22">
+        <PresetList :presets="presets" :active-preset-id="activePresetId" :selected-prompt-index="selectedPromptIndex"
+          :selected-regex-index="selectedRegexIndex" :selected-is-header="selectedIsHeader"
+          :multi-selected-node-keys="multiSelectedNodeKeys" :drag-drop-handlers="dragDropHandlers"
+          @create-preset="createPreset" @rename-preset="handleRenamePreset" @delete-preset="handleDeletePreset"
+          @select-preset="handleSelectPreset" @select-header="handleSelectHeader" @select-prompt="handleSelectPrompt"
+          @select-regex="handleSelectRegex" @toggle-prompt-enabled="togglePromptEnabled"
+          @toggle-node-selection="handleToggleNodeSelection" @add-prompt="addPrompt" @add-regex="addRegexScript"
+          @duplicate-prompt="duplicatePrompt" @delete-prompt="removePrompt" @delete-regex="removeRegexScript"
+          @export-preset="handleExportPreset" @import-preset="handleImportPreset" />
       </pane>
 
-      <pane
-        min-size="35"
-        size="50"
-      >
-        <PresetEditor
-          v-model:active-tab="activeEditorTab"
-          v-model:editor-state="editorState"
-          :active-preset="activePreset"
-          :selected-prompt="selectedPrompt"
-          :selected-regex-index="selectedRegexIndex"
-          :has-previous-preset="hasPreviousPreset"
-          :has-next-preset="hasNextPreset"
-          :has-previous-prompt="hasPreviousPrompt"
-          :has-next-prompt="hasNextPrompt"
-          :save-status="presetAutoSave.saveStatus.value"
-          :auto-save-mode="presetAutoSave.autoSaveMode.value"
-          @save="handleManualSave"
-          @toggle-mode="presetAutoSave.toggleAutoSaveMode"
-          @add-clipboard="addEditorToClipboard"
-          @open-first-prompt="handleOpenFirstPrompt"
-          @select-regex="selectRegex"
-          @add-regex="handleAddRegexFromEditor"
-          @delete-regex="handleDeleteRegexFromEditor"
-          @go-previous="goToPrevious"
-          @go-next="goToNext"
-        />
+      <pane min-size="35" size="50">
+        <PresetEditor v-model:active-tab="activeEditorTab" v-model:editor-state="editorState"
+          :active-preset="activePreset" :selected-prompt="selectedPrompt" :selected-regex-index="selectedRegexIndex"
+          :has-previous-preset="hasPreviousPreset" :has-next-preset="hasNextPreset"
+          :has-previous-prompt="hasPreviousPrompt" :has-next-prompt="hasNextPrompt"
+          :save-status="presetAutoSave.saveStatus.value" :auto-save-mode="presetAutoSave.autoSaveMode.value"
+          @save="handleManualSave" @toggle-mode="presetAutoSave.toggleAutoSaveMode"
+          @add-clipboard="addEditorToClipboard" @open-first-prompt="handleOpenFirstPrompt" @select-regex="selectRegex"
+          @add-regex="handleAddRegexFromEditor" @delete-regex="handleDeleteRegexFromEditor" @go-previous="goToPrevious"
+          @go-next="goToNext" />
       </pane>
 
-      <pane
-        min-size="20"
-        size="28"
-      >
-        <el-tabs
-          v-model="rightPanelTab"
-          class="right-panel-tabs"
-        >
-          <el-tab-pane
-            label="剪贴板"
-            name="clipboard"
-          >
-            <PresetClipboardPanel
-              :items="clipboardItems"
-              :has-items="hasItems"
-              :can-edit="Boolean(selectedPrompt)"
-              @clear-all="clearAll"
-              @move-up="moveUp"
-              @move-down="moveDown"
-              @remove="removeClipboardItem"
-              @insert="insertToEditor"
-              @replace="replaceEditor"
-            />
+      <pane min-size="20" size="28">
+        <el-tabs v-model="rightPanelTab" class="right-panel-tabs">
+          <el-tab-pane label="剪贴板" name="clipboard">
+            <PresetClipboardPanel :items="clipboardItems" :has-items="hasItems" :can-edit="Boolean(selectedPrompt)"
+              @clear-all="clearAll" @move-up="moveUp" @move-down="moveDown" @remove="removeClipboardItem"
+              @insert="insertToEditor" @replace="replaceEditor" />
           </el-tab-pane>
-          <el-tab-pane
-            label="预设预览"
-            name="preview"
-          >
+          <el-tab-pane label="预设预览" name="preview">
             <PresetPreviewPanel :active-preset="activePreset" />
           </el-tab-pane>
         </el-tabs>

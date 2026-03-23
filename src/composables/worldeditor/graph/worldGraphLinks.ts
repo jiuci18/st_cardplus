@@ -206,7 +206,7 @@ export const linkLandmarks = (
   upsertRoadConnection(targetLandmark, sourceId, targetHandle, sourceHandle, computedLength);
 };
 
-export const getRoadConnectionLength = (
+const getRoadConnectionLength = (
   source: EnhancedLandmark,
   target: EnhancedLandmark,
   landmarks?: EnhancedLandmark[]

@@ -62,8 +62,7 @@ export function useCharacterCollection() {
     saveToLS(characterCollection.value, LOCAL_STORAGE_KEY_CHARACTER_MANAGER);
   };
 
-  const { projects, ensureProjects, handleCreateProject, reorderProjects } = useCharacterProjects(characterCollection);
-
+  const { projects, ensureProjects, handleCreateProject, reorderProjects, handleRenameProject } = useCharacterProjects(characterCollection);
   const ensureCharacterOrder = () => {
     const characters = { ...characterCollection.value.characters };
     const values = Object.values(characters);
@@ -358,6 +357,7 @@ export function useCharacterCollection() {
     activeCharacter,
     handleSelectCharacter,
     handleCreateProject,
+    handleRenameProject,
     handleCreateCharacter,
     handleDeleteCharacter,
     handleImportCharacter,

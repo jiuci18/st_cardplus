@@ -11,7 +11,7 @@ import { ref, computed, unref, type MaybeRef } from 'vue';
  * @returns {RegExp|undefined} The regular expression instance or undefined if invalid.
  * @copyright Originally from: https://github.com/IonicaBizau/regex-parser.js/blob/master/lib/index.js
  */
-export function regexFromString(input: string): RegExp | undefined {
+function regexFromString(input: string): RegExp | undefined {
   try {
     const m = input.match(/(\/?)(.+)\1([a-z]*)/i);
     if (!m) return new RegExp(input);

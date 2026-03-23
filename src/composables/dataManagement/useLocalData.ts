@@ -1,6 +1,5 @@
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { resetAppDatabase, exportAllDatabases, importAllDatabases } from '@/database/utils';
-import { characterCardService } from '@/database/characterCardService';
 import { nowIso } from '@/utils/datetime';
 import { saveFile } from '@/utils/fileSave';
 
@@ -132,60 +131,9 @@ export function useLocalData(updateStorageInfo: () => Promise<void>) {
       });
   };
 
-  const clearInvalidLocalStorage = async () => {
-    const whitelist = [
-      'characterManagerData',
-      'ejs-editor-projects',
-      'regex-script-collection',
-      'settings',
-      'vueuse-color-scheme',
-      'webdavConfig',
-      'gistConfig',
-      'world-editor-data',
-      'worldEditorData',
-    ];
-
-    ElMessageBox.confirm(
-      '您确定要清理无效的本地缓存吗？此操作将删除所有不在白名单中的本地存储条目，以及所有角色卡数据库中的数据（世界书数据将被保留）',
-      '清理确认',
-      {
-        confirmButtonText: '确认清理',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    )
-      .then(async () => {
-        try {
-          let removedCount = 0;
-          for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key && !whitelist.includes(key)) {
-              localStorage.removeItem(key);
-              removedCount++;
-              i--;
-            }
-          }
-
-          await characterCardService.clearDatabase();
-          ElMessage.success(`已成功清理 ${removedCount} 个无效缓存条目和角色卡数据库，应用将重新加载`);
-          await updateStorageInfo();
-          setTimeout(() => {
-            window.location.reload();
-          }, 1500);
-        } catch (error) {
-          console.error('清理缓存失败:', error);
-          ElMessage.error('清理缓存时发生错误');
-        }
-      })
-      .catch(() => {
-        ElMessage.info('操作已取消');
-      });
-  };
-
   return {
     exportData,
     importData,
     clearAllData,
-    clearInvalidLocalStorage,
   };
 }

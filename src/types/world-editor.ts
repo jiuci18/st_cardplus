@@ -21,9 +21,6 @@ export interface ProjectIntegration {
   name: string; // 显示名称（通常为"整合"）
 }
 
-/**
- * 增强的地标实体接口
- */
 export interface EnhancedLandmark {
   // 基础信息
   id: string; // UUID 唯一标识
@@ -59,11 +56,56 @@ export interface EnhancedLandmark {
 
   // 元数据
   notes: string; // 额外备注
-  imageUrl?: string; // 图片链接
   createdAt: string; // 创建时间
   updatedAt: string; // 更新时间
   version: number; // 版本号
 }
+
+export interface EnhancedForce {
+  // 基础信息
+  id: string;
+  projectId: string; // 所属项目ID
+  name: string;
+  description: string;
+
+  // 组织属性
+  type: string; // 势力类型
+  power: PowerLevel; // 势力强度
+  structure: OrganizationStructure; // 组织结构
+
+  // 人员管理
+  leaders: Leader[]; // 领导者列表
+  members: Member[]; // 成员列表
+  totalMembers: number; // 总成员数
+
+  // 地域控制
+  controlledTerritories: string[]; // 控制地标ID
+  influenceAreas: string[]; // 影响区域ID
+  headquarters?: string; // 总部地标ID
+  branchLocations?: BranchLocation[]; // 分部位置列表
+
+  // 外交关系
+  allies: string[]; // 盟友势力ID列表
+  enemies: string[]; // 敌对势力ID列表
+  neutral: string[]; // 中立势力ID
+
+  // 资源与能力
+  resources: Resource[]; // 拥有资源
+  capabilities: string[]; // 特殊能力
+  weaknesses: string[]; // 弱点
+  // 重要历史事件
+  foundedDate?: string; // 成立日期
+  timeline?: HistoryEvent[]; // 时间线事件列表
+
+  // 元数据
+  tags: string[];
+  notes: string;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+  version: number;
+}
+
 
 /**
  * 区域实体接口
@@ -133,54 +175,6 @@ export interface RoadConnection {
   handle?: string;
   targetHandle?: string;
   length?: number;
-}
-
-/**
- * 增强的势力实体接口
- */
-export interface EnhancedForce {
-  // 基础信息
-  id: string;
-  projectId: string; // 所属项目ID
-  name: string;
-  description: string;
-
-  // 组织属性
-  type: string; // 势力类型
-  power: PowerLevel; // 势力强度
-  structure: OrganizationStructure; // 组织结构
-
-  // 人员管理
-  leaders: Leader[]; // 领导者列表
-  members: Member[]; // 成员列表
-  totalMembers: number; // 总成员数
-
-  // 地域控制
-  controlledTerritories: string[]; // 控制地标ID
-  influenceAreas: string[]; // 影响区域ID
-  headquarters?: string; // 总部地标ID
-  branchLocations?: BranchLocation[]; // 分部位置列表
-
-  // 外交关系
-  allies: string[]; // 盟友势力ID列表
-  enemies: string[]; // 敌对势力ID列表
-  neutral: string[]; // 中立势力ID
-
-  // 资源与能力
-  resources: Resource[]; // 拥有资源
-  capabilities: string[]; // 特殊能力
-  weaknesses: string[]; // 弱点
-  // 重要历史事件
-  foundedDate?: string; // 成立日期
-  timeline?: HistoryEvent[]; // 时间线事件列表
-
-  // 元数据
-  tags: string[];
-  notes: string;
-  imageUrl?: string;
-  createdAt: string;
-  updatedAt: string;
-  version: number;
 }
 
 /**

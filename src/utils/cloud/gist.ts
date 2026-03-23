@@ -132,7 +132,7 @@ export async function uploadToGist(token: string, gistId: string, backupData: Ba
 /**
  * 从 Gist 下载备份数据
  */
-export async function downloadFromGist(token: string, gistId: string): Promise<GistResponse> {
+async function downloadFromGist(token: string, gistId: string): Promise<GistResponse> {
   try {
     const octokit = createOctokitClient(token);
 

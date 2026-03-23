@@ -127,7 +127,7 @@ export interface OpenAIChatCompletionPreset {
   personality_format: string;
   group_nudge_prompt: string;
   prompts: PromptDefinition[];
-  prompt_order: PromptOrderItem[];
+  prompt_order: PromptOrderEntry[];
   show_external_models: boolean;
   proxy_password: string;
   assistant_prefill: string;
@@ -260,7 +260,7 @@ export const defaultOpenAIPreset: OpenAIChatCompletionPreset = {
       marker: true,
     },
   ],
-  prompt_order: [],
+  prompt_order: defaultPromptOrder,
   show_external_models: false,
   proxy_password: '',
   assistant_prefill: '',

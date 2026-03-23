@@ -48,7 +48,7 @@
                 placeholder="当条目激活时，这段文本会被插入到AI的提示中..." />
             </div>
             <div class="form-checkbox-padding">
-              <el-checkbox v-model="localModel.addMemo" label="插入时附带备注 (Add Memo)" />
+              <el-checkbox v-model="localModel.addMemo">插入时附带备注 (Add Memo)</el-checkbox>
             </div>
           </div>
         </section>
@@ -71,12 +71,12 @@
               <div class="form-flex-row">
                 <el-slider v-model="localModel.probability" :min="0" :max="100" show-input class="form-slider"
                   :disabled="!localModel.useProbability" />
-                <el-checkbox v-model="localModel.useProbability" label="启用概率" class="form-checkbox-nowrap" />
+                <el-checkbox v-model="localModel.useProbability" class="form-checkbox-nowrap">启用概率</el-checkbox>
               </div>
             </div>
             <div>
               <label class="form-label">顺序</label>
-              <el-input-number v-model="localModel.order" :min="100" controls-position="right"
+              <el-input-number v-model="localModel.order" :min="0" controls-position="right"
                 class="form-full-width" />
             </div>
             <div>
@@ -159,7 +159,7 @@
                     <el-option label="非任何" :value="2" />
                     <el-option label="与所有" :value="3" />
                   </el-select>
-                  <el-checkbox v-model="localModel.selective" label="启用次要逻辑" class="form-checkbox-margin-top" />
+                  <el-checkbox v-model="localModel.selective" class="form-checkbox-margin-top">启用次要逻辑</el-checkbox>
                 </div>
               </div>
             </section>
@@ -172,12 +172,12 @@
                 <div class="form-grid-span-3">
                   <label class="form-label">扫描范围 (Scan Scope)</label>
                   <div class="form-grid-3-col">
-                    <el-checkbox v-model="localModel.matchPersonaDescription" label="用户人设" />
-                    <el-checkbox v-model="localModel.matchCharacterDescription" label="角色描述" />
-                    <el-checkbox v-model="localModel.matchCharacterPersonality" label="角色性格" />
-                    <el-checkbox v-model="localModel.matchCharacterDepthPrompt" label="角色笔记" />
-                    <el-checkbox v-model="localModel.matchScenario" label="场景设定" />
-                    <el-checkbox v-model="localModel.matchCreatorNotes" label="创作者备注" />
+                    <el-checkbox v-model="localModel.matchPersonaDescription">用户人设</el-checkbox>
+                    <el-checkbox v-model="localModel.matchCharacterDescription">角色描述</el-checkbox>
+                    <el-checkbox v-model="localModel.matchCharacterPersonality">角色性格</el-checkbox>
+                    <el-checkbox v-model="localModel.matchCharacterDepthPrompt">角色笔记</el-checkbox>
+                    <el-checkbox v-model="localModel.matchScenario">场景设定</el-checkbox>
+                    <el-checkbox v-model="localModel.matchCreatorNotes">创作者备注</el-checkbox>
                   </div>
                   <p class="form-help-text">选择在哪些文本范围内匹配关键词（聊天消息之外的额外扫描范围）</p>
                 </div>

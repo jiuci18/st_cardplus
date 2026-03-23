@@ -7,6 +7,8 @@ import { worldBookService } from '../../database/worldBookService';
 import type { StoredWorldBook } from '../../database/db';
 import { nowIso, formatDateTime } from '@/utils/datetime';
 
+const isMessageBoxCancel = (error: unknown): error is 'cancel' | 'close' => error === 'cancel' || error === 'close';
+
 export function useWorldBookCollection() {
   const worldBookCollection = ref<WorldBookCollection>({
     books: {},
@@ -50,7 +52,8 @@ export function useWorldBookCollection() {
         inputPattern: /.+/,
         inputErrorMessage: '名称不能为空',
       });
-      const { value: bookName } = createBookResult as { value: string };
+      const { value } = createBookResult as { value: string };
+      const bookName = value.trim();
 
       const newBookId = uuidv4();
       const now = nowIso();
@@ -75,9 +78,8 @@ export function useWorldBookCollection() {
 
       ElMessage.success(`世界书 "${bookName}" 已创建！`);
     } catch (error) {
-      if (error !== 'cancel' && error !== 'close') {
-        ElMessage.info('创建操作已取消');
-      }
+      if (isMessageBoxCancel(error)) return;
+      ElMessage.error('创建世界书失败');
     }
   };
 
@@ -93,7 +95,12 @@ export function useWorldBookCollection() {
         inputPattern: /.+/,
         inputErrorMessage: '名称不能为空',
       });
-      const { value: newBookName } = renameBookResult as { value: string };
+      const { value } = renameBookResult as { value: string };
+      const newBookName = value.trim();
+
+      if (newBookName === book.name) {
+        return;
+      }
 
       const bookToUpdate: StoredWorldBook = {
         id: book.id,
@@ -113,9 +120,8 @@ export function useWorldBookCollection() {
 
       ElMessage.success('世界书已重命名！');
     } catch (error) {
-      if (error !== 'cancel' && error !== 'close') {
-        ElMessage.info('重命名操作已取消');
-      }
+      if (isMessageBoxCancel(error)) return;
+      ElMessage.error('重命名世界书失败');
     }
   };
 
@@ -145,9 +151,8 @@ export function useWorldBookCollection() {
 
       ElMessage.success(`世界书 "${book.name}" 已删除`);
     } catch (error) {
-      if (error !== 'cancel' && error !== 'close') {
-        ElMessage.info('删除操作已取消');
-      }
+      if (isMessageBoxCancel(error)) return;
+      ElMessage.error('删除世界书失败');
     }
   };
 

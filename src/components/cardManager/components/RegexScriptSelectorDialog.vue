@@ -81,7 +81,7 @@
               <el-checkbox
                 v-for="script in category.scripts"
                 :key="script.id"
-                :label="script.id"
+                :value="script.id"
                 class="script-checkbox"
               >
                 <div class="script-item">

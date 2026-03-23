@@ -2,7 +2,7 @@ import { db, type StoredWorldBook, type StoredWorldBookEntry } from './db';
 import type { WorldBookCollection, WorldBook, WorldBookEntry } from '../types/types';
 import type { CharacterBook } from '../types/character-book';
 import { convertCharacterBookToWorldBook } from '../utils/worldBookConverter';
-import { estimateEncodedSize } from './utils';
+import { estimateEncodedSize, sanitizeForIndexedDB } from './utils';
 import { v4 as uuidv4 } from 'uuid';
 import { getSessionStorageItem, setSessionStorageItem, removeSessionStorageItem } from '@/utils/localStorageUtils';
 import { nowIso } from '@/utils/datetime';
@@ -25,15 +25,12 @@ export const worldBookService = {
    * 从 IndexedDB 加载并组装完整的 WorldBookCollection 对象
    */
   async getFullWorldBookCollection(): Promise<WorldBookCollection> {
-    // 并行获取所有书籍和所有条目以提高效率
     const [allBooksStored, allEntriesStored] = await Promise.all([
       db.books.orderBy('order').toArray(),
       db.entries.toArray(),
     ]);
 
     const booksMap = new Map<string, WorldBook>();
-
-    // 1. 初始化所有书籍，此时 entries 数组为空
     allBooksStored.forEach((storedBook) => {
       booksMap.set(storedBook.id, {
         ...storedBook,
@@ -45,13 +42,10 @@ export const worldBookService = {
     allEntriesStored.forEach((storedEntry) => {
       const book = booksMap.get(storedEntry.bookId);
       if (book) {
-        // 从存储对象中移除 bookId，但保留数据库主键 id
         const { bookId, ...entry } = storedEntry;
         book.entries.push(entry);
       }
     });
-
-    // 3. 将 Map 转换为应用所需的 Record<string, WorldBook> 格式
     const books: Record<string, WorldBook> = {};
     for (const [id, book] of booksMap.entries()) {
       books[id] = book;
@@ -83,14 +77,14 @@ export const worldBookService = {
    * 添加一本新的世界书
    */
   async addBook(book: StoredWorldBook): Promise<void> {
-    await db.books.add(book);
+    await db.books.add(sanitizeForIndexedDB(book));
   },
 
   /**
    * 更新一本书的元数据 (除 entries 外的所有字段)
    */
   async updateBook(book: StoredWorldBook): Promise<void> {
-    await db.books.put(book);
+    await db.books.put(sanitizeForIndexedDB(book));
   },
 
   /**
@@ -298,15 +292,17 @@ export const worldBookService = {
       ...entry,
       bookId,
     }));
+    const sanitizedUpdatedBook = sanitizeForIndexedDB(updatedBook);
+    const sanitizedStoredEntries = sanitizeForIndexedDB(storedEntries);
 
     // 在事务中更新书籍和替换条目
     await db.transaction('rw', db.books, db.entries, async () => {
-      await db.books.put(updatedBook);
+      await db.books.put(sanitizedUpdatedBook);
       // 删除旧条目
       await db.entries.where('bookId').equals(bookId).delete();
       // 添加新条目
-      if (storedEntries.length > 0) {
-        await db.entries.bulkAdd(storedEntries);
+      if (sanitizedStoredEntries.length > 0) {
+        await db.entries.bulkAdd(sanitizedStoredEntries);
       }
     });
   },
@@ -372,12 +368,14 @@ export const worldBookService = {
       ...entry,
       bookId: newBookId,
     }));
+    const sanitizedNewBook = sanitizeForIndexedDB(newBook);
+    const sanitizedStoredEntries = sanitizeForIndexedDB(storedEntries);
 
     // 在事务中同时添加书籍和条目
     await db.transaction('rw', db.books, db.entries, async () => {
-      await db.books.add(newBook);
-      if (storedEntries.length > 0) {
-        await db.entries.bulkAdd(storedEntries);
+      await db.books.add(sanitizedNewBook);
+      if (sanitizedStoredEntries.length > 0) {
+        await db.entries.bulkAdd(sanitizedStoredEntries);
       }
     });
 

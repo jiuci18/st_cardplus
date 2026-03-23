@@ -6,7 +6,7 @@ function formatConditionDisplayValue(value: unknown): string {
   return typeof value === 'string' ? `'${value}'` : String(value);
 }
 
-export function formatSingleCondition(condition: Condition): string {
+function formatSingleCondition(condition: Condition): string {
   const { variableAlias, type, value, endValue } = condition;
   const variableName = variableAlias || '变量';
   const valueLabel = formatConditionDisplayValue(value);
@@ -65,7 +65,7 @@ function getSimulationValue(variablePath: string, simulationValues: SimulationVa
   return undefined;
 }
 
-export function matchesCondition(condition: Condition, simulationValues: SimulationValues): boolean {
+function matchesCondition(condition: Condition, simulationValues: SimulationValues): boolean {
   const simValue = getSimulationValue(condition.variablePath, simulationValues);
   if (simValue === undefined) {
     return false;
@@ -115,7 +115,7 @@ export function matchesCondition(condition: Condition, simulationValues: Simulat
   }
 }
 
-export function matchesConditionGroup(group: ConditionGroup, simulationValues: SimulationValues): boolean {
+function matchesConditionGroup(group: ConditionGroup, simulationValues: SimulationValues): boolean {
   if (!group.conditions?.length) {
     return true;
   }

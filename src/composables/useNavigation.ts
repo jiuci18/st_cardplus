@@ -28,7 +28,7 @@ export interface NavigationContext {
   navigateTo: (path: string) => void;
 }
 
-export const NavigationKey: InjectionKey<NavigationContext> = Symbol('navigation');
+const NavigationKey: InjectionKey<NavigationContext> = Symbol('navigation');
 
 /**
  * 提供导航上下文
@@ -68,11 +68,7 @@ export function provideNavigation(menuItems: Ref<MenuItemConfig[]>): NavigationC
   });
 
   const allMenuItems = computed(() => menuItems.value.map(processMenuItem));
-
-  // 主要导航项
   const mainNavItems = computed(() => allMenuItems.value.filter((item) => item.visible && item.id !== 'toolbox'));
-
-  // 工具箱
   const toolboxItem = computed(() => {
     const item = allMenuItems.value.find((item) => item.id === 'toolbox' && item.visible);
     return item || null;

@@ -3,10 +3,13 @@ name: Build and Deploy
 on:
   push:
     branches: [ main, dev ]
+    tags:
+      - '**'
 
 permissions:
   contents: read
   actions: write
+  pull-requests: read
 
 concurrency:
   group: build-${{ github.ref }}
@@ -59,10 +62,16 @@ jobs:
         cache: 'pnpm'
         cache-dependency-path: pnpm-lock.yaml
 
+    - name: Sync app version to release tag
+      if: startsWith(github.ref, 'refs/tags/')
+      run: node scripts/set-version.mjs "${{ github.ref_name }}"
+
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
 
     - name: Build web version
+      env:
+        APP_CHANNEL_OVERRIDE: ${{ startsWith(github.ref, 'refs/tags/') && 'stable' || '' }}
       run: pnpm build
 
     - name: Upload web build artifacts
@@ -92,6 +101,10 @@ jobs:
         cache: 'pnpm'
         cache-dependency-path: pnpm-lock.yaml
 
+    - name: Sync app version to release tag
+      if: startsWith(github.ref, 'refs/tags/')
+      run: node scripts/set-version.mjs "${{ github.ref_name }}"
+
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
 
@@ -104,6 +117,8 @@ jobs:
         workspaces: src-tauri -> target
 
     - name: Build Windows installers
+      env:
+        APP_CHANNEL_OVERRIDE: ${{ startsWith(github.ref, 'refs/tags/') && 'stable' || '' }}
       run: pnpm build:desktop
 
     - name: Upload Windows NSIS installer artifact
@@ -141,6 +156,10 @@ jobs:
         cache: 'pnpm'
         cache-dependency-path: pnpm-lock.yaml
 
+    - name: Sync app version to release tag
+      if: startsWith(github.ref, 'refs/tags/')
+      run: node scripts/set-version.mjs "${{ github.ref_name }}"
+
     - name: Install Linux dependencies
       run: |
         sudo apt-get update
@@ -166,6 +185,8 @@ jobs:
       run: pnpm prepare:icons
 
     - name: Build Linux AppImage
+      env:
+        APP_CHANNEL_OVERRIDE: ${{ startsWith(github.ref, 'refs/tags/') && 'stable' || '' }}
       run: pnpm tauri build --bundles appimage
 
     - name: Upload Linux AppImage artifacts
@@ -174,3 +195,82 @@ jobs:
         name: linux-appimage
         path: src-tauri/target/release/bundle/appimage/*.AppImage
         if-no-files-found: error
+
+  release:
+    needs:
+      - build-web
+      - build-windows
+      - build-linux-appimage
+    if: github.repository == 'awaae001/st_cardplus' && startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+      pull-requests: read
+
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: release-assets
+
+    - name: Package web build
+      run: |
+        cd release-assets/web-build
+        zip -r "../sillytavern-char_cardplus-${{ github.ref_name }}-web.zip" .
+
+    - name: Prepare release notes from PR
+      id: release_notes
+      uses: actions/github-script@v7
+      env:
+        TAG_NAME: ${{ github.ref_name }}
+      with:
+        script: |
+          const fs = require('fs');
+          const { owner, repo } = context.repo;
+          const pullRequests = await github.paginate(
+            github.rest.repos.listPullRequestsAssociatedWithCommit,
+            {
+              owner,
+              repo,
+              commit_sha: context.sha,
+              per_page: 100,
+            }
+          );
+
+          const mergedPullRequest = pullRequests.find((pr) => pr.merged_at) ?? pullRequests[0] ?? null;
+          const tagName = process.env.TAG_NAME;
+          let releaseBody;
+          let releaseName = tagName;
+
+          if (mergedPullRequest) {
+            const prBody = (mergedPullRequest.body || '').trim();
+            releaseName = `${tagName} - ${mergedPullRequest.title}`;
+            releaseBody = [
+              `## ${mergedPullRequest.title}`,
+              '',
+              prBody || '_PR 描述为空_',
+              '',
+              `关联 PR: #${mergedPullRequest.number}`,
+            ].join('\n');
+          } else {
+            releaseBody = [
+              `## ${tagName}`,
+              '',
+              `未找到与提交 ${context.sha} 关联的 PR，已回退为基础版本说明。`,
+            ].join('\n');
+          }
+
+          fs.writeFileSync('release-notes.md', releaseBody);
+          core.setOutput('release_name', releaseName);
+
+    - name: Publish GitHub release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: ${{ steps.release_notes.outputs.release_name }}
+        body_path: release-notes.md
+        files: |
+          release-assets/sillytavern-char_cardplus-${{ github.ref_name }}-web.zip
+          release-assets/windows-nsis-installer/*.exe
+          release-assets/windows-msi-installer/*.msi
+          release-assets/linux-appimage/*.AppImage

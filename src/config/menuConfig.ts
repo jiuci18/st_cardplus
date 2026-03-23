@@ -29,18 +29,8 @@ export interface MenuItemConfig {
   showInTabBar?: boolean;
 }
 
-// 工具箱固定工具接口
-export interface ToolboxToolConfig {
-  id: string;
-  title: string;
-  icon: string;
-  description: string;
-  route: string;
-  category: 'utility' | 'converter' | 'metadata';
-}
-
 // Element Plus 图标映射
-export const iconMap = {
+const iconMap = {
   House: markRaw(House),
   EditPen: markRaw(EditPen),
   Location: markRaw(Location),
@@ -53,7 +43,7 @@ export const iconMap = {
 };
 
 // Iconify 图标映射
-export const iconifyIconMap: Record<string, string> = {
+const iconifyIconMap: Record<string, string> = {
   House: 'ep:house',
   EditPen: 'ep:edit-pen',
   Location: 'ep:location',
@@ -66,7 +56,7 @@ export const iconifyIconMap: Record<string, string> = {
 };
 
 // 主菜单项配置
-export const mainMenuItems: MenuItemConfig[] = [
+const mainMenuItems: MenuItemConfig[] = [
   {
     id: 'home',
     type: 'main',
@@ -165,7 +155,7 @@ export const mainMenuItems: MenuItemConfig[] = [
 ];
 
 // 工具箱小工具配置
-export const toolboxToolItems: MenuItemConfig[] = [
+const toolboxToolItems: MenuItemConfig[] = [
   {
     id: 'json-formatter',
     type: 'tool',
@@ -206,54 +196,20 @@ export const toolboxToolItems: MenuItemConfig[] = [
     route: '/toolbox/chinese-converter',
     description: '批量转换角色卡简繁体，支持多种方言',
   },
-];
-
-// 工具箱固定工具配置（不会出现在导航栏中的固定工具）
-export const toolboxFixedTools: ToolboxToolConfig[] = [
-  {
-    id: 'json-formatter',
-    title: 'JSON格式化',
-    icon: 'material-symbols:code',
-    description: '去除JSON中的换行和多余空格',
-    route: '/toolbox/json-formatter',
-    category: 'utility',
-  },
-  {
-    id: 'separator',
-    title: '元数据分离器',
-    icon: 'material-symbols:image-outline',
-    description: '分离角色卡的 json 和图片',
-    route: '/toolbox/separator',
-    category: 'metadata',
-  },
-  {
-    id: 'worldbook-converter',
-    title: '世界书转换器',
-    icon: 'ph:books-bold',
-    description: '在 CharacterBook 和 WorldBook 格式之间进行双向转换',
-    route: '/toolbox/worldbook-converter',
-    category: 'converter',
-  },
-  {
-    id: 'chinese-converter',
-    title: '简繁转换器',
-    icon: 'material-symbols:translate',
-    description: '批量转换角色卡简繁体，支持多种方言',
-    route: '/toolbox/chinese-converter',
-    category: 'converter',
-  },
   {
     id: 'old-world-editor',
+    type: 'tool',
+    visible: false,
+    order: 105,
     title: '旧版世界编辑器',
     icon: 'material-symbols:history',
-    description: '兼容旧版本格式的世界地标编辑器',
     route: '/toolbox/old-world-editor',
-    category: 'utility',
+    description: '兼容旧版本格式的世界地标编辑器',
   },
 ];
 
 // 获取所有默认菜单项配置
-export const getAllDefaultMenuItems = (): MenuItemConfig[] => {
+const getAllDefaultMenuItems = (): MenuItemConfig[] => {
   return [...mainMenuItems, ...toolboxToolItems];
 };
 

@@ -8,11 +8,17 @@
       class="sidebar-logo"
       @click="navigateTo('/')"
     >
-      <img
-        src="/image/logo.png"
-        alt="Logo"
-        class="logo-img"
-      />
+      <span class="logo-wrap">
+        <img
+          src="/image/logo.png"
+          alt="Logo"
+          class="logo-img"
+        />
+        <span
+          v-if="updateAvailable"
+          class="logo-update-dot"
+        ></span>
+      </span>
       <span class="logo-text">ST CardPlus</span>
     </div>
 
@@ -151,6 +157,7 @@
 
 <script setup lang="ts">
 import { useNavigation } from '@/composables/useNavigation';
+import { useAppUpdate } from '@/composables/useAppUpdate';
 import { getSetting, setSetting } from '@/utils/localStorageUtils';
 import { DArrowLeft, DArrowRight, InfoFilled, Moon, Setting, Sunny } from '@element-plus/icons-vue';
 import { onMounted, ref } from 'vue';
@@ -158,6 +165,7 @@ import { useRouter } from 'vue-router';
 
 const router = useRouter();
 const { mainNavItems, toolboxItem, isActive, isDark, toggleDark } = useNavigation();
+const { updateAvailable } = useAppUpdate();
 const sidebarExpanded = ref(true);
 
 const toggleSidebar = () => {
@@ -215,12 +223,29 @@ const navigateTo = (path: string) => {
   padding-right: 0.625rem;
 }
 
+.logo-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
 .logo-img {
   width: 2rem;
   height: 2rem;
   object-fit: contain;
   border-radius: 0.5rem;
   flex-shrink: 0;
+}
+
+.logo-update-dot {
+  position: absolute;
+  top: -0.125rem;
+  right: -0.125rem;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+  background: #f04438;
+  box-shadow: 0 0 0 2px var(--el-bg-color);
 }
 
 .logo-text {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getIconifyIconName, toolboxFixedTools } from '@/config/menuConfig';
+import { getIconifyIconName } from '@/config/menuConfig';
 import { getHiddenMenuItems, type MenuItemConfig } from '@/utils/localStorageUtils';
 import { Icon } from '@iconify/vue';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
@@ -11,33 +11,26 @@ interface ToolboxDisplayItem {
   icon: string;
   description: string;
   route: string;
-  type: 'fixed' | 'hidden'; // fixed: 固定工具, hidden: 来自导航栏的隐藏项目
-  category?: string;
-  isMainMenu?: boolean; // 是否为主菜单项
 }
 
 // 隐藏的菜单项
 const hiddenMenuItems = ref<MenuItemConfig[]>([]);
 
-// 获取固定工具（总是显示的工具箱工具）
-const getFixedTools = (): ToolboxDisplayItem[] => {
-  return toolboxFixedTools.map((tool) => ({
-    id: tool.id,
-    title: tool.title,
-    icon: tool.icon,
-    description: tool.description,
-    route: tool.route,
-    type: 'fixed',
-    category: tool.category,
-  }));
-};
+const toolboxTools = computed((): ToolboxDisplayItem[] => {
+  return hiddenMenuItems.value
+    .filter((item) => item.route.startsWith('/toolbox/') && item.route !== '/toolbox')
+    .map((item) => ({
+      id: item.id,
+      title: item.title,
+      icon: getIconifyIconName(item.icon),
+      description: item.description || '工具箱条目',
+      route: item.route,
+    }));
+});
 
-// 获取来自导航栏的隐藏项目（只包含非工具箱的主菜单项）
-const getHiddenSidebarItems = (): ToolboxDisplayItem[] => {
+const hiddenSidebarItems = computed((): ToolboxDisplayItem[] => {
   return hiddenMenuItems.value
     .filter((item) => {
-      // 只显示非工具箱相关的隐藏项目
-      // 排除工具箱本身和工具箱内的小工具
       return item.route !== '/toolbox' && !item.route.startsWith('/toolbox/');
     })
     .map((item) => ({
@@ -46,22 +39,8 @@ const getHiddenSidebarItems = (): ToolboxDisplayItem[] => {
       icon: getIconifyIconName(item.icon),
       description: item.description || '从导航栏隐藏的菜单项',
       route: item.route,
-      type: 'hidden',
-      isMainMenu: item.type === 'main',
     }));
-};
-
-// 合并所有工具
-const allTools = computed((): ToolboxDisplayItem[] => {
-  const fixedTools = getFixedTools();
-  const hiddenItems = getHiddenSidebarItems();
-
-  return [...fixedTools, ...hiddenItems];
 });
-
-// 按类型分组
-const fixedTools = computed(() => allTools.value.filter((tool) => tool.type === 'fixed'));
-const hiddenSidebarItems = computed(() => allTools.value.filter((tool) => tool.type === 'hidden'));
 
 // 刷新隐藏项目
 const refreshHiddenItems = () => {
@@ -88,12 +67,15 @@ onUnmounted(() => {
     <div class="toolbox-container">
       <h1>工具箱</h1>
 
-      <!-- 固定工具 -->
-      <div class="section">
+      <!-- 工具箱条目 -->
+      <div
+        v-if="toolboxTools.length > 0"
+        class="section"
+      >
         <h2 class="section-title">工具</h2>
         <div class="tools-grid">
           <el-card
-            v-for="tool in fixedTools"
+            v-for="tool in toolboxTools"
             :key="tool.id"
             class="tool-card"
             shadow="hover"
@@ -123,7 +105,7 @@ onUnmounted(() => {
             width="20"
             height="20"
           />
-          来自导航栏 ({{ hiddenSidebarItems.length }})
+          来自导航栏
         </h2>
         <p class="section-description">这些项目已从导航栏隐藏，可在此快速访问</p>
 

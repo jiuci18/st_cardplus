@@ -48,7 +48,7 @@ async function tauriWebDAVRequest<T>(
  * @param options - WebDAV 连接选项
  * @returns WebDAV 客户端实例
  */
-export function createWebDAVClient(options: WebDAVConnectionOptions) {
+function createWebDAVClient(options: WebDAVConnectionOptions) {
   return createClient(options.url, {
     username: options.username,
     password: options.password,

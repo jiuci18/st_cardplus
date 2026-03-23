@@ -1,9 +1,9 @@
 import type { EnhancedLandmark } from '@/types/world-editor';
 
-export type HandleSide = 'left' | 'right' | 'top' | 'bottom';
+type HandleSide = 'left' | 'right' | 'top' | 'bottom';
 
-export const BRIDGE_NODE_WIDTH = 120;
-export const BRIDGE_NODE_HEIGHT = 24;
+const BRIDGE_NODE_WIDTH = 120;
+const BRIDGE_NODE_HEIGHT = 24;
 
 const DEFAULT_GRAPH_COLUMNS = 4;
 const DEFAULT_GRAPH_SPACING_X = 220;
@@ -17,12 +17,12 @@ const DEFAULT_GRAPH_BOUNDS = {
 const DEFAULT_BRIDGE_MARGIN = 80;
 const DEFAULT_BRIDGE_SPACING = 70;
 
-export const isLargeLandmark = (landmark: EnhancedLandmark) => {
+const isLargeLandmark = (landmark: EnhancedLandmark) => {
   const type = landmark.type || '';
   return type === 'natural' || type === 'chasm' || type === 'canyon';
 };
 
-export const getLandmarkNodeSize = (landmark: EnhancedLandmark) => {
+const getLandmarkNodeSize = (landmark: EnhancedLandmark) => {
   if (isLargeLandmark(landmark)) {
     return { width: 240, height: 46 };
   }

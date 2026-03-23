@@ -2,9 +2,8 @@
   "extends": "@vue/tsconfig/tsconfig.dom.json",
   "compilerOptions": {
     "composite": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["./src/*"]
     },
     "lib": ["ES2021", "DOM", "DOM.Iterable"],
     "target": "ES2021",

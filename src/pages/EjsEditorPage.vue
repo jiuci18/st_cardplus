@@ -286,6 +286,7 @@
 <script setup lang="ts">
 import { useEjsEditorStore } from '@/composables/ejs/ejsEditor';
 import { useDevice } from '@/composables/useDevice';
+import { copyToClipboard as copyTextToClipboard } from '@/utils/clipboard';
 import { nowIso } from '@/utils/datetime';
 import { saveFile } from '@/utils/fileSave';
 import { CopyDocument, DocumentAdd, Download, Hide, RefreshLeft, RefreshRight, View } from '@element-plus/icons-vue';
@@ -395,12 +396,7 @@ async function copyToClipboard() {
     return;
   }
 
-  try {
-    await navigator.clipboard.writeText(store.ejsTemplate);
-    ElMessage.success('代码已复制到剪贴板');
-  } catch {
-    ElMessage.error('复制失败');
-  }
+  await copyTextToClipboard(store.ejsTemplate, '代码已复制到剪贴板', '复制失败');
 }
 
 // 页面加载时的初始化

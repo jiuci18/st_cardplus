@@ -41,28 +41,6 @@ export function useValidation() {
   return { errors, validate };
 }
 
-// Example validation rules for a Landmark
-export const landmarkValidationRules: ValidationRule[] = [
-  {
-    field: 'name',
-    rule: ValidationType.REQUIRED,
-    message: '地标名称不能为空',
-  },
-  {
-    field: 'description',
-    rule: ValidationType.MIN_LENGTH,
-    message: '描述至少需要10个字符',
-    params: { min: 10 },
-  },
-  {
-    field: 'headquarters',
-    rule: ValidationType.MAX_LENGTH,
-    message: '总部位置名称不能超过50个字符',
-    params: { max: 50 },
-  },
-];
-
-// Example validation rules for a Force
 export const forceValidationRules: ValidationRule[] = [
   {
     field: 'name',

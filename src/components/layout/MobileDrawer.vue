@@ -1,4 +1,3 @@
-s
 <template>
   <el-drawer
     v-model="visible"

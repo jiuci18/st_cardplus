@@ -35,7 +35,7 @@ export interface StoredPresetFile {
  * 定义应用主数据库类
  * 包含世界书、角色卡等所有应用数据
  */
-export class AppDatabase extends Dexie {
+class AppDatabase extends Dexie {
   /**
    * `books` 表，用于存储世界书的元数据
    * 主键是 `id` (string, UUID)

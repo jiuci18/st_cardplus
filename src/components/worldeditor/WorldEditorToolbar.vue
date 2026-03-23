@@ -164,7 +164,7 @@ import { ElTooltip, ElInput, ElDropdown, ElDropdownMenu, ElDropdownItem } from '
 import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
 import { Icon } from '@iconify/vue';
 import { Search } from '@element-plus/icons-vue';
-import SidebarTreePanel from '../common/SidebarTreePanel.vue';
+import SidebarTreePanel from '@/components/layout/common/SidebarTreePanel.vue';
 import type {
   Project,
   EnhancedLandmark,
@@ -397,7 +397,7 @@ const handleAddCommand = (command: 'project' | 'landmark' | 'region' | 'force') 
 </script>
 
 <style scoped>
-@import '@/styles/split-create-actions.css';
+@import '@/css/split-create-actions.css';
 
 .toolbar-container {
   height: 100%;

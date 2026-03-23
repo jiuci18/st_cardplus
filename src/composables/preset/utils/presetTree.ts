@@ -2,7 +2,7 @@ import type { StoredPresetFile } from '@/database/db';
 import { getPromptOrderIdentifiers } from '@/composables/preset/utils/presetPromptOrder';
 
 export const getHeaderNodeKey = (presetId: string) => `${presetId}:header`;
-export const getUninsertedNodeKey = (presetId: string) => `${presetId}:uninserted`;
+const getUninsertedNodeKey = (presetId: string) => `${presetId}:uninserted`;
 export const getPromptNodeKey = (presetId: string, identifier: string) => `${presetId}:prompt:${identifier}`;
 export const getRegexFolderNodeKey = (presetId: string) => `${presetId}:regex-folder`;
 export const getRegexNodeKey = (presetId: string, scriptId: string) => `${presetId}:regex:${scriptId}`;
