@@ -16,7 +16,174 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  prepare-release:
+    if: github.repository == 'awaae001/st_cardplus'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    outputs:
+      release_enabled: ${{ steps.release_info.outputs.release_enabled }}
+      tag_name: ${{ steps.release_info.outputs.tag_name }}
+      release_name: ${{ steps.release_info.outputs.release_name }}
+      release_body: ${{ steps.release_info.outputs.release_body }}
+
+    steps:
+    - name: Prepare release metadata
+      id: release_info
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { owner, repo } = context.repo;
+          const semverPattern = /^\d+\.\d+\.\d+$/;
+          const currentRef = context.ref;
+          const currentSha = context.sha;
+
+          const compareVersions = (left, right) => {
+            const leftParts = left.split('.').map((part) => Number.parseInt(part, 10));
+            const rightParts = right.split('.').map((part) => Number.parseInt(part, 10));
+            const maxLength = Math.max(leftParts.length, rightParts.length);
+
+            for (let index = 0; index < maxLength; index += 1) {
+              const leftPart = leftParts[index] ?? 0;
+              const rightPart = rightParts[index] ?? 0;
+
+              if (leftPart > rightPart) return 1;
+              if (leftPart < rightPart) return -1;
+            }
+
+            return 0;
+          };
+
+          const incrementPatch = (version) => {
+            const parts = version.split('.').map((part) => Number.parseInt(part, 10));
+            return `${parts[0]}.${parts[1]}.${parts[2] + 1}`;
+          };
+
+          const loadAssociatedPullRequest = async (sha) => {
+            const pullRequests = await github.paginate(
+              github.rest.repos.listPullRequestsAssociatedWithCommit,
+              {
+                owner,
+                repo,
+                commit_sha: sha,
+                per_page: 100,
+              }
+            );
+
+            return pullRequests.find((pullRequest) => pullRequest.merged_at) ?? pullRequests[0] ?? null;
+          };
+
+          const hasReleaseLabel = (pullRequest) => {
+            if (!pullRequest) return false;
+            return (pullRequest.labels || []).some((label) => {
+              if (typeof label === 'string') return label === 'release';
+              return label?.name === 'release';
+            });
+          };
+
+          const findOrCreateTagForCommit = async (sha) => {
+            const tags = await github.paginate(github.rest.repos.listTags, {
+              owner,
+              repo,
+              per_page: 100,
+            });
+
+            const existingTag = tags
+              .filter((tag) => semverPattern.test(tag.name) && tag.commit?.sha === sha)
+              .map((tag) => tag.name)
+              .sort(compareVersions)
+              .at(-1);
+
+            if (existingTag) {
+              return existingTag;
+            }
+
+            const latestVersion = tags
+              .map((tag) => tag.name)
+              .filter((tagName) => semverPattern.test(tagName))
+              .sort(compareVersions)
+              .at(-1) ?? '0.0.0';
+
+            const nextVersion = incrementPatch(latestVersion);
+            await github.rest.git.createRef({
+              owner,
+              repo,
+              ref: `refs/tags/${nextVersion}`,
+              sha,
+            });
+
+            return nextVersion;
+          };
+
+          const buildReleaseNotes = (tagName, pullRequest) => {
+            if (!pullRequest) {
+              return {
+                releaseName: tagName,
+                releaseBody: [
+                  `## ${tagName}`,
+                  '',
+                  `未找到与提交 ${currentSha} 关联的 PR，已回退为基础版本说明。`,
+                ].join('\n'),
+              };
+            }
+
+            const title = (pullRequest.title || '').trim();
+            const body = (pullRequest.body || '').trim();
+
+            return {
+              releaseName: title ? `${tagName} - ${title}` : tagName,
+              releaseBody: [
+                title ? `## ${title}` : `## ${tagName}`,
+                '',
+                body || '_PR 描述为空_',
+                '',
+                `关联 PR: #${pullRequest.number}`,
+              ].join('\n'),
+            };
+          };
+
+          let releaseEnabled = false;
+          let tagName = '';
+          let releaseName = '';
+          let releaseBody = '';
+          let associatedPullRequest = null;
+
+          if (currentRef.startsWith('refs/tags/')) {
+            const currentTag = currentRef.replace('refs/tags/', '');
+            if (semverPattern.test(currentTag)) {
+              releaseEnabled = true;
+              tagName = currentTag;
+              associatedPullRequest = await loadAssociatedPullRequest(currentSha);
+            }
+          } else if (currentRef === 'refs/heads/main') {
+            associatedPullRequest = await loadAssociatedPullRequest(currentSha);
+            if (associatedPullRequest?.merged_at && hasReleaseLabel(associatedPullRequest)) {
+              releaseEnabled = true;
+              tagName = await findOrCreateTagForCommit(currentSha);
+            }
+          }
+
+          if (releaseEnabled) {
+            const releaseNotes = buildReleaseNotes(tagName, associatedPullRequest);
+            releaseName = releaseNotes.releaseName;
+            releaseBody = releaseNotes.releaseBody;
+          }
+
+          core.setOutput('release_enabled', String(releaseEnabled));
+          core.setOutput('tag_name', tagName);
+          core.setOutput('release_name', releaseName);
+          core.setOutput('release_body', releaseBody);
+
+          if (releaseEnabled) {
+            core.summary
+              .addHeading('Release Prepared')
+              .addRaw(`tag: ${tagName}`)
+              .write();
+          }
+
   type-check:
+    needs: prepare-release
     if: github.repository == 'awaae001/st_cardplus'
     runs-on: ubuntu-latest
     steps:
@@ -42,7 +209,9 @@ jobs:
       run: pnpm type-check
 
   build-web:
-    needs: type-check
+    needs:
+      - prepare-release
+      - type-check
     if: github.repository == 'awaae001/st_cardplus'
     runs-on: ubuntu-latest
 
@@ -63,15 +232,15 @@ jobs:
         cache-dependency-path: pnpm-lock.yaml
 
     - name: Sync app version to release tag
-      if: startsWith(github.ref, 'refs/tags/')
-      run: node scripts/set-version.mjs "${{ github.ref_name }}"
+      if: needs.prepare-release.outputs.release_enabled == 'true'
+      run: node scripts/set-version.mjs "${{ needs.prepare-release.outputs.tag_name }}"
 
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
 
     - name: Build web version
       env:
-        APP_CHANNEL_OVERRIDE: ${{ startsWith(github.ref, 'refs/tags/') && 'stable' || '' }}
+        APP_CHANNEL_OVERRIDE: ${{ needs.prepare-release.outputs.release_enabled == 'true' && 'stable' || '' }}
       run: pnpm build
 
     - name: Upload web build artifacts
@@ -81,7 +250,9 @@ jobs:
         path: dist/
 
   build-windows:
-    needs: type-check
+    needs:
+      - prepare-release
+      - type-check
     if: github.repository == 'awaae001/st_cardplus'
     runs-on: windows-latest
 
@@ -102,8 +273,8 @@ jobs:
         cache-dependency-path: pnpm-lock.yaml
 
     - name: Sync app version to release tag
-      if: startsWith(github.ref, 'refs/tags/')
-      run: node scripts/set-version.mjs "${{ github.ref_name }}"
+      if: needs.prepare-release.outputs.release_enabled == 'true'
+      run: node scripts/set-version.mjs "${{ needs.prepare-release.outputs.tag_name }}"
 
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
@@ -118,7 +289,7 @@ jobs:
 
     - name: Build Windows installers
       env:
-        APP_CHANNEL_OVERRIDE: ${{ startsWith(github.ref, 'refs/tags/') && 'stable' || '' }}
+        APP_CHANNEL_OVERRIDE: ${{ needs.prepare-release.outputs.release_enabled == 'true' && 'stable' || '' }}
       run: pnpm build:desktop
 
     - name: Upload Windows NSIS installer artifact
@@ -136,7 +307,9 @@ jobs:
         if-no-files-found: error
 
   build-linux-appimage:
-    needs: type-check
+    needs:
+      - prepare-release
+      - type-check
     if: github.repository == 'awaae001/st_cardplus'
     runs-on: ubuntu-latest
 
@@ -157,8 +330,8 @@ jobs:
         cache-dependency-path: pnpm-lock.yaml
 
     - name: Sync app version to release tag
-      if: startsWith(github.ref, 'refs/tags/')
-      run: node scripts/set-version.mjs "${{ github.ref_name }}"
+      if: needs.prepare-release.outputs.release_enabled == 'true'
+      run: node scripts/set-version.mjs "${{ needs.prepare-release.outputs.tag_name }}"
 
     - name: Install Linux dependencies
       run: |
@@ -186,7 +359,7 @@ jobs:
 
     - name: Build Linux AppImage
       env:
-        APP_CHANNEL_OVERRIDE: ${{ startsWith(github.ref, 'refs/tags/') && 'stable' || '' }}
+        APP_CHANNEL_OVERRIDE: ${{ needs.prepare-release.outputs.release_enabled == 'true' && 'stable' || '' }}
       run: pnpm tauri build --bundles appimage
 
     - name: Upload Linux AppImage artifacts
@@ -198,10 +371,11 @@ jobs:
 
   release:
     needs:
+      - prepare-release
       - build-web
       - build-windows
       - build-linux-appimage
-    if: github.repository == 'awaae001/st_cardplus' && startsWith(github.ref, 'refs/tags/')
+    if: github.repository == 'awaae001/st_cardplus' && needs.prepare-release.outputs.release_enabled == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -217,60 +391,17 @@ jobs:
     - name: Package web build
       run: |
         cd release-assets/web-build
-        zip -r "../sillytavern-char_cardplus-${{ github.ref_name }}-web.zip" .
-
-    - name: Prepare release notes from PR
-      id: release_notes
-      uses: actions/github-script@v7
-      env:
-        TAG_NAME: ${{ github.ref_name }}
-      with:
-        script: |
-          const fs = require('fs');
-          const { owner, repo } = context.repo;
-          const pullRequests = await github.paginate(
-            github.rest.repos.listPullRequestsAssociatedWithCommit,
-            {
-              owner,
-              repo,
-              commit_sha: context.sha,
-              per_page: 100,
-            }
-          );
-
-          const mergedPullRequest = pullRequests.find((pr) => pr.merged_at) ?? pullRequests[0] ?? null;
-          const tagName = process.env.TAG_NAME;
-          let releaseBody;
-          let releaseName = tagName;
-
-          if (mergedPullRequest) {
-            const prBody = (mergedPullRequest.body || '').trim();
-            releaseName = `${tagName} - ${mergedPullRequest.title}`;
-            releaseBody = [
-              `## ${mergedPullRequest.title}`,
-              '',
-              prBody || '_PR 描述为空_',
-              '',
-              `关联 PR: #${mergedPullRequest.number}`,
-            ].join('\n');
-          } else {
-            releaseBody = [
-              `## ${tagName}`,
-              '',
-              `未找到与提交 ${context.sha} 关联的 PR，已回退为基础版本说明。`,
-            ].join('\n');
-          }
-
-          fs.writeFileSync('release-notes.md', releaseBody);
-          core.setOutput('release_name', releaseName);
+        zip -r "../sillytavern-char_cardplus-${{ needs.prepare-release.outputs.tag_name }}-web.zip" .
 
     - name: Publish GitHub release
       uses: softprops/action-gh-release@v2
       with:
-        name: ${{ steps.release_notes.outputs.release_name }}
-        body_path: release-notes.md
+        tag_name: ${{ needs.prepare-release.outputs.tag_name }}
+        target_commitish: ${{ github.sha }}
+        name: ${{ needs.prepare-release.outputs.release_name }}
+        body: ${{ needs.prepare-release.outputs.release_body }}
         files: |
-          release-assets/sillytavern-char_cardplus-${{ github.ref_name }}-web.zip
+          release-assets/sillytavern-char_cardplus-${{ needs.prepare-release.outputs.tag_name }}-web.zip
           release-assets/windows-nsis-installer/*.exe
           release-assets/windows-msi-installer/*.msi
           release-assets/linux-appimage/*.AppImage
