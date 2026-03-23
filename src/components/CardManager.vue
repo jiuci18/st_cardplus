@@ -508,6 +508,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+@import '@/css/card-manager-panels.css';
+
 .card-manager-container {
   display: flex;
   flex-direction: column;
@@ -559,41 +561,6 @@ onUnmounted(() => {
   background-color: var(--el-bg-color);
 }
 
-.content-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 60px;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--el-border-color-light);
-  background-color: var(--el-bg-color-overlay);
-  flex-shrink: 0;
-  margin-bottom: 0px;
-}
-
-.content-panel-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--el-text-color-primary);
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.content-panel-icon {
-  font-size: 18px;
-}
-
-.content-panel-text-highlight {
-  color: var(--el-color-primary);
-  font-weight: 500;
-  white-space: nowrap;
-}
 
 .header-actions {
   display: flex;
@@ -666,10 +633,6 @@ onUnmounted(() => {
     min-width: 120px;
     font-size: 14px;
     gap: 6px;
-  }
-
-  .content-panel-icon {
-    font-size: 16px;
   }
 
   .content-panel-text-highlight {

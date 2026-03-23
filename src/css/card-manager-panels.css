@@ -1,8 +1,12 @@
-.empty-state {
+.empty-state,
+.editor-empty-state {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.empty-state {
   padding: 40px;
 }
 
@@ -17,9 +21,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  height: 60px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--el-border-color-light);
-  background: var(--el-fill-color-extra-light);
+  background-color: var(--el-bg-color-overlay);
   flex-shrink: 0;
 }
 
@@ -27,32 +32,30 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--el-text-color-primary);
   margin: 0;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .content-panel-icon {
   font-size: 18px;
-  color: var(--el-color-primary);
 }
 
 .content-panel-text-highlight {
   color: var(--el-color-primary);
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .editor-actions {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.editor-empty-state {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .content-panel-header-mobile {
