@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   prepare-release:
-    if: github.repository == 'awaae001/st_cardplus'
+    if: github.repository == 'jiuci18/st_cardplus'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -184,7 +184,7 @@ jobs:
 
   type-check:
     needs: prepare-release
-    if: github.repository == 'awaae001/st_cardplus'
+    if: github.repository == 'jiuci18/st_cardplus'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -212,7 +212,7 @@ jobs:
     needs:
       - prepare-release
       - type-check
-    if: github.repository == 'awaae001/st_cardplus'
+    if: github.repository == 'jiuci18/st_cardplus'
     runs-on: ubuntu-latest
 
     steps:
@@ -253,7 +253,7 @@ jobs:
     needs:
       - prepare-release
       - type-check
-    if: github.repository == 'awaae001/st_cardplus'
+    if: github.repository == 'jiuci18/st_cardplus'
     runs-on: windows-latest
 
     steps:
@@ -310,7 +310,7 @@ jobs:
     needs:
       - prepare-release
       - type-check
-    if: github.repository == 'awaae001/st_cardplus'
+    if: github.repository == 'jiuci18/st_cardplus'
     runs-on: ubuntu-latest
 
     steps:
@@ -374,7 +374,7 @@ jobs:
       - build-web
       - build-windows
       - build-linux-deb
-    if: github.repository == 'awaae001/st_cardplus' && needs.prepare-release.outputs.release_enabled == 'true'
+    if: github.repository == 'jiuci18/st_cardplus' && needs.prepare-release.outputs.release_enabled == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write

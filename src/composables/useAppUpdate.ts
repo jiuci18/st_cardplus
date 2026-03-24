@@ -3,6 +3,7 @@ import { computed, readonly, ref } from 'vue';
 
 type AppChannel = 'stable' | 'dev';
 type UpdateKind = 'version' | 'commit';
+type UpdateBranch = 'main' | 'dev';
 
 interface UpdateMetadata {
   version?: string;
@@ -12,20 +13,28 @@ interface UpdateMetadata {
   buildTime?: string;
 }
 
-const UPDATE_METADATA_URLS: Record<AppChannel, string> = {
-  stable: 'https://cardplus.jiuci.top/metadata.json',
+const DEFAULT_UPDATE_BRANCH: UpdateBranch = 'main';
+
+const CHANNEL_BRANCH_MAP: Record<AppChannel, UpdateBranch> = {
+  stable: 'main',
+  dev: 'dev',
+};
+
+const UPDATE_METADATA_URLS: Record<UpdateBranch, string> = {
+  main: 'https://cardplus.jiuci.top/metadata.json',
   dev: 'https://dev.st-cardplus-1kl.pages.dev/metadata.json',
 };
 
-const UPDATE_GUIDE_URLS: Record<AppChannel, string> = {
-  stable: 'https://nightly.link/awaae001/st_cardplus/workflows/build/main',
-  dev: 'https://nightly.link/awaae001/st_cardplus/workflows/build/dev',
+const UPDATE_GUIDE_URLS: Record<UpdateBranch, string> = {
+  main: 'https://nightly.link/jiuci18/st_cardplus/workflows/build/main',
+  dev: 'https://nightly.link/jiuci18/st_cardplus/workflows/build/dev',
 };
 
 const currentVersion = __APP_SEMVER__;
 const currentCommitHash = __APP_VERSION__;
 const currentChannel: AppChannel = __APP_CHANNEL__ === 'stable' ? 'stable' : 'dev';
-const updateGuideUrl = UPDATE_GUIDE_URLS[currentChannel];
+const resolvedUpdateBranch = ref<UpdateBranch>(CHANNEL_BRANCH_MAP[currentChannel]);
+const updateGuideUrl = computed(() => UPDATE_GUIDE_URLS[resolvedUpdateBranch.value] ?? UPDATE_GUIDE_URLS[DEFAULT_UPDATE_BRANCH]);
 
 const latestVersion = ref('');
 const latestCommitHash = ref('');
@@ -38,6 +47,11 @@ const isCheckingForUpdate = ref(false);
 const updateCheckError = ref<string | null>(null);
 const updateKind = ref<UpdateKind | null>(null);
 const ignoredUntil = ref(getSetting('updateIgnoreUntil'));
+
+const getUpdateBranchesToTry = (channel: AppChannel) => {
+  const preferredBranch = CHANNEL_BRANCH_MAP[channel];
+  return preferredBranch === DEFAULT_UPDATE_BRANCH ? [preferredBranch] : [preferredBranch, DEFAULT_UPDATE_BRANCH];
+};
 
 const isUpdateIgnored = computed(() => {
   if (ignoredUntil.value === 'permanent') return true;
@@ -135,15 +149,29 @@ const runUpdateCheck = async () => {
   updateCheckError.value = null;
 
   try {
-    const response = await fetch(UPDATE_METADATA_URLS[currentChannel], { cache: 'no-store' });
+    const branchesToTry = getUpdateBranchesToTry(currentChannel);
+    let lastError: Error | null = null;
 
-    if (!response.ok) {
-      throw new Error(`metadata request failed with status ${response.status}`);
+    for (const branch of branchesToTry) {
+      try {
+        const response = await fetch(UPDATE_METADATA_URLS[branch], { cache: 'no-store' });
+
+        if (!response.ok) {
+          throw new Error(`metadata request failed with status ${response.status}`);
+        }
+
+        const metadata = (await response.json()) as UpdateMetadata;
+        const { remoteVersion, remoteCommitHash } = applyRemoteMetadata(metadata);
+        resolvedUpdateBranch.value = branch;
+        setDetectedUpdate(resolveUpdateKind(remoteVersion, remoteCommitHash));
+        return;
+      } catch (error) {
+        lastError = error instanceof Error ? error : new Error('unknown error');
+      }
     }
 
-    const metadata = (await response.json()) as UpdateMetadata;
-    const { remoteVersion, remoteCommitHash } = applyRemoteMetadata(metadata);
-    setDetectedUpdate(resolveUpdateKind(remoteVersion, remoteCommitHash));
+    resolvedUpdateBranch.value = DEFAULT_UPDATE_BRANCH;
+    throw lastError ?? new Error('unknown error');
   } catch (error) {
     updateCheckError.value = error instanceof Error ? error.message : 'unknown error';
     setDetectedUpdate(null);
@@ -184,7 +212,8 @@ const appUpdate = {
   currentVersion,
   currentCommitHash,
   currentChannel,
-  updateGuideUrl,
+  updateGuideUrl: readonly(updateGuideUrl),
+  resolvedUpdateBranch: readonly(resolvedUpdateBranch),
   latestVersion: readonly(latestVersion),
   latestCommitHash: readonly(latestCommitHash),
   latestBuildTime: readonly(latestBuildTime),
