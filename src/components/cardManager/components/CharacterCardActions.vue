@@ -10,12 +10,7 @@
       :offset="8"
       :hide-after="0"
     >
-      <el-upload
-        action="#"
-        :before-upload="handleFileUpload"
-        :show-file-list="false"
-        accept=".json"
-      >
+      <BrowserFilePicker accept=".json" @select-first="handleFileUpload">
         <button class="btn-adv btn-primary-adv character-card-action-button-text">
           <Icon
             icon="ph:upload-duotone"
@@ -26,7 +21,7 @@
           <span class="character-card-action-text-short">导入</span>
           <span class="character-card-action-text-long">从文件导入</span>
         </button>
-      </el-upload>
+      </BrowserFilePicker>
     </el-tooltip>
 
     <el-tooltip
@@ -182,7 +177,8 @@
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
-import { ElTooltip, ElUpload } from 'element-plus';
+import { ElTooltip } from 'element-plus';
+import BrowserFilePicker from '@/components/common/BrowserFilePicker.vue';
 
 interface Props {
   context: 'list' | 'editor';
@@ -204,9 +200,8 @@ const emit = defineEmits<{
   (e: 'toggle-mode'): void;
 }>();
 
-const handleFileUpload = (file: File): boolean => {
+const handleFileUpload = (file: File) => {
   emit('import-file', file);
-  return false; // 阻止 el-upload 的默认行为
 };
 
 const getModeIcon = () => {

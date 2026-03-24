@@ -26,6 +26,7 @@ scripts/__pycache__/*
 src-tauri/target/
 src-tauri/gen/
 .vscode/
+generated/
 
 doc/
 

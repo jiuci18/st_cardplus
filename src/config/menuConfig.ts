@@ -76,7 +76,7 @@ const mainMenuItems: MenuItemConfig[] = [
     title: '角色卡管理器',
     icon: 'Postcard',
     route: '/cardmanager',
-    showInTabBar: true, // 默认显示在 TabBar
+    showInTabBar: true,
   },
   {
     id: 'cardinfo',
@@ -96,20 +96,9 @@ const mainMenuItems: MenuItemConfig[] = [
     title: '世界地标',
     icon: 'Location',
     route: '/world',
-    showInTabBar: true, // 默认显示在 TabBar
+    showInTabBar: true,
   },
-  {
-    id: 'ejs-editor',
-    type: 'main',
-    visible: true,
-    order: 4,
-    title: 'EJS模板',
-    icon: 'DataLine',
-    route: '/ejs-editor',
-    beta: true,
-    showInTabBar: false,
-  },
-  {
+    {
     id: 'worldbook',
     type: 'main',
     visible: true,
@@ -117,6 +106,17 @@ const mainMenuItems: MenuItemConfig[] = [
     title: '世界书',
     icon: 'Collection',
     route: '/worldbook',
+    showInTabBar: false,
+  },
+  {
+    id: 'ejs-editor',
+    type: 'main',
+    visible: true,
+    order: 5,
+    title: 'EJS模板',
+    icon: 'DataLine',
+    route: '/ejs-editor',
+    beta: true,
     showInTabBar: false,
   },
   {
@@ -157,16 +157,6 @@ const mainMenuItems: MenuItemConfig[] = [
 // 工具箱小工具配置
 const toolboxToolItems: MenuItemConfig[] = [
   {
-    id: 'json-formatter',
-    type: 'tool',
-    visible: false,
-    order: 100,
-    title: 'JSON格式化',
-    icon: 'material-symbols:code',
-    route: '/toolbox/json-formatter',
-    description: '去除JSON中的换行和多余空格',
-  },
-  {
     id: 'separator',
     type: 'tool',
     visible: false,
@@ -197,10 +187,20 @@ const toolboxToolItems: MenuItemConfig[] = [
     description: '批量转换角色卡简繁体，支持多种方言',
   },
   {
-    id: 'old-world-editor',
+    id: 'width-converter',
     type: 'tool',
     visible: false,
     order: 105,
+    title: '文本格式化',
+    icon: 'material-symbols:swap-horiz',
+    route: '/toolbox/width-converter',
+    description: '支持全角半角转换、清除独立空行与 JSON 压缩',
+  },
+  {
+    id: 'old-world-editor',
+    type: 'tool',
+    visible: false,
+    order: 106,
     title: '旧版世界编辑器',
     icon: 'material-symbols:history',
     route: '/toolbox/old-world-editor',

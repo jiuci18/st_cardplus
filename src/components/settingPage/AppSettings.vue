@@ -47,7 +47,7 @@
                 :class="{ 'is-collapsed': isUpdateContentOverflowing && !isUpdateContentExpanded }"
                 :style="{ maxHeight: updateQuoteMaxHeight }"
               >
-                <p class="update-quote">「{{ updateContentText }}」</p>
+                <p class="update-quote">{{ updateContentText }}</p>
               </div>
               <div
                 v-if="isUpdateContentOverflowing"
@@ -215,6 +215,7 @@ const {
   currentCommitHash,
   currentChannel,
   updateGuideUrl,
+  resolvedUpdateBranch,
   latestVersion,
   latestCommitHash,
   latestBuildTime,
@@ -239,7 +240,7 @@ const onBetaFeaturesToggle = (value: boolean) => {
             <p>这些功能可能会在没有事先通知的情况下发生变化或被移除</p>
             <p>在一般情况下，测试版将会带来更多<b>破坏性更新</b>，这可能导致您的创意丢失或者难以寻回</p>
             <p><strong>使用测试版功能即表示您理解并接受这些风险</strong></p>
-            <p>我鼓励您通过 <a href="https://github.com/awaae001/st_cardplus/issues" target="_blank" rel="noopener noreferrer" data-external-link="true" style="color: var(--el-color-primary);">GitHub Issues</a> 反馈问题，但请注意，我可能无法提供即时支持 </p>
+            <p>我鼓励您通过 <a href="https://github.com/jiuci18/st_cardplus/issues" target="_blank" rel="noopener noreferrer" data-external-link="true" style="color: var(--el-color-primary);">GitHub Issues</a> 反馈问题，但请注意，我可能无法提供即时支持 </p>
           </div>
         `,
       '启用测试版功能',
@@ -302,7 +303,8 @@ const formatMetadataDate = (value: string) => {
 const remoteMetadataText = computed(() => {
   if (!hasCheckedForUpdate.value) return '读取中……';
   if (!latestVersion.value) return '暂时没有读到远端元数据';
-  return `${currentChannel}[${latestCommitHash.value || '----'}](V - ${latestVersion.value}) - ${formatMetadataDate(latestBuildTime.value)}`;
+  const remoteBranchLabel = resolvedUpdateBranch.value === 'main' ? 'main' : 'dev';
+  return `${currentChannel} -> ${remoteBranchLabel}[${latestCommitHash.value || '----'}](V - ${latestVersion.value}) - ${formatMetadataDate(latestBuildTime.value)}`;
 });
 
 const updateStatusText = computed(() => {
@@ -388,7 +390,7 @@ const handleUpdateIgnoreAction = () => {
 };
 
 const openUpdateGuide = () => {
-  void openExternalUrl(updateGuideUrl).catch((error) => {
+  void openExternalUrl(updateGuideUrl.value).catch((error) => {
     console.error('打开更新说明失败:', error);
   });
 };

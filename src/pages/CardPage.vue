@@ -13,7 +13,7 @@
         <el-tab-pane name="list">
           <template #label>
             <span>
-              <i class="el-icon-user"></i>
+              <el-icon><User /></el-icon>
               角色列表
             </span>
           </template>
@@ -38,7 +38,7 @@
         >
           <template #label>
             <span>
-              <i class="el-icon-edit"></i>
+              <el-icon><Edit /></el-icon>
               {{ activeCharacter ? activeCharacter.data.chineseName || '编辑中' : '编辑角色' }}
             </span>
           </template>
@@ -121,6 +121,7 @@
 import { computed, watch, onUnmounted, ref, shallowRef, onMounted } from 'vue';
 import type { Component } from 'vue';
 import { ElEmpty, ElTabs, ElTabPane } from 'element-plus';
+import { Edit, User } from '@element-plus/icons-vue';
 import { Splitpanes, Pane } from 'splitpanes';
 import 'splitpanes/dist/splitpanes.css';
 import CharacterListSidebar from '../components/charcard/CharacterListSidebar.vue';

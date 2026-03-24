@@ -32,11 +32,12 @@
                   @save-as-new="handleSaveAsNewCard" @update-card="handleUpdateActiveCard"
                   @export-current="handleExportCurrentCard" />
                 <el-divider direction="vertical" />
-                <el-button type="primary" @click="triggerFileInput" size="small" :loading="isUploading"
-                  :disabled="isUploading">
-                  <Icon icon="ph:file-image-duotone" v-if="!isUploading" />
-                  <span class="button-text">{{ isUploading ? uploadProgress : '加载PNG' }}</span>
-                </el-button>
+                <BrowserFilePicker accept="image/png" :disabled="isUploading" @select-first="handleFileSelected">
+                  <el-button type="primary" size="small" :loading="isUploading" :disabled="isUploading">
+                    <Icon icon="ph:file-image-duotone" v-if="!isUploading" />
+                    <span class="button-text">{{ isUploading ? uploadProgress : '加载PNG' }}</span>
+                  </el-button>
+                </BrowserFilePicker>
                 <el-button type="success" @click="handleSave" size="small">
                   <Icon icon="ph:download-duotone" />
                   <span class="button-text">导出PNG</span>
@@ -137,7 +138,6 @@
       </div>
     </div>
 
-    <input ref="fileInput" type="file" accept="image/png" style="display: none" @change="handleFileSelected" />
   </div>
 </template>
 
@@ -152,6 +152,7 @@ import CharacterCardHome from '@/components/cardManager/components/CharacterCard
 import CharacterCardTabs from '@/components/cardManager/components/CharacterCardTabs.vue';
 import CardRegexPanel from '@/components/cardManager/panel/CardRegexPanel.vue';
 import CardWorldBookPanel from '@/components/cardManager/panel/CardWorldBookPanel.vue';
+import BrowserFilePicker from '@/components/common/BrowserFilePicker.vue';
 
 import { useCardExport } from '@/composables/characterCard/useCardExport';
 import { useCardImport } from '@/composables/characterCard/useCardImport';
@@ -356,7 +357,7 @@ watch(
 
 const imagePreviewUrl = computed(() => localPreviewUrl.value || avatarUrl.value || undefined);
 
-const { isUploading, uploadProgress, triggerFileInput, handleFileSelected } = useCardImport((card) => {
+const { isUploading, uploadProgress, handleFileSelected } = useCardImport((card) => {
   replaceCurrentSessionDraft(card, { markAsPersisted: false });
   rightEditorTab.value = 'card';
 }, handleImageUpdate);

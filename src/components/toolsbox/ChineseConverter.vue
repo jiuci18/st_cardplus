@@ -2,6 +2,7 @@
 import { Icon } from '@iconify/vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { computed, ref } from 'vue';
+import BrowserFilePicker from '@/components/common/BrowserFilePicker.vue';
 import { saveFile } from '@/utils/fileSave';
 import {
   CONVERSION_OPTIONS,
@@ -37,10 +38,8 @@ const successCount = computed(() => fileList.value.filter((item) => item.status 
 const errorCount = computed(() => fileList.value.filter((item) => item.status === 'error').length);
 
 // 文件上传处理
-function handleFileChange(event: Event) {
-  const input = event.target as HTMLInputElement;
-  const files = input.files;
-  if (!files || files.length === 0) return;
+function handleFileChange(files: File[]) {
+  if (files.length === 0) return;
 
   // 验证文件类型
   const pngFiles = Array.from(files).filter((file) => {
@@ -65,9 +64,6 @@ function handleFileChange(event: Event) {
 
   fileList.value.push(...newItems);
   ElMessage.success(`已添加 ${pngFiles.length} 个文件`);
-
-  // 重置 input
-  input.value = '';
 }
 
 // 移除单个文件
@@ -282,15 +278,16 @@ function getStatusText(status: FileItem['status']): string {
 
     <!-- 上传区 -->
     <div class="action-section">
-      <el-button type="primary" @click="($refs.fileInput as HTMLInputElement)?.click()" :disabled="isConverting">
-        <Icon icon="material-symbols:upload-file" class="icon-left" />
-        选择 PNG 文件（支持多选）
-      </el-button>
+      <BrowserFilePicker accept=".png" multiple :disabled="isConverting" @select="handleFileChange">
+        <el-button type="primary" :disabled="isConverting">
+          <Icon icon="material-symbols:upload-file" class="icon-left" />
+          选择 PNG 文件（支持多选）
+        </el-button>
+      </BrowserFilePicker>
       <el-button @click="clearAllFiles" :disabled="!hasFiles || isConverting">
         <Icon icon="material-symbols:delete-outline" class="icon-left" />
         清空列表
       </el-button>
-      <input ref="fileInput" type="file" accept=".png" multiple @change="handleFileChange" style="display: none" />
       <el-button type="success" size="large" @click="startConversion" :disabled="!hasFiles || isConverting"
         :loading="isConverting">
         <Icon v-if="!isConverting" icon="material-symbols:sync" class="icon-left" />

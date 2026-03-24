@@ -35,7 +35,7 @@
       <h2 class="section-title">链接</h2>
       <div class="links-row">
         <ExternalLink
-          href="https://github.com/awaae001/st_cardplus"
+          href="https://github.com/jiuci18/st_cardplus"
           class="link-item"
         >
           <Icon
@@ -92,7 +92,7 @@
             </span>
           </ExternalLink>
           <ExternalLink
-            href="https://dev.st-cardplus-1kl.pages.dev/"
+            href="https://dev.stcardplus.pages.dev/settings"
             class="link-item"
           >
             <Icon
@@ -246,8 +246,13 @@ const isMainDomain = computed(() => {
 });
 
 const isDevDomain = computed(() => {
-  return window.location.hostname === 'dev.st-cardplus-1kl.pages.dev';
+  return window.location.hostname === 'dev.stcardplus.pages.dev';
 });
+
+const resolvePreferredBranch = (branchNames: string[]) => {
+  const preferredBranch = isMainDomain.value ? 'main' : 'dev';
+  return branchNames.includes(preferredBranch) ? preferredBranch : 'main';
+};
 
 const loadMore = async (isBranchChange = false) => {
   if ((!hasMore.value || loading.value) && !isBranchChange) return;
@@ -261,7 +266,7 @@ const loadMore = async (isBranchChange = false) => {
   try {
     if (!selectedBranch.value) return;
     const response = await fetch(
-      `https://api.github.com/repos/awaae001/st_cardplus/commits?sha=${selectedBranch.value}&per_page=10&page=${page.value}`
+      `https://api.github.com/repos/jiuci18/st_cardplus/commits?sha=${selectedBranch.value}&per_page=10&page=${page.value}`
     );
     const commits: Commit[] = await response.json();
 
@@ -299,10 +304,11 @@ const loadMore = async (isBranchChange = false) => {
 
 const fetchBranches = async () => {
   try {
-    const response = await fetch('https://api.github.com/repos/awaae001/st_cardplus/branches');
+    const response = await fetch('https://api.github.com/repos/jiuci18/st_cardplus/branches');
     if (response.ok) {
       branches.value = await response.json();
-      selectedBranch.value = isMainDomain.value ? 'main' : 'dev';
+      const branchNames = branches.value.map((branch: { name: string }) => branch.name);
+      selectedBranch.value = resolvePreferredBranch(branchNames);
     }
   } catch (error) {
     console.error('Error fetching branches:', error);

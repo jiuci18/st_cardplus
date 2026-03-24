@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import BrowserFilePicker from '@/components/common/BrowserFilePicker.vue';
 import { ElMessage } from 'element-plus';
 import { v4 as uuidv4 } from 'uuid';
 import { ref } from 'vue';
@@ -39,8 +40,7 @@ function extractAndNormalizeBookData(data: any): object | null {
   return null;
 }
 
-function handleFileChange(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0];
+function handleFileChange(file: File) {
   if (!file) return;
 
   if (file.type !== 'application/json') {
@@ -119,19 +119,11 @@ async function downloadJson() {
 
     <div class="io-grid">
       <div class="file-upload-area">
-        <el-button
-          type="primary"
-          @click="($refs.fileInput as HTMLInputElement).click()"
-        >
-          打开 JSON 文件
-        </el-button>
-        <input
-          ref="fileInput"
-          type="file"
-          accept=".json"
-          @change="handleFileChange"
-          style="display: none"
-        />
+        <BrowserFilePicker accept=".json" @select-first="handleFileChange">
+          <el-button type="primary">
+            打开 JSON 文件
+          </el-button>
+        </BrowserFilePicker>
         <p
           v-if="fileName"
           class="file-name"

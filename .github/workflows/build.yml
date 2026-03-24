@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   prepare-release:
-    if: github.repository == 'awaae001/st_cardplus'
+    if: github.repository == 'jiuci18/st_cardplus'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -184,7 +184,7 @@ jobs:
 
   type-check:
     needs: prepare-release
-    if: github.repository == 'awaae001/st_cardplus'
+    if: github.repository == 'jiuci18/st_cardplus'
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -212,7 +212,7 @@ jobs:
     needs:
       - prepare-release
       - type-check
-    if: github.repository == 'awaae001/st_cardplus'
+    if: github.repository == 'jiuci18/st_cardplus'
     runs-on: ubuntu-latest
 
     steps:
@@ -253,7 +253,7 @@ jobs:
     needs:
       - prepare-release
       - type-check
-    if: github.repository == 'awaae001/st_cardplus'
+    if: github.repository == 'jiuci18/st_cardplus'
     runs-on: windows-latest
 
     steps:
@@ -306,11 +306,11 @@ jobs:
         path: src-tauri/target/release/bundle/msi/*.msi
         if-no-files-found: error
 
-  build-linux-appimage:
+  build-linux-deb:
     needs:
       - prepare-release
       - type-check
-    if: github.repository == 'awaae001/st_cardplus'
+    if: github.repository == 'jiuci18/st_cardplus'
     runs-on: ubuntu-latest
 
     steps:
@@ -340,8 +340,7 @@ jobs:
           libwebkit2gtk-4.1-dev \
           libgtk-3-dev \
           libayatana-appindicator3-dev \
-          librsvg2-dev \
-          patchelf
+          librsvg2-dev
 
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
@@ -357,16 +356,16 @@ jobs:
     - name: Generate Tauri icons
       run: pnpm prepare:icons
 
-    - name: Build Linux AppImage
+    - name: Build Linux Debian package
       env:
         APP_CHANNEL_OVERRIDE: ${{ needs.prepare-release.outputs.release_enabled == 'true' && 'stable' || '' }}
-      run: pnpm tauri build --bundles appimage
+      run: pnpm tauri build --bundles deb
 
-    - name: Upload Linux AppImage artifacts
+    - name: Upload Linux Debian package artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: linux-appimage
-        path: src-tauri/target/release/bundle/appimage/*.AppImage
+        name: linux-deb
+        path: src-tauri/target/release/bundle/deb/*.deb
         if-no-files-found: error
 
   release:
@@ -374,8 +373,8 @@ jobs:
       - prepare-release
       - build-web
       - build-windows
-      - build-linux-appimage
-    if: github.repository == 'awaae001/st_cardplus' && needs.prepare-release.outputs.release_enabled == 'true'
+      - build-linux-deb
+    if: github.repository == 'jiuci18/st_cardplus' && needs.prepare-release.outputs.release_enabled == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -404,4 +403,4 @@ jobs:
           release-assets/sillytavern-char_cardplus-${{ needs.prepare-release.outputs.tag_name }}-web.zip
           release-assets/windows-nsis-installer/*.exe
           release-assets/windows-msi-installer/*.msi
-          release-assets/linux-appimage/*.AppImage
+          release-assets/linux-deb/*.deb
