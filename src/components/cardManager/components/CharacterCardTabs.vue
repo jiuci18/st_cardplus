@@ -91,10 +91,11 @@ const handleDragEnd = () => {
 const handleWheel = (event: WheelEvent) => {
   if (!scrollWrapper.value) return;
 
-  // 阻止默认垂直滚动
-  event.preventDefault();
+  if (event.ctrlKey || event.metaKey) {
+    return;
+  }
 
-  // 将垂直滚动转换为横向滚动
+  event.preventDefault();
   scrollWrapper.value.scrollLeft += event.deltaY;
 };
 

@@ -166,6 +166,7 @@ async function copyResult() {
         <Icon icon="material-symbols:swap-horiz" class="icon-left" />
         交换结果
       </el-button>
+      <p> · </p>
       <el-button @click="clearAll" :disabled="!inputText && !outputText">
         <Icon icon="material-symbols:delete-outline" class="icon-left" />
         清空

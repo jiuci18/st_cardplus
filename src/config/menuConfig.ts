@@ -76,7 +76,7 @@ const mainMenuItems: MenuItemConfig[] = [
     title: '角色卡管理器',
     icon: 'Postcard',
     route: '/cardmanager',
-    showInTabBar: true, // 默认显示在 TabBar
+    showInTabBar: true,
   },
   {
     id: 'cardinfo',
@@ -96,20 +96,9 @@ const mainMenuItems: MenuItemConfig[] = [
     title: '世界地标',
     icon: 'Location',
     route: '/world',
-    showInTabBar: true, // 默认显示在 TabBar
+    showInTabBar: true,
   },
-  {
-    id: 'ejs-editor',
-    type: 'main',
-    visible: true,
-    order: 4,
-    title: 'EJS模板',
-    icon: 'DataLine',
-    route: '/ejs-editor',
-    beta: true,
-    showInTabBar: false,
-  },
-  {
+    {
     id: 'worldbook',
     type: 'main',
     visible: true,
@@ -117,6 +106,17 @@ const mainMenuItems: MenuItemConfig[] = [
     title: '世界书',
     icon: 'Collection',
     route: '/worldbook',
+    showInTabBar: false,
+  },
+  {
+    id: 'ejs-editor',
+    type: 'main',
+    visible: true,
+    order: 5,
+    title: 'EJS模板',
+    icon: 'DataLine',
+    route: '/ejs-editor',
+    beta: true,
     showInTabBar: false,
   },
   {
