@@ -92,7 +92,7 @@
             </span>
           </ExternalLink>
           <ExternalLink
-            href="https://dev.st-cardplus-1kl.pages.dev/"
+            href="https://dev.stcardplus.pages.dev/settings"
             class="link-item"
           >
             <Icon
@@ -246,7 +246,7 @@ const isMainDomain = computed(() => {
 });
 
 const isDevDomain = computed(() => {
-  return window.location.hostname === 'dev.st-cardplus-1kl.pages.dev';
+  return window.location.hostname === 'dev.stcardplus.pages.dev';
 });
 
 const resolvePreferredBranch = (branchNames: string[]) => {

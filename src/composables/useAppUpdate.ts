@@ -22,7 +22,7 @@ const CHANNEL_BRANCH_MAP: Record<AppChannel, UpdateBranch> = {
 
 const UPDATE_METADATA_URLS: Record<UpdateBranch, string> = {
   main: 'https://cardplus.jiuci.top/metadata.json',
-  dev: 'https://dev.st-cardplus-1kl.pages.dev/metadata.json',
+  dev: 'https://dev.stcardplus.pages.dev/metadata.json',
 };
 
 const UPDATE_GUIDE_URLS: Record<UpdateBranch, string> = {

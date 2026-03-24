@@ -47,7 +47,7 @@
                 :class="{ 'is-collapsed': isUpdateContentOverflowing && !isUpdateContentExpanded }"
                 :style="{ maxHeight: updateQuoteMaxHeight }"
               >
-                <p class="update-quote">「{{ updateContentText }}」</p>
+                <p class="update-quote">{{ updateContentText }}</p>
               </div>
               <div
                 v-if="isUpdateContentOverflowing"
