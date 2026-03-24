@@ -13,6 +13,7 @@
     "prepare:iconify": "node scripts/generate-iconify-bundle.mjs",
     "prebuild:desktop": "pnpm prepare:icons",
     "prebuild": "pnpm prepare:iconify",
+    "pretype-check": "pnpm prepare:iconify",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "build": "vite build",
     "preview": "vite preview",
