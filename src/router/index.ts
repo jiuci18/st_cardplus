@@ -58,12 +58,6 @@ const router = createRouter({
       meta: { title: '工具箱' },
     },
     {
-      path: '/toolbox/json-formatter',
-      name: 'jsonFormatter',
-      component: () => import('../components/toolsbox/JsonFormatter.vue'),
-      meta: { title: 'JSON 格式化' },
-    },
-    {
       path: '/toolbox/separator',
       name: 'separator',
       component: () => import('../components/toolsbox/separator.vue'),

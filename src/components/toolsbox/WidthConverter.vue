@@ -1,16 +1,48 @@
 <script setup lang="ts">
+import { copyToClipboard } from '@/utils/clipboard';
 import { Icon } from '@iconify/vue';
 import { ElMessage } from 'element-plus';
-import { computed, ref } from 'vue';
-import { copyToClipboard } from '@/utils/clipboard';
+import { computed, ref, watch } from 'vue';
+
+type FormatterOperation = 'full-to-half' | 'half-to-full' | 'remove-blank-lines' | 'minify-json';
 
 const inputText = ref('');
 const outputText = ref('');
-const conversionMode = ref<'full-to-half' | 'half-to-full'>('full-to-half');
+const selectedOperations = ref<FormatterOperation[]>(['full-to-half']);
+
+const OPERATION_OPTIONS: Array<{ label: string; value: FormatterOperation }> = [
+  { label: '全角转半角', value: 'full-to-half' },
+  { label: '半角转全角', value: 'half-to-full' },
+  { label: '清除独立空行', value: 'remove-blank-lines' },
+  { label: 'JSON 压缩', value: 'minify-json' },
+];
+
+const CONFLICTS: Record<FormatterOperation, FormatterOperation[]> = {
+  'full-to-half': ['half-to-full'],
+  'half-to-full': ['full-to-half', 'minify-json'],
+  'remove-blank-lines': [],
+  'minify-json': ['half-to-full'],
+};
 
 const hasInput = computed(() => inputText.value.length > 0);
+const hasSelectedOperations = computed(() => selectedOperations.value.length > 0);
 const charCount = computed(() => inputText.value.length);
 const outputCharCount = computed(() => outputText.value.length);
+const selectedOperationLabels = computed(() =>
+  OPERATION_OPTIONS.filter((option) => selectedOperations.value.includes(option.value)).map((option) => option.label)
+);
+
+function sortOperations(operations: FormatterOperation[]) {
+  return OPERATION_OPTIONS.map((option) => option.value).filter((value) => operations.includes(value));
+}
+
+function getOperationLabel(operation: FormatterOperation) {
+  return OPERATION_OPTIONS.find((option) => option.value === operation)?.label ?? operation;
+}
+
+function isSameOperationList(left: FormatterOperation[], right: FormatterOperation[]) {
+  return left.length === right.length && left.every((operation, index) => operation === right[index]);
+}
 
 const specialFullToHalfMap: Record<string, string> = {
   '“': '"',
@@ -74,21 +106,90 @@ function toFullWidth(text: string): string {
   });
 }
 
-function applyTransform(transformer: (text: string) => string, successMessage: string) {
+function removeBlankLines(text: string): string {
+  return text
+    .split(/\r?\n/)
+    .filter((line) => line.trim() !== '')
+    .join('\n');
+}
+
+function minifyJson(text: string): string {
+  return JSON.stringify(JSON.parse(text));
+}
+
+function validateSelectedOperations() {
+  if (!selectedOperations.value.length) {
+    ElMessage.warning('请先选择至少一个处理功能');
+    return false;
+  }
+
+  return true;
+}
+
+watch(selectedOperations, (nextOperations, previousOperations) => {
+  const addedOperation = nextOperations.find((operation) => !previousOperations.includes(operation));
+  if (!addedOperation) {
+    const sortedOperations = sortOperations(nextOperations);
+    if (!isSameOperationList(sortedOperations, nextOperations)) {
+      selectedOperations.value = sortedOperations;
+    }
+    return;
+  }
+
+  const conflicts = CONFLICTS[addedOperation];
+  const resolvedOperations = sortOperations(nextOperations.filter((operation) => !conflicts.includes(operation)));
+  const removedOperations = nextOperations.filter((operation) => conflicts.includes(operation));
+
+  if (resolvedOperations.length !== nextOperations.length) {
+    selectedOperations.value = resolvedOperations;
+    const removedLabels = removedOperations.map(getOperationLabel).join('、');
+    ElMessage.info(`已自动取消互斥项：${removedLabels}`);
+    return;
+  }
+
+  if (!isSameOperationList(resolvedOperations, nextOperations)) {
+    selectedOperations.value = resolvedOperations;
+  }
+});
+
+function processText() {
   if (!inputText.value) {
     ElMessage.warning('请先输入要处理的文本');
     return;
   }
 
-  outputText.value = transformer(inputText.value);
-  ElMessage.success(successMessage);
-}
+  if (!validateSelectedOperations()) {
+    return;
+  }
 
-function convertText() {
-  applyTransform(
-    conversionMode.value === 'full-to-half' ? toHalfWidth : toFullWidth,
-    '转换完成'
-  );
+  try {
+    let result = inputText.value;
+
+    for (const operation of OPERATION_OPTIONS.map((option) => option.value)) {
+      if (!selectedOperations.value.includes(operation)) continue;
+
+      if (operation === 'full-to-half') {
+        result = toHalfWidth(result);
+      } else if (operation === 'half-to-full') {
+        result = toFullWidth(result);
+      } else if (operation === 'remove-blank-lines') {
+        result = removeBlankLines(result);
+      } else if (operation === 'minify-json') {
+        result = minifyJson(result);
+      }
+    }
+
+    outputText.value = result;
+    ElMessage.success(`处理完成：${selectedOperationLabels.value.join(' / ')}`);
+  } catch (error) {
+    if (selectedOperations.value.includes('minify-json')) {
+      ElMessage.error('JSON 格式无效，无法压缩');
+      return;
+    }
+
+    console.error('文本处理失败:', error);
+    ElMessage.error('处理失败，请检查输入内容');
+  }
 }
 
 function swapTexts() {
@@ -99,23 +200,11 @@ function swapTexts() {
 
   inputText.value = outputText.value;
   outputText.value = '';
-  conversionMode.value = conversionMode.value === 'full-to-half' ? 'half-to-full' : 'full-to-half';
 }
 
 function clearAll() {
   inputText.value = '';
   outputText.value = '';
-}
-
-function removeBlankLines() {
-  applyTransform(
-    (text) =>
-      text
-        .split(/\r?\n/)
-        .filter((line) => line.trim() !== '')
-        .join('\n'),
-    '已清除独立空行'
-  );
 }
 
 async function copyResult() {
@@ -139,34 +228,40 @@ async function copyResult() {
     </div>
 
     <el-alert type="info" :closable="false" class="info-alert">
-      <p>支持中英文标点、字母、数字与空格的全角 / 半角互转。</p>
-      <p>也支持清除独立空行，适合统一文本格式、清理提示词或处理中日文混排内容。</p>
+      <p>把文本处理功能合并到了一个入口里，选择需要的步骤后统一执行。</p>
+      <p>支持全角 / 半角互转、清除独立空行，以及 JSON 压缩。</p>
     </el-alert>
 
     <div class="config-section">
       <div class="config-item">
-        <label>转换方向：</label>
-        <el-radio-group v-model="conversionMode" size="large">
-          <el-radio-button label="full-to-half">全角 → 半角</el-radio-button>
-          <el-radio-button label="half-to-full">半角 → 全角</el-radio-button>
-        </el-radio-group>
+        <label>处理功能：</label>
+        <el-checkbox-group
+          v-model="selectedOperations"
+        >
+          <el-checkbox
+            v-for="option in OPERATION_OPTIONS"
+            :key="option.value"
+            :label="option.value"
+            class="operation-checkbox"
+          >
+            {{ option.label }}
+          </el-checkbox>
+        </el-checkbox-group>
       </div>
+      <p class="config-hint">
+        勾选时会自动取消互斥项。执行顺序固定为：全角转半角 / 半角转全角 → 清除独立空行 → JSON 压缩
+      </p>
     </div>
 
     <div class="action-section">
-      <el-button type="primary" @click="convertText" :disabled="!hasInput">
-        <Icon icon="material-symbols:sync-alt" class="icon-left" />
-        开始转换
-      </el-button>
-      <el-button type="success" plain @click="removeBlankLines" :disabled="!hasInput">
-        <Icon icon="material-symbols:format-line-spacing" class="icon-left" />
-        清除独立空行
+      <el-button type="primary" @click="processText" :disabled="!hasInput || !hasSelectedOperations">
+        <Icon icon="material-symbols:auto-fix-high" class="icon-left" />
+        一键处理
       </el-button>
       <el-button @click="swapTexts" :disabled="!outputText">
         <Icon icon="material-symbols:swap-horiz" class="icon-left" />
         交换结果
       </el-button>
-      <p> · </p>
       <el-button @click="clearAll" :disabled="!inputText && !outputText">
         <Icon icon="material-symbols:delete-outline" class="icon-left" />
         清空
@@ -188,13 +283,13 @@ async function copyResult() {
           type="textarea"
           :rows="16"
           resize="vertical"
-          placeholder="请输入要转换的文本，例如：ＡＢＣ１２３，。！？"
+          placeholder="请输入要处理的文本或 JSON 内容"
         />
       </div>
 
       <div class="editor-section">
         <div class="section-header">
-          <h3>转换结果</h3>
+          <h3>处理结果</h3>
           <span>{{ outputCharCount }} 字符</span>
         </div>
         <el-input
@@ -203,17 +298,18 @@ async function copyResult() {
           :rows="16"
           resize="vertical"
           readonly
-          placeholder="转换结果会显示在这里"
+          placeholder="处理结果会显示在这里"
         />
       </div>
     </div>
 
     <div class="tips-section">
-      <h3>转换说明</h3>
+      <h3>处理说明</h3>
       <ul>
         <li>全角转半角：例如 `ＡＢＣ１２３，“你好”！` → `ABC123,"你好"!`</li>
         <li>半角转全角：例如 `ABC 123!?` → `ＡＢＣ　１２３！？`</li>
-        <li>清除独立空行：会删除内容为空或只包含空格的整行，并保留其余文本顺序。</li>
+        <li>清除独立空行：删除内容为空或只包含空格的整行。</li>
+        <li>JSON 压缩：校验 JSON 后输出单行结果，不会破坏字符串内部空格。</li>
       </ul>
     </div>
   </div>
@@ -264,6 +360,28 @@ async function copyResult() {
 .config-item label {
   font-weight: 500;
   min-width: 80px;
+}
+
+.config-item :deep(.el-checkbox-group) {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.operation-checkbox {
+  flex: 1;
+  min-width: 160px;
+  margin-right: 0;
+  padding: 10px 14px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 8px;
+  background: var(--el-bg-color);
+}
+
+.config-hint {
+  margin: 12px 0 0;
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
 }
 
 .action-section {
@@ -339,6 +457,15 @@ async function copyResult() {
   .config-item {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .config-item :deep(.el-checkbox-group) {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .operation-checkbox {
+    width: 100%;
   }
 
   .action-section {

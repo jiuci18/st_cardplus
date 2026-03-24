@@ -157,16 +157,6 @@ const mainMenuItems: MenuItemConfig[] = [
 // 工具箱小工具配置
 const toolboxToolItems: MenuItemConfig[] = [
   {
-    id: 'json-formatter',
-    type: 'tool',
-    visible: false,
-    order: 100,
-    title: 'JSON格式化',
-    icon: 'material-symbols:code',
-    route: '/toolbox/json-formatter',
-    description: '去除JSON中的换行和多余空格',
-  },
-  {
     id: 'separator',
     type: 'tool',
     visible: false,
@@ -204,7 +194,7 @@ const toolboxToolItems: MenuItemConfig[] = [
     title: '文本格式化',
     icon: 'material-symbols:swap-horiz',
     route: '/toolbox/width-converter',
-    description: '支持全角半角转换与清除独立空行',
+    description: '支持全角半角转换、清除独立空行与 JSON 压缩',
   },
   {
     id: 'old-world-editor',
