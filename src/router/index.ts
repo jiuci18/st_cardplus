@@ -82,6 +82,12 @@ const router = createRouter({
       meta: { title: '简繁转换器' },
     },
     {
+      path: '/toolbox/width-converter',
+      name: 'widthConverter',
+      component: () => import('../components/toolsbox/WidthConverter.vue'),
+      meta: { title: '文本格式化' },
+    },
+    {
       path: '/toolbox/old-world-editor',
       name: 'oldWorldEditor',
       component: () => import('../components/toolsbox/OldWorldEditorTool.vue'),
