@@ -3,7 +3,6 @@
  * 使用 opencc-js 进行角色卡文本的简繁体转换
  */
 
-import * as OpenCC from 'opencc-js';
 import { read, write } from './pngCardMetadata';
 import { saveFile } from './fileSave';
 
@@ -74,6 +73,16 @@ export interface ConversionResult {
   error?: Error;
 }
 
+let openCCModulePromise: Promise<typeof import('opencc-js')> | null = null;
+
+async function getOpenCCModule(): Promise<typeof import('opencc-js')> {
+  if (!openCCModulePromise) {
+    openCCModulePromise = import('opencc-js');
+  }
+
+  return openCCModulePromise;
+}
+
 /**
  * 递归转换对象中的所有字符串字段
  * @param obj 要转换的对象
@@ -106,8 +115,9 @@ function convertObjectStrings<T>(obj: T, converter: (text: string) => string): T
  * @param config 转换配置
  * @returns 转换后的 JSON 字符串
  */
-function convertCharacterCardJson(jsonData: any | string, config: ConversionConfig): string {
+async function convertCharacterCardJson(jsonData: any | string, config: ConversionConfig): Promise<string> {
   const cardData = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+  const OpenCC = await getOpenCCModule();
   const converter = OpenCC.Converter({ from: 'cn', to: config });
   const convertedData = convertObjectStrings(cardData, converter);
   return JSON.stringify(convertedData);
@@ -144,11 +154,9 @@ async function convertPngCharacterCard(file: File, config: ConversionConfig): Pr
         message: 'PNG 文件中未找到角色卡数据',
       };
     }
-
-    // 转换 JSON 数据
     let convertedJsonString: string;
     try {
-      convertedJsonString = convertCharacterCardJson(jsonString, config);
+      convertedJsonString = await convertCharacterCardJson(jsonString, config);
     } catch (error) {
       return {
         success: false,
@@ -157,8 +165,6 @@ async function convertPngCharacterCard(file: File, config: ConversionConfig): Pr
         error: error instanceof Error ? error : new Error(String(error)),
       };
     }
-
-    // 将转换后的 JSON 写回 PNG
     let convertedImageData: Uint8Array;
     try {
       convertedImageData = write(imageData, convertedJsonString);
