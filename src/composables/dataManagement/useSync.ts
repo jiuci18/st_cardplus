@@ -11,7 +11,7 @@ import {
   uploadToGist,
 } from '@/utils/cloud/gist';
 import { SYNC_EXCLUDED_KEYS, SYNC_SNAPSHOT_SESSION_KEY } from '@/config/dataSyncConfig';
-import { getSessionStorageItem, removeSessionStorageItem, writeLocalStorageJSON } from '@/utils/localStorageUtils';
+import { getSessionStorageItem, getSetting, removeSessionStorageItem, writeLocalStorageJSON } from '@/utils/localStorageUtils';
 import { formatDateTime, formatRelative, now, nowIso } from '@/utils/datetime';
 import type { GistConfig } from '@/types/gist';
 import { DEFAULT_SYNC_PROVIDER, SYNC_PROVIDER_OPTIONS, WEB_DAV_BACKUP_FILE_NAME } from './sync/constants';
@@ -179,9 +179,14 @@ export function useSync() {
         return;
       }
 
+      const snapshotRecoveryDisabled = getSetting('disableSyncSnapshotRecovery');
+      let snapshotSaved: boolean | undefined;
+
       clearSnapshot();
-      const snapshotSaved = await saveSnapshot(SYNC_SNAPSHOT_SESSION_KEY, SYNC_EXCLUDED_KEYS);
-      snapshotAvailable.value = snapshotSaved;
+      if (!snapshotRecoveryDisabled) {
+        snapshotSaved = await saveSnapshot(SYNC_SNAPSHOT_SESSION_KEY, SYNC_EXCLUDED_KEYS);
+        snapshotAvailable.value = snapshotSaved;
+      }
 
       const confirmed = await confirmPull(backupData.timestamp, snapshotSaved);
       if (!confirmed) {
