@@ -32,18 +32,6 @@ const selectedOperationLabels = computed(() =>
   OPERATION_OPTIONS.filter((option) => selectedOperations.value.includes(option.value)).map((option) => option.label)
 );
 
-function sortOperations(operations: FormatterOperation[]) {
-  return OPERATION_OPTIONS.map((option) => option.value).filter((value) => operations.includes(value));
-}
-
-function getOperationLabel(operation: FormatterOperation) {
-  return OPERATION_OPTIONS.find((option) => option.value === operation)?.label ?? operation;
-}
-
-function isSameOperationList(left: FormatterOperation[], right: FormatterOperation[]) {
-  return left.length === right.length && left.every((operation, index) => operation === right[index]);
-}
-
 const specialFullToHalfMap: Record<string, string> = {
   '“': '"',
   '”': '"',
@@ -66,7 +54,9 @@ const specialFullToHalfMap: Record<string, string> = {
 };
 
 const specialHalfToFullMap: Record<string, string> = Object.fromEntries(
-  Object.entries(specialFullToHalfMap).map(([full, half]) => [half, full])
+  Object.entries(specialFullToHalfMap)
+    .filter(([, half]) => half !== '"' && half !== "'")
+    .map(([full, half]) => [half, full])
 ) as Record<string, string>;
 
 function convertCharacters(
@@ -97,13 +87,36 @@ function toHalfWidth(text: string): string {
 }
 
 function toFullWidth(text: string): string {
-  return convertCharacters(text, specialHalfToFullMap, (char, code) => {
-    if (code === 0x20) return '　';
-    if (code >= 0x21 && code <= 0x7e) {
-      return String.fromCharCode(code + 0xfee0);
-    }
-    return char;
-  });
+  let doubleQuoteOpen = true;
+  let singleQuoteOpen = true;
+
+  return Array.from(text)
+    .map((char) => {
+      if (char === '"') {
+        const quote = doubleQuoteOpen ? '“' : '”';
+        doubleQuoteOpen = !doubleQuoteOpen;
+        return quote;
+      }
+
+      if (char === "'") {
+        const quote = singleQuoteOpen ? '‘' : '’';
+        singleQuoteOpen = !singleQuoteOpen;
+        return quote;
+      }
+
+      const mapped = specialHalfToFullMap[char];
+      if (mapped) {
+        return mapped;
+      }
+
+      const code = char.charCodeAt(0);
+      if (code === 0x20) return '　';
+      if (code >= 0x21 && code <= 0x7e) {
+        return String.fromCharCode(code + 0xfee0);
+      }
+      return char;
+    })
+    .join('');
 }
 
 function removeBlankLines(text: string): string {
@@ -117,37 +130,29 @@ function minifyJson(text: string): string {
   return JSON.stringify(JSON.parse(text));
 }
 
-function validateSelectedOperations() {
-  if (!selectedOperations.value.length) {
-    ElMessage.warning('请先选择至少一个处理功能');
-    return false;
-  }
+function getResolvedOperations(operations: FormatterOperation[]) {
+  return OPERATION_OPTIONS.reduce<FormatterOperation[]>((resolved, option) => {
+    if (!operations.includes(option.value)) {
+      return resolved;
+    }
 
-  return true;
+    const conflicts = CONFLICTS[option.value];
+    if (resolved.some((operation) => conflicts.includes(operation))) {
+      return resolved;
+    }
+
+    resolved.push(option.value);
+    return resolved;
+  }, []);
 }
 
-watch(selectedOperations, (nextOperations, previousOperations) => {
-  const addedOperation = nextOperations.find((operation) => !previousOperations.includes(operation));
-  if (!addedOperation) {
-    const sortedOperations = sortOperations(nextOperations);
-    if (!isSameOperationList(sortedOperations, nextOperations)) {
-      selectedOperations.value = sortedOperations;
-    }
-    return;
-  }
+function isSameOperationList(left: FormatterOperation[], right: FormatterOperation[]) {
+  return left.length === right.length && left.every((operation, index) => operation === right[index]);
+}
 
-  const conflicts = CONFLICTS[addedOperation];
-  const resolvedOperations = sortOperations(nextOperations.filter((operation) => !conflicts.includes(operation)));
-  const removedOperations = nextOperations.filter((operation) => conflicts.includes(operation));
-
-  if (resolvedOperations.length !== nextOperations.length) {
-    selectedOperations.value = resolvedOperations;
-    const removedLabels = removedOperations.map(getOperationLabel).join('、');
-    ElMessage.info(`已自动取消互斥项：${removedLabels}`);
-    return;
-  }
-
-  if (!isSameOperationList(resolvedOperations, nextOperations)) {
+watch(selectedOperations, (operations) => {
+  const resolvedOperations = getResolvedOperations(operations);
+  if (!isSameOperationList(resolvedOperations, operations)) {
     selectedOperations.value = resolvedOperations;
   }
 });
@@ -158,15 +163,18 @@ function processText() {
     return;
   }
 
-  if (!validateSelectedOperations()) {
+  const operations = getResolvedOperations(selectedOperations.value);
+  if (!operations.length) {
+    ElMessage.warning('请先选择至少一个处理功能');
     return;
   }
+
+  selectedOperations.value = operations;
 
   try {
     let result = inputText.value;
 
-    for (const operation of OPERATION_OPTIONS.map((option) => option.value)) {
-      if (!selectedOperations.value.includes(operation)) continue;
+    for (const operation of operations) {
 
       if (operation === 'full-to-half') {
         result = toHalfWidth(result);
@@ -181,14 +189,13 @@ function processText() {
 
     outputText.value = result;
     ElMessage.success(`处理完成：${selectedOperationLabels.value.join(' / ')}`);
-  } catch (error) {
-    if (selectedOperations.value.includes('minify-json')) {
-      ElMessage.error('JSON 格式无效，无法压缩');
+  } catch {
+    if (operations.includes('minify-json')) {
+      ElMessage.warning('JSON 格式无效，无法压缩');
       return;
     }
 
-    console.error('文本处理失败:', error);
-    ElMessage.error('处理失败，请检查输入内容');
+    ElMessage.warning('处理失败，请检查输入内容');
   }
 }
 
@@ -226,11 +233,6 @@ async function copyResult() {
       </el-button>
       <h1>文本格式化</h1>
     </div>
-
-    <el-alert type="info" :closable="false" class="info-alert">
-      <p>把文本处理功能合并到了一个入口里，选择需要的步骤后统一执行。</p>
-      <p>支持全角 / 半角互转、清除独立空行，以及 JSON 压缩。</p>
-    </el-alert>
 
     <div class="config-section">
       <div class="config-item">
@@ -332,15 +334,6 @@ async function copyResult() {
 
 .header h1 {
   margin: 0;
-}
-
-.info-alert {
-  margin-bottom: 20px;
-}
-
-.info-alert p {
-  margin: 4px 0;
-  font-size: 14px;
 }
 
 .config-section {
