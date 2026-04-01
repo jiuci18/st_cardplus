@@ -57,6 +57,8 @@
             :regions="regions"
             :create-region="createRegion"
             :projects="projects"
+            :export-project="exportProject"
+            :import-project-overwrite="importProjectOverwrite"
             @update:selected-item="handleSelectionFromChild"
             @create-project="handleCreateProjectFromPanel"
           />
@@ -107,6 +109,8 @@
             :regions="regions"
             :create-region="createRegion"
             :projects="projects"
+            :export-project="exportProject"
+            :import-project-overwrite="importProjectOverwrite"
             @update:selected-item="handleSelectionFromChild"
             @create-project="handleCreateProjectFromPanel"
           />
@@ -165,6 +169,8 @@
               :regions="regions"
               :create-region="createRegion"
               :projects="projects"
+              :export-project="exportProject"
+              :import-project-overwrite="importProjectOverwrite"
               @update:selected-item="handleSelectionFromChild"
               @create-project="handleCreateProjectFromPanel"
             />
@@ -222,6 +228,8 @@ const {
   handleDelete: coreHandleDelete,
   handleCopy,
   handleProjectSubmit,
+  exportProject,
+  importProjectOverwrite,
 } = useWorldEditor();
 
 const isIntegrationItem = (

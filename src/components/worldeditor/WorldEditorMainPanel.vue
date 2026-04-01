@@ -8,6 +8,8 @@
         <ProjectEditor
           v-if="isProject(props.selectedItem)"
           :project="props.selectedItem"
+          :on-export-project="props.exportProject"
+          :on-import-project-overwrite="props.importProjectOverwrite"
         />
         <LandmarkEditor
           v-else-if="isLandmark(props.selectedItem)"
@@ -88,6 +90,8 @@ interface Props {
   regions?: EnhancedRegion[];
   createRegion?: (name: string, projectId: string) => EnhancedRegion;
   projects?: Project[];
+  exportProject?: (projectId: string) => void | Promise<void>;
+  importProjectOverwrite?: (projectId: string) => void;
 }
 
 const props = defineProps<Props>();
