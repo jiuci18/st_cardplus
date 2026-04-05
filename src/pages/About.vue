@@ -78,20 +78,6 @@
         </ExternalLink>
         <template v-if="isMainDomain">
           <ExternalLink
-            href="https://autopatchcn.yuanshen.com/client_app/download/launcher/20241225164539_9oyGHAOXvzP4uaBW/mihoyo/yuanshen_setup_202412201736.exe"
-            class="link-item"
-          >
-            <Icon
-              icon="material-symbols:key-vertical-outline"
-              width="16"
-              height="16"
-            />
-            <span>
-              高级版
-              <small>解锁更多功能</small>
-            </span>
-          </ExternalLink>
-          <ExternalLink
             href="https://dev.stcardplus.pages.dev/settings"
             class="link-item"
           >
