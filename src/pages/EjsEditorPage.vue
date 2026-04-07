@@ -24,116 +24,61 @@
         <div class="mobile-stage-panel">
           <LogicBlockPanel />
         </div>
-        <div class="mobile-bookmark-group mobile-bookmark-group--ejs">
-          <button
-            type="button"
-            class="mobile-bookmark-btn"
-            :class="{ active: mobileBookmarkTab === 'preview' && mobileDrawerVisible }"
-            @click="openMobileDrawer('preview')"
-          >
-            预览
-          </button>
-          <button
-            type="button"
-            class="mobile-bookmark-btn"
-            :class="{ active: mobileBookmarkTab === 'simulation' && mobileDrawerVisible }"
-            @click="openMobileDrawer('simulation')"
-          >
-            模拟
-          </button>
-          <button
-            type="button"
-            class="mobile-bookmark-btn"
-            :class="{ active: mobileBookmarkTab === 'config' && mobileDrawerVisible }"
-            @click="openMobileDrawer('config')"
-          >
-            配置
-          </button>
-          <button
-            type="button"
-            class="mobile-bookmark-btn"
-            :class="{ active: mobileBookmarkTab === 'project' && mobileDrawerVisible }"
-            @click="openMobileDrawer('project')"
-          >
-            项目
-          </button>
-        </div>
-
-        <el-drawer
-          v-model="mobileDrawerVisible"
-          direction="rtl"
-          size="88%"
-          :with-header="false"
-          class="mobile-side-drawer"
+        <MobileBookmarkDrawer
+          v-model:visible="mobileDrawerVisible"
+          v-model:active-tab="mobileBookmarkTab"
+          :items="mobileBookmarkItems"
+          drawer-size="88%"
+          :group-style="mobileBookmarkGroupStyle"
         >
-          <div class="mobile-drawer-content">
-            <el-tabs
-              v-model="mobileBookmarkTab"
-              class="h-full mobile-bookmark-tabs"
-            >
-              <el-tab-pane
-                label="预览"
-                name="preview"
-                class="h-full"
-              >
-                <PreviewPanel />
-              </el-tab-pane>
-              <el-tab-pane
-                label="模拟"
-                name="simulation"
-                class="h-full"
-              >
-                <SimulationPanel />
-              </el-tab-pane>
-              <el-tab-pane
-                label="配置"
-                name="config"
-                class="h-full"
-              >
-                <div class="mobile-panel mobile-config-panel">
-                  <div class="sidebar-actions mobile-sidebar-actions">
-                    <el-button-group>
-                      <el-button
-                        :icon="DocumentAdd"
-                        @click="handleImportConfig"
-                        size="small"
-                      >
-                        导入配置
-                      </el-button>
-                      <el-button
-                        :icon="Download"
-                        @click="handleExportConfig"
-                        size="small"
-                      >
-                        导出配置
-                      </el-button>
-                      <el-button
-                        :icon="RefreshLeft"
-                        @click="handleClearAll"
-                        size="small"
-                        type="warning"
-                      >
-                        清空
-                      </el-button>
-                    </el-button-group>
-                  </div>
-                  <div class="mobile-config-content">
-                    <VariablePanel />
-                  </div>
-                </div>
-              </el-tab-pane>
-              <el-tab-pane
-                label="项目"
-                name="project"
-                class="h-full"
-              >
-                <div class="mobile-panel">
-                  <ProjectManager />
-                </div>
-              </el-tab-pane>
-            </el-tabs>
-          </div>
-        </el-drawer>
+          <template #pane-preview>
+            <PreviewPanel />
+          </template>
+
+          <template #pane-simulation>
+            <SimulationPanel />
+          </template>
+
+          <template #pane-config>
+            <div class="mobile-panel mobile-config-panel">
+              <div class="sidebar-actions mobile-sidebar-actions">
+                <el-button-group>
+                  <el-button
+                    :icon="DocumentAdd"
+                    @click="handleImportConfig"
+                    size="small"
+                  >
+                    导入配置
+                  </el-button>
+                  <el-button
+                    :icon="Download"
+                    @click="handleExportConfig"
+                    size="small"
+                  >
+                    导出配置
+                  </el-button>
+                  <el-button
+                    :icon="RefreshLeft"
+                    @click="handleClearAll"
+                    size="small"
+                    type="warning"
+                  >
+                    清空
+                  </el-button>
+                </el-button-group>
+              </div>
+              <div class="mobile-config-content">
+                <VariablePanel />
+              </div>
+            </div>
+          </template>
+
+          <template #pane-project>
+            <div class="mobile-panel">
+              <ProjectManager />
+            </div>
+          </template>
+        </MobileBookmarkDrawer>
       </div>
 
       <!-- 桌面端布局 -->
@@ -297,6 +242,7 @@ import { onMounted, ref } from 'vue';
 
 // 组件导入
 import LogicBlockPanel from '@/components/ejseditor/LogicBlockPanel.vue';
+import MobileBookmarkDrawer from '@/components/ui/common/MobileBookmarkDrawer.vue';
 import PreviewPanel from '@/components/ejseditor/PreviewPanel.vue';
 import ProjectManager from '@/components/ejseditor/ProjectManager.vue';
 import SimulationPanel from '@/components/ejseditor/SimulationPanel.vue';
@@ -311,14 +257,19 @@ const activeRightTab = ref('preview');
 const centerPanelVisible = ref(false);
 const mobileBookmarkTab = ref('preview');
 const mobileDrawerVisible = ref(false);
+const mobileBookmarkItems = [
+  { key: 'preview', label: '预览', icon: 'ph:eye-duotone' },
+  { key: 'simulation', label: '模拟', icon: 'ph:flask-duotone' },
+  { key: 'config', label: '配置', icon: 'ph:sliders-horizontal-duotone' },
+  { key: 'project', label: '项目', icon: 'ph:folder-open-duotone' },
+];
+const mobileBookmarkGroupStyle = {
+  top: '50%',
+  transform: 'translateY(-50%)',
+} as const;
 
 function toggleCenterPanel() {
   centerPanelVisible.value = !centerPanelVisible.value;
-}
-
-function openMobileDrawer(tab: 'preview' | 'simulation' | 'config' | 'project') {
-  mobileBookmarkTab.value = tab;
-  mobileDrawerVisible.value = true;
 }
 
 // 工具栏操作
@@ -598,29 +549,6 @@ watch(
   border: 1px solid var(--el-border-color-light);
   border-radius: 8px;
   background: var(--el-bg-color);
-  overflow: hidden;
-}
-
-.mobile-bookmark-group--ejs {
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.mobile-drawer-content {
-  height: 100%;
-  overflow: hidden;
-}
-
-.mobile-bookmark-tabs {
-  height: 100%;
-}
-
-.mobile-bookmark-tabs :deep(.el-tabs__header) {
-  padding: 0 12px;
-}
-
-:deep(.mobile-side-drawer .el-drawer__body) {
-  padding: 0;
   overflow: hidden;
 }
 

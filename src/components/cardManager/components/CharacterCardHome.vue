@@ -175,7 +175,7 @@
 </template>
 
 <script setup lang="ts">
-import BrowserFilePicker from '@/components/common/BrowserFilePicker.vue';
+import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
 import { formatDate, now, toDateSafe } from '@/utils/datetime';
 import type { CharacterCardCollection } from '@/types/character-card-collection';
 import { Delete, Download, FolderOpened, MoreFilled, Plus, Search } from '@element-plus/icons-vue';

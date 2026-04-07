@@ -199,7 +199,7 @@
 </template>
 
 <script setup lang="ts">
-import ExternalLink from '@/components/common/ExternalLink.vue';
+import ExternalLink from '@/components/ui/common/ExternalLink.vue';
 import SystemBanner from '@/components/SystemBanner.vue';
 import { formatDate } from '@/utils/datetime';
 import { Icon } from '@iconify/vue';

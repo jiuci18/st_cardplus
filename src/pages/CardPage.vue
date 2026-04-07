@@ -1,22 +1,31 @@
 <template>
   <div class="card-page-container">
-    <!-- Mobile Layout -->
     <div
       class="card-page-mobile-layout"
       v-if="useNewEditor"
     >
-      <el-tabs
-        v-model="activeTab"
-        type="border-card"
-        class="card-page-tabs-mobile"
+      <div class="editor-area">
+        <component
+          :is="editorComponent"
+          v-if="activeCharacter"
+          :character="activeCharacter"
+          @update:character="handleUpdateCharacter"
+        />
+        <div
+          v-else
+          class="editor-empty-state"
+        >
+          <el-empty description="请先打开角色列表选择一个角色，或创建一个新角色" />
+        </div>
+      </div>
+
+      <MobileBookmarkDrawer
+        v-model:visible="mobileDrawerVisible"
+        v-model:active-tab="mobilePanelTab"
+        :items="mobileBookmarkItems"
+        drawer-size="88%"
       >
-        <el-tab-pane name="list">
-          <template #label>
-            <span>
-              <el-icon><User /></el-icon>
-              角色列表
-            </span>
-          </template>
+        <template #pane-list>
           <CharacterListSidebar
             :characters="characters"
             :projects="projects"
@@ -31,36 +40,10 @@
             @toggle-star="handleToggleStar"
             @rename-project="handleRenameProject"
           />
-        </el-tab-pane>
-        <el-tab-pane
-          name="editor"
-          :disabled="!activeCharacter"
-        >
-          <template #label>
-            <span>
-              <el-icon><Edit /></el-icon>
-              {{ activeCharacter ? activeCharacter.data.chineseName || '编辑中' : '编辑角色' }}
-            </span>
-          </template>
-          <div class="editor-area">
-            <component
-              :is="editorComponent"
-              v-if="activeCharacter"
-              :character="activeCharacter"
-              @update:character="handleUpdateCharacter"
-            />
-            <div
-              v-else
-              class="editor-empty-state"
-            >
-              <el-empty description="请在左侧选择一个角色进行编辑，或创建一个新角色 " />
-            </div>
-          </div>
-        </el-tab-pane>
-      </el-tabs>
+        </template>
+      </MobileBookmarkDrawer>
     </div>
 
-    <!-- Desktop Layout -->
     <div
       class="card-page-desktop-layout"
       v-if="useNewEditor"
@@ -120,19 +103,23 @@
 <script setup lang="ts">
 import { computed, watch, onUnmounted, ref, shallowRef, onMounted } from 'vue';
 import type { Component } from 'vue';
-import { ElEmpty, ElTabs, ElTabPane } from 'element-plus';
-import { Edit, User } from '@element-plus/icons-vue';
+import { ElEmpty } from 'element-plus';
 import { Splitpanes, Pane } from 'splitpanes';
 import 'splitpanes/dist/splitpanes.css';
+import MobileBookmarkDrawer from '@/components/ui/common/MobileBookmarkDrawer.vue';
 import CharacterListSidebar from '../components/charcard/CharacterListSidebar.vue';
 import { useCharacterCollection } from '../composables/characterInfo/useCharacterCollection';
 import { useDevice } from '../composables/useDevice';
 import type { CharacterCard } from '../types/character';
 
 const { isMobile } = useDevice();
-const activeTab = ref('list');
 const useNewEditor = ref(true);
 const editorComponent = shallowRef<Component | null>(null);
+const mobileDrawerVisible = ref(false);
+const mobilePanelTab = ref('list');
+const mobileBookmarkItems = [
+  { key: 'list', label: '列表', drawerLabel: '角色列表', title: '角色列表', icon: 'ph:users-three-duotone' },
+];
 
 const {
   characterCollection,
@@ -154,13 +141,13 @@ const {
 const handleSelectCharacterWithTabSwitch = (characterId: string) => {
   handleSelectCharacter(characterId);
   if (isMobile.value) {
-    activeTab.value = 'editor';
+    mobileDrawerVisible.value = false;
   }
 };
 
 watch(activeCharacterId, (newId) => {
   if (isMobile.value && !newId) {
-    activeTab.value = 'list';
+    mobilePanelTab.value = 'list';
   }
 });
 
@@ -223,27 +210,17 @@ onUnmounted(() => {
 .card-page-mobile-layout {
   display: block;
   height: 100%;
-}
-
-.card-page-desktop-layout {
-  display: none;
-}
-
-.card-page-tabs-mobile {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-:deep(.el-tabs__content) {
-  height: 100%;
-  overflow-y: auto;
+  position: relative;
 }
 
 .editor-area {
   flex-grow: 1;
   overflow-y: hidden;
   height: 100%;
+}
+
+.card-page-desktop-layout {
+  display: none;
 }
 
 .editor-empty-state {

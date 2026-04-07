@@ -187,7 +187,7 @@
 </template>
 
 <script setup lang="ts">
-import ExternalLink from '@/components/common/ExternalLink.vue';
+import ExternalLink from '@/components/ui/common/ExternalLink.vue';
 import { getAppSettings } from '@/composables/appSettings';
 import { useAppUpdate } from '@/composables/useAppUpdate';
 import { openExternalUrl } from '@/utils/externalLink';

@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import ExternalLink from '@/components/common/ExternalLink.vue';
+import ExternalLink from '@/components/ui/common/ExternalLink.vue';
 import { now, toDateSafe } from '@/utils/datetime';
 import { onMounted, ref } from 'vue';
 

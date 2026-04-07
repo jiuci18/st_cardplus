@@ -152,7 +152,7 @@ import CharacterCardHome from '@/components/cardManager/components/CharacterCard
 import CharacterCardTabs from '@/components/cardManager/components/CharacterCardTabs.vue';
 import CardRegexPanel from '@/components/cardManager/panel/CardRegexPanel.vue';
 import CardWorldBookPanel from '@/components/cardManager/panel/CardWorldBookPanel.vue';
-import BrowserFilePicker from '@/components/common/BrowserFilePicker.vue';
+import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
 
 import { useCardExport } from '@/composables/characterCard/useCardExport';
 import { useCardImport } from '@/composables/characterCard/useCardImport';

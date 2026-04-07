@@ -179,7 +179,7 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
 import { ElDropdown, ElDropdownItem, ElDropdownMenu, ElTooltip } from 'element-plus';
-import BrowserFilePicker from '@/components/common/BrowserFilePicker.vue';
+import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
 
 interface Props {
   context: 'list' | 'editor';

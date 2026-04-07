@@ -10,75 +10,34 @@
         @open-first-prompt="handleOpenFirstPrompt" @select-regex="selectRegex" @add-regex="handleAddRegexFromEditor"
         @delete-regex="handleDeleteRegexFromEditor" @go-previous="goToPrevious" @go-next="goToNext" />
 
-      <div class="mobile-bookmark-group">
-        <button type="button" class="mobile-bookmark-btn"
-          :class="{ active: mobilePanelTab === 'list' && mobileDrawerVisible }" @click="openMobilePanel('list')">
-          <Icon icon="ph:tree-structure-duotone" class="bookmark-icon" />
-          预设
-        </button>
-        <button type="button" class="mobile-bookmark-btn"
-          :class="{ active: mobilePanelTab === 'clipboard' && mobileDrawerVisible }"
-          @click="openMobilePanel('clipboard')">
-          <Icon icon="ph:clipboard-text-duotone" class="bookmark-icon" />
-          剪贴
-        </button>
-        <button type="button" class="mobile-bookmark-btn"
-          :class="{ active: mobilePanelTab === 'preview' && mobileDrawerVisible }" @click="openMobilePanel('preview')">
-          <Icon icon="ph:eye-duotone" class="bookmark-icon" />
-          预览
-        </button>
-      </div>
+      <MobileBookmarkDrawer
+        v-model:visible="mobileDrawerVisible"
+        v-model:active-tab="mobilePanelTab"
+        :items="mobileBookmarkItems"
+      >
+        <template #pane-list>
+          <PresetList :presets="presets" :active-preset-id="activePresetId"
+            :selected-prompt-index="selectedPromptIndex" :selected-regex-index="selectedRegexIndex"
+            :selected-is-header="selectedIsHeader" :multi-selected-node-keys="multiSelectedNodeKeys"
+            :drag-drop-handlers="dragDropHandlers" @create-preset="createPreset" @rename-preset="handleRenamePreset"
+            @delete-preset="handleDeletePreset" @select-preset="handleSelectPreset"
+            @select-header="handleSelectHeader" @select-prompt="handleSelectPrompt"
+            @select-regex="handleSelectRegex" @toggle-prompt-enabled="togglePromptEnabled"
+            @toggle-node-selection="handleToggleNodeSelection" @add-prompt="addPrompt" @add-regex="addRegexScript"
+            @duplicate-prompt="duplicatePrompt" @delete-prompt="removePrompt" @delete-regex="removeRegexScript"
+            @export-preset="handleExportPreset" @import-preset="handleImportPreset" />
+        </template>
 
-      <el-drawer v-model="mobileDrawerVisible" direction="rtl" :with-header="false" size="86%" append-to-body
-        class="preset-mobile-drawer">
-        <div class="mobile-drawer-inner">
-          <div class="mobile-drawer-header">
-            <div class="mobile-drawer-title">{{ mobilePanelTitle }}</div>
-            <el-button size="small" text @click="mobileDrawerVisible = false">
-              关闭
-            </el-button>
-          </div>
-          <div class="mobile-drawer-tabs">
-            <button type="button" class="mobile-drawer-tab" :class="{ active: mobilePanelTab === 'list' }"
-              @click="mobilePanelTab = 'list'">
-              预设
-            </button>
-            <button type="button" class="mobile-drawer-tab" :class="{ active: mobilePanelTab === 'clipboard' }"
-              @click="mobilePanelTab = 'clipboard'">
-              剪贴
-            </button>
-            <button type="button" class="mobile-drawer-tab" :class="{ active: mobilePanelTab === 'preview' }"
-              @click="mobilePanelTab = 'preview'">
-              预览
-            </button>
-          </div>
+        <template #pane-clipboard>
+          <PresetClipboardPanel :items="clipboardItems" :has-items="hasItems" :can-edit="Boolean(selectedPrompt)"
+            @clear-all="clearAll" @move-up="moveUp" @move-down="moveDown" @remove="removeClipboardItem"
+            @insert="insertToEditor" @replace="replaceEditor" />
+        </template>
 
-          <div class="mobile-drawer-body">
-            <div v-show="mobilePanelTab === 'list'" class="mobile-drawer-pane">
-              <PresetList :presets="presets" :active-preset-id="activePresetId"
-                :selected-prompt-index="selectedPromptIndex" :selected-regex-index="selectedRegexIndex"
-                :selected-is-header="selectedIsHeader" :multi-selected-node-keys="multiSelectedNodeKeys"
-                :drag-drop-handlers="dragDropHandlers" @create-preset="createPreset" @rename-preset="handleRenamePreset"
-                @delete-preset="handleDeletePreset" @select-preset="handleSelectPreset"
-                @select-header="handleSelectHeader" @select-prompt="handleSelectPrompt"
-                @select-regex="handleSelectRegex" @toggle-prompt-enabled="togglePromptEnabled"
-                @toggle-node-selection="handleToggleNodeSelection" @add-prompt="addPrompt" @add-regex="addRegexScript"
-                @duplicate-prompt="duplicatePrompt" @delete-prompt="removePrompt" @delete-regex="removeRegexScript"
-                @export-preset="handleExportPreset" @import-preset="handleImportPreset" />
-            </div>
-
-            <div v-show="mobilePanelTab === 'clipboard'" class="mobile-drawer-pane">
-              <PresetClipboardPanel :items="clipboardItems" :has-items="hasItems" :can-edit="Boolean(selectedPrompt)"
-                @clear-all="clearAll" @move-up="moveUp" @move-down="moveDown" @remove="removeClipboardItem"
-                @insert="insertToEditor" @replace="replaceEditor" />
-            </div>
-
-            <div v-show="mobilePanelTab === 'preview'" class="mobile-drawer-pane">
-              <PresetPreviewPanel :active-preset="activePreset" />
-            </div>
-          </div>
-        </div>
-      </el-drawer>
+        <template #pane-preview>
+          <PresetPreviewPanel :active-preset="activePreset" />
+        </template>
+      </MobileBookmarkDrawer>
     </div>
 
     <splitpanes v-else class="default-theme preset-split" :horizontal="false">
@@ -127,6 +86,7 @@ import PresetEditor from '@/components/preset/PresetEditor.vue';
 import PresetClipboardPanel from '@/components/preset/PresetClipboardPanel.vue';
 import PresetList from '@/components/preset/PresetList.vue';
 import PresetPreviewPanel from '@/components/preset/PresetPreviewPanel.vue';
+import MobileBookmarkDrawer from '@/components/ui/common/MobileBookmarkDrawer.vue';
 import { usePresetClipboard } from '@/composables/preset/usePresetClipboard';
 import { usePresetEditorState } from '@/composables/preset/usePresetEditorState';
 import { usePresetPageNavigation } from '@/composables/preset/usePresetPageNavigation';
@@ -138,7 +98,6 @@ import {
   upsertPromptOrderEntry,
 } from '@/composables/preset/utils/presetPromptOrder';
 import { useDevice } from '@/composables/useDevice';
-import { Icon } from '@iconify/vue';
 import { ElMessage } from 'element-plus';
 import { saveFile } from '@/utils/fileSave';
 import { Pane, Splitpanes } from 'splitpanes';
@@ -147,6 +106,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 const { isMobileOrTablet } = useDevice();
+const mobileBookmarkItems = [
+  { key: 'list', label: '预设', icon: 'ph:tree-structure-duotone' },
+  { key: 'clipboard', label: '剪贴', icon: 'ph:clipboard-text-duotone' },
+  { key: 'preview', label: '预览', icon: 'ph:eye-duotone' },
+];
 const {
   presets,
   activePresetId,
@@ -210,8 +174,6 @@ const { multiSelectedNodeKeys, handleToggleNodeSelection, dragDropHandlers } = u
 const {
   mobileDrawerVisible,
   mobilePanelTab,
-  mobilePanelTitle,
-  openMobilePanel,
   handleRenamePreset,
   handleDeletePreset,
   handleSelectPreset,
@@ -366,61 +328,5 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 100%;
   position: relative;
-}
-
-.mobile-drawer-inner {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.mobile-drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.mobile-drawer-title {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.mobile-drawer-tabs {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.mobile-drawer-tab {
-  border: 1px solid var(--el-border-color-light);
-  background: var(--el-fill-color-blank);
-  color: var(--el-text-color-regular);
-  border-radius: 999px;
-  padding: 6px 8px;
-  font-size: 12px;
-}
-
-.mobile-drawer-tab.active {
-  border-color: var(--el-color-primary-light-3);
-  background: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
-}
-
-.mobile-drawer-body {
-  flex: 1;
-  min-height: 0;
-}
-
-.mobile-drawer-pane {
-  height: 100%;
-  min-height: 0;
-}
-
-.preset-mobile-drawer :deep(.el-drawer__body) {
-  padding: 14px 10px 10px;
 }
 </style>

@@ -2,7 +2,7 @@
 import { Icon } from '@iconify/vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { computed, ref } from 'vue';
-import BrowserFilePicker from '@/components/common/BrowserFilePicker.vue';
+import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
 import { saveFile } from '@/utils/fileSave';
 import {
   CONVERSION_OPTIONS,
