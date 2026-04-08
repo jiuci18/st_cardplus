@@ -192,7 +192,7 @@ import { useDevice } from '../composables/useDevice';
 import { useWorldBookCollection } from '../composables/worldbook/useWorldBookCollection';
 import { useWorldBookDragDrop } from '../composables/worldbook/useWorldBookDragDrop';
 import { useWorldBookEntry } from '../composables/worldbook/useWorldBookEntry';
-import type { WorldBookEntry } from '../types/types';
+import type { WorldBookEntry } from '@/types/worldbook';
 import MobileBookmarkDrawer from './ui/common/MobileBookmarkDrawer.vue';
 import WorldBookActions from './worldbook/WorldBookActions.vue';
 import WorldBookEditor from './worldbook/WorldBookEditor.vue';

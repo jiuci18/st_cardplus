@@ -286,7 +286,7 @@ import {
   ElButton,
 } from 'element-plus';
 import { Icon } from '@iconify/vue';
-import type { WorldBookEntry } from '../../types/types';
+import type { WorldBookEntry } from '@/types/worldbook';
 import { bindDelimitedPaste, mergeUniqueValues } from '@/utils/multiValuePaste';
 
 const props = defineProps<{

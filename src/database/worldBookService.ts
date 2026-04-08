@@ -1,6 +1,6 @@
 import { db, type StoredWorldBook, type StoredWorldBookEntry } from './db';
-import type { WorldBookCollection, WorldBook, WorldBookEntry } from '../types/types';
-import type { CharacterBook } from '../types/character-book';
+import type { WorldBookCollection, WorldBook, WorldBookEntry } from '@/types/worldbook';
+import type { CharacterBook } from '@/types/character/character-book';
 import { convertCharacterBookToWorldBook } from '../utils/worldBookConverter';
 import { estimateEncodedSize, sanitizeForIndexedDB } from './utils';
 import { v4 as uuidv4 } from 'uuid';
@@ -38,7 +38,6 @@ export const worldBookService = {
       });
     });
 
-    // 2. 将所有条目填充到对应书籍的 entries 数组中
     allEntriesStored.forEach((storedEntry) => {
       const book = booksMap.get(storedEntry.bookId);
       if (book) {
@@ -50,8 +49,6 @@ export const worldBookService = {
     for (const [id, book] of booksMap.entries()) {
       books[id] = book;
     }
-
-    // 4. 从 sessionStorage 获取并验证 activeBookId
     const activeBookId = getSessionStorageItem(ACTIVE_BOOK_ID_KEY);
     const finalActiveBookId = activeBookId && books[activeBookId] ? activeBookId : allBooksStored[0]?.id || null;
 
@@ -114,20 +111,15 @@ export const worldBookService = {
    * 完全替换一本书的所有条目 (用于导入、拖拽等操作)
    */
   async replaceEntriesForBook(bookId: string, entries: WorldBookEntry[]): Promise<void> {
-    // 确保 `entries` 是一个普通的 JavaScript 数组，而不是 Vue 的响应式代理
     const plainEntries = JSON.parse(JSON.stringify(entries));
-
     const storedEntries: StoredWorldBookEntry[] = plainEntries.map((entry: WorldBookEntry) => ({
       ...entry,
       bookId,
     }));
 
     await db.transaction('rw', db.entries, async () => {
-      // 1. 删除旧的所有条目
       await db.entries.where('bookId').equals(bookId).delete();
-      // 2. 添加新的所有条目
       if (storedEntries.length > 0) {
-        // 使用 bulkAdd 而不是 bulkPut，因为我们已经删除了旧条目，并且 id 可能不存在
         await db.entries.bulkAdd(storedEntries);
       }
     });
@@ -157,7 +149,7 @@ export const worldBookService = {
   async updateEntry(entry: StoredWorldBookEntry): Promise<void> {
     const plainEntry = JSON.parse(JSON.stringify(entry));
 
-    // 优雅降级：若缺少 id，尝试通过 (bookId, uid) 定位记录，找不到则按新增处理
+    // 若缺少 id，尝试通过 (bookId, uid) 定位记录，找不到则按新增处理
     if (plainEntry.id === undefined) {
       if (!plainEntry.bookId) {
         console.error('[worldBookService] 更新条目失败：缺少 id 且缺少 bookId');
@@ -189,17 +181,8 @@ export const worldBookService = {
     await db.entries.delete(entryId);
   },
 
-  /**
-   * 检查数据库是否为空 (通过检查是否有任何书籍)
-   */
-  async isDatabaseEmpty(): Promise<boolean> {
-    const count = await db.books.count();
-    return count === 0;
-  },
-
   async getStats(): Promise<WorldBookStats> {
     const [books, entries] = await Promise.all([db.books.toArray(), db.entries.toArray()]);
-
     const approxBytes = estimateEncodedSize(books) + estimateEncodedSize(entries);
 
     return {
@@ -223,11 +206,8 @@ export const worldBookService = {
    */
   async importDatabase(data: WorldBookExport): Promise<void> {
     await db.transaction('rw', db.books, db.entries, async () => {
-      // 1. 清空现有数据
       await db.books.clear();
       await db.entries.clear();
-
-      // 2. 批量导入新数据
       await db.books.bulkAdd(data.books);
       await db.entries.bulkPut(data.entries);
     });
@@ -267,10 +247,7 @@ export const worldBookService = {
   ): Promise<void> {
     const now = nowIso();
 
-    // 使用转换工具将 CharacterBook 转换为 WorldBook
     const worldBook = convertCharacterBookToWorldBook(characterBook, bookId);
-
-    // 获取现有书籍信息以保留某些字段
     const existingBook = await db.books.get(bookId);
     if (!existingBook) {
       throw new Error('找不到指定的世界书');
@@ -298,33 +275,11 @@ export const worldBookService = {
     // 在事务中更新书籍和替换条目
     await db.transaction('rw', db.books, db.entries, async () => {
       await db.books.put(sanitizedUpdatedBook);
-      // 删除旧条目
       await db.entries.where('bookId').equals(bookId).delete();
-      // 添加新条目
       if (sanitizedStoredEntries.length > 0) {
         await db.entries.bulkAdd(sanitizedStoredEntries);
       }
     });
-  },
-
-  /**
-   * 清除世界书的来源信息
-   * @param bookId - 世界书ID
-   */
-  async clearBookSource(bookId: string): Promise<void> {
-    const existingBook = await db.books.get(bookId);
-    if (!existingBook) {
-      throw new Error('找不到指定的世界书');
-    }
-
-    const updatedBook: StoredWorldBook = {
-      ...existingBook,
-      sourceCharacterId: undefined,
-      sourceCharacterName: undefined,
-      updatedAt: nowIso(),
-    };
-
-    await db.books.put(updatedBook);
   },
 
   /**
@@ -345,11 +300,9 @@ export const worldBookService = {
     // 使用转换工具将 CharacterBook 转换为 WorldBook
     const worldBook = convertCharacterBookToWorldBook(characterBook, newBookId);
 
-    // 获取当前所有书籍的最大 order 值
     const allBooks = await db.books.toArray();
     const maxOrder = allBooks.length > 0 ? Math.max(...allBooks.map((b) => b.order)) : -1;
 
-    // 创建带有来源信息的新世界书
     const newBook: StoredWorldBook = {
       id: worldBook.id,
       name: worldBook.name,
@@ -362,7 +315,6 @@ export const worldBookService = {
       metadata: worldBook.metadata,
     };
 
-    // 准备条目数据
     const plainEntries = JSON.parse(JSON.stringify(worldBook.entries));
     const storedEntries: StoredWorldBookEntry[] = plainEntries.map((entry: WorldBookEntry) => ({
       ...entry,
@@ -370,8 +322,6 @@ export const worldBookService = {
     }));
     const sanitizedNewBook = sanitizeForIndexedDB(newBook);
     const sanitizedStoredEntries = sanitizeForIndexedDB(storedEntries);
-
-    // 在事务中同时添加书籍和条目
     await db.transaction('rw', db.books, db.entries, async () => {
       await db.books.add(sanitizedNewBook);
       if (sanitizedStoredEntries.length > 0) {

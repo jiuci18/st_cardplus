@@ -156,7 +156,7 @@ import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tre
 import { Icon } from '@iconify/vue';
 import SidebarTreePanel from '@/components/ui/layout/common/SidebarTreePanel.vue';
 import WorldBookActions from './WorldBookActions.vue';
-import type { WorldBookCollection, WorldBookEntry } from '../../types/types';
+import type { WorldBookCollection, WorldBookEntry } from '@/types/worldbook';
 
 interface Props {
   collection: WorldBookCollection;

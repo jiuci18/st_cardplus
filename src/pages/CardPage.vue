@@ -110,7 +110,7 @@ import MobileBookmarkDrawer from '@/components/ui/common/MobileBookmarkDrawer.vu
 import CharacterListSidebar from '../components/charcard/CharacterListSidebar.vue';
 import { useCharacterCollection } from '../composables/characterInfo/useCharacterCollection';
 import { useDevice } from '../composables/useDevice';
-import type { CharacterCard } from '../types/character';
+import type { CharacterCard } from '@/types/character/character';
 
 const { isMobile } = useDevice();
 const useNewEditor = ref(true);

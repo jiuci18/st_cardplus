@@ -1,7 +1,7 @@
 // 迁移模块：仅用于把历史扁平结构角色数据迁移到 { meta, data } 结构。
 // 历史数据清理完成后可整体删除此文件及其调用。
 
-import type { CharacterCard } from '../../types/character';
+import type { CharacterCard } from '@/types/character/character';
 import { createDefaultCharacterCard } from './useCharacterCard';
 
 export interface CharacterCollectionLike {

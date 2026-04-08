@@ -136,7 +136,7 @@ import { ElTooltip, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-p
 import { Icon } from '@iconify/vue';
 import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
 import SidebarTreePanel from '@/components/ui/layout/common/SidebarTreePanel.vue';
-import type { CharacterCard, CharacterProject } from '../../types/character';
+import type { CharacterCard, CharacterProject } from '@/types/character/character';
 import { useCharacterProjectTree, type CharacterOrderPatch } from '../../composables/characterInfo/useCharacterProjectTree';
 
 interface Props {

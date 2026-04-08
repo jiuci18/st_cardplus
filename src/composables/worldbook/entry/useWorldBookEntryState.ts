@@ -1,5 +1,5 @@
 import { ref, computed, watch, type Ref } from 'vue';
-import type { WorldBookEntry, WorldBook } from '../../../types/types';
+import type { WorldBookEntry, WorldBook } from '@/types/worldbook';
 
 export function useWorldBookEntryState(activeBook: Ref<WorldBook | null>) {
   const selectedEntryIndex = ref<number | null>(null);

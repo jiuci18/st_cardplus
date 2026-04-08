@@ -1,4 +1,4 @@
-import type { CharacterCard } from '../../types/character';
+import type { CharacterCard } from '@/types/character/character';
 
 /**
  * 创建默认的角色卡数据

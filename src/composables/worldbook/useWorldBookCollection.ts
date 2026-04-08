@@ -1,6 +1,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import type { WorldBook, WorldBookCollection, WorldBookEntry } from '../../types/types';
+import type { WorldBook, WorldBookCollection, WorldBookEntry } from '@/types/worldbook';
 import { v4 as uuidv4 } from 'uuid';
 import { processImportedWorldBookData } from './entry/useWorldBookEntryData';
 import { worldBookService } from '../../database/worldBookService';

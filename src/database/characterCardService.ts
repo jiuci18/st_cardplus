@@ -1,6 +1,6 @@
 import { db } from './db';
 import type { StoredCharacterCard } from './db';
-import type { CharacterCardV3 } from '../types/character-card-v3';
+import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 import { estimateEncodedSize, sanitizeForIndexedDB } from './utils';
 import { getSessionStorageItem, setSessionStorageItem, removeSessionStorageItem } from '@/utils/localStorageUtils';
 import { nowIso } from '@/utils/datetime';
@@ -130,14 +130,6 @@ export const characterCardService = {
     };
   },
 
-  /**
-   * 检查数据库是否为空
-   */
-  async isDatabaseEmpty(): Promise<boolean> {
-    const count = await db.characterCards.count();
-    return count === 0;
-  },
-
   async getStats(): Promise<CharacterCardStats> {
     const cards = await db.characterCards.toArray();
     return {
@@ -159,9 +151,7 @@ export const characterCardService = {
    */
   async importDatabase(data: CharacterCardExport): Promise<void> {
     await db.transaction('rw', db.characterCards, async () => {
-      // 清空现有角色卡数据
       await db.characterCards.clear();
-      // 批量导入新数据
       await db.characterCards.bulkAdd(data.cards);
     });
   },

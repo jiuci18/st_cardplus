@@ -1,6 +1,6 @@
 import Dexie, { type Table } from 'dexie';
-import type { WorldBook, WorldBookEntry } from '../types/types';
-import type { CharacterCardV3 } from '../types/character-card-v3';
+import type { WorldBook, WorldBookEntry } from '@/types/worldbook';
+import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 import type { OpenAIChatCompletionPreset } from '../types/openai-preset';
 
 // 定义存储在 IndexedDB 中的 WorldBookEntry 结构，增加了 bookId 作为外键
