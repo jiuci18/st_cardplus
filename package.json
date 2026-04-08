@@ -83,7 +83,6 @@
       "src/css/split-create-actions.css",
       "src/polyfills/fs.js",
       "src/polyfills/path.js",
-      "src/shims-splitpanes.d.ts",
       "src/types/png-modules.d.ts"
     ],
     "ignoreExportsUsedInFile": true

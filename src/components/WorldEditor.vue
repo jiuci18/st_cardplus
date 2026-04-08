@@ -1,24 +1,40 @@
 <template>
   <div class="world-editor-container">
     <div class="world-editor-mobile-layout">
-      <el-tabs
-        v-model="activeTab"
-        type="border-card"
-        class="world-editor-tabs-mobile"
+      <div class="main-panel-container world-editor-mobile-panel">
+        <WorldGraph
+          v-if="graphProjectId"
+          :projects="projects"
+          :landmarks="landmarks"
+          :forces="forces"
+          :regions="regions"
+          :active-project-id="graphProjectId || activeProjectId"
+          @edit-item="handleEditFromGraph"
+        />
+        <WorldEditorMainPanel
+          v-else
+          :selected-item="selectedItem"
+          :all-tags="allTags"
+          :all-regions="allRegions"
+          :landmarks="landmarks"
+          :forces="forces"
+          :regions="regions"
+          :create-region="createRegion"
+          :projects="projects"
+          :export-project="exportProject"
+          :import-project-overwrite="importProjectOverwrite"
+          @update:selected-item="handleSelectionFromChild"
+          @create-project="handleCreateProjectFromPanel"
+        />
+      </div>
+
+      <MobileBookmarkDrawer
+        v-model:visible="mobileDrawerVisible"
+        v-model:active-tab="mobilePanelTab"
+        :items="mobileBookmarkItems"
+        drawer-size="88%"
       >
-        <el-tab-pane
-          name="list"
-          class="world-editor-tab-pane"
-        >
-          <template #label>
-            <span class="world-editor-tab-label">
-              <Icon
-                icon="ph:list-bullets-duotone"
-                class="world-editor-tab-icon"
-              />
-              <span class="world-editor-tab-text">项目列表</span>
-            </span>
-          </template>
+        <template #pane-list>
           <WorldEditorToolbar
             :projects="projects"
             :landmarks="landmarks"
@@ -33,89 +49,8 @@
             @copy="handleCopy"
             :drag-drop-handlers="dragDropHandlers"
           />
-        </el-tab-pane>
-        <el-tab-pane
-          name="editor"
-          class="world-editor-tab-pane"
-          :disabled="!selectedEditorItem"
-        >
-          <template #label>
-            <span class="world-editor-tab-label">
-              <Icon
-                icon="ph:note-pencil-duotone"
-                class="world-editor-tab-icon"
-              />
-              <span class="world-editor-tab-text">编辑</span>
-            </span>
-          </template>
-          <WorldEditorMainPanel
-            :selected-item="selectedEditorItem"
-            :all-tags="allTags"
-            :all-regions="allRegions"
-            :landmarks="landmarks"
-            :forces="forces"
-            :regions="regions"
-            :create-region="createRegion"
-            :projects="projects"
-            :export-project="exportProject"
-            :import-project-overwrite="importProjectOverwrite"
-            @update:selected-item="handleSelectionFromChild"
-            @create-project="handleCreateProjectFromPanel"
-          />
-        </el-tab-pane>
-        <el-tab-pane
-          name="graph"
-          class="world-editor-tab-pane"
-          :disabled="!hasAnyProject"
-        >
-          <template #label>
-            <span class="world-editor-tab-label">
-              <Icon
-                icon="ph:share-network-duotone"
-                class="world-editor-tab-icon"
-              />
-              <span class="world-editor-tab-text">节点图</span>
-            </span>
-          </template>
-          <WorldGraph
-            :projects="projects"
-            :landmarks="landmarks"
-            :forces="forces"
-            :regions="regions"
-            :active-project-id="currentProjectId"
-            @edit-item="handleEditFromGraph"
-          />
-        </el-tab-pane>
-        <el-tab-pane
-          name="integration"
-          class="world-editor-tab-pane"
-          :disabled="!hasAnyProject"
-        >
-          <template #label>
-            <span class="world-editor-tab-label">
-              <Icon
-                icon="ph:circles-four-duotone"
-                class="world-editor-tab-icon"
-              />
-              <span class="world-editor-tab-text">整合</span>
-            </span>
-          </template>
-          <WorldEditorMainPanel
-            :selected-item="selectedIntegrationItem"
-            :all-tags="allTags"
-            :all-regions="allRegions"
-            :landmarks="landmarks"
-            :forces="forces"
-            :regions="regions"
-            :create-region="createRegion"
-            :projects="projects"
-            :export-project="exportProject"
-            :import-project-overwrite="importProjectOverwrite"
-            @update:selected-item="handleSelectionFromChild"
-            @create-project="handleCreateProjectFromPanel"
-          />
-        </el-tab-pane>
-      </el-tabs>
+        </template>
+      </MobileBookmarkDrawer>
     </div>
 
     <div class="world-editor-desktop-layout">
@@ -187,9 +122,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { ElTabs, ElTabPane, ElMessageBox } from 'element-plus';
-import { Icon } from '@iconify/vue';
+import { ref } from 'vue';
+import { ElMessageBox } from 'element-plus';
 import { Splitpanes, Pane } from 'splitpanes';
 import 'splitpanes/dist/splitpanes.css';
 import '@/css/worldeditor.css';
@@ -204,14 +138,21 @@ import WorldEditorToolbar from '@/components/worldeditor/WorldEditorToolbar.vue'
 import WorldEditorMainPanel from './worldeditor/WorldEditorMainPanel.vue';
 import WorldGraph from './worldeditor/WorldGraph.vue';
 import ProjectModal from './worldeditor/ProjectModal.vue';
+import MobileBookmarkDrawer from '@/components/ui/common/MobileBookmarkDrawer.vue';
 import { useWorldEditor } from '@/composables/worldeditor/useWorldEditor';
 import { useWorldEditorUI } from '@/composables/worldeditor/useWorldEditorUI';
 import { useDragAndDrop } from '@/composables/worldeditor/useDragAndDrop';
+import { useDevice } from '@/composables/useDevice';
 import { collectDescendantIds, removeLandmarkFromHierarchy } from '@/utils/worldeditor/landmarkHierarchy';
 import { removeLandmarkLinksForIds } from '@/composables/worldeditor/graph/worldGraphLinks';
 
-const activeTab = ref('list');
 const graphProjectId = ref<string | null>(null);
+const mobileDrawerVisible = ref(false);
+const mobilePanelTab = ref('list');
+const mobileBookmarkItems = [
+  { key: 'list', label: '列表', drawerLabel: '项目列表', title: '项目列表', icon: 'ph:list-bullets-duotone' },
+];
+const { isMobile } = useDevice();
 
 const {
   projects,
@@ -232,49 +173,12 @@ const {
   importProjectOverwrite,
 } = useWorldEditor();
 
-const isIntegrationItem = (
-  item: Project | EnhancedLandmark | EnhancedForce | EnhancedRegion | ProjectIntegration | null
-): item is ProjectIntegration => Boolean(item && 'type' in item && item.type === 'integration');
-
-const selectedEditorItem = computed(() => {
-  if (isIntegrationItem(selectedItem.value)) {
-    return null;
-  }
-  return selectedItem.value;
-});
-
-const currentProjectId = computed(() => {
-  if (graphProjectId.value) return graphProjectId.value;
-  const currentItem = selectedItem.value;
-  if (currentItem && 'projectId' in currentItem) {
-    return currentItem.projectId;
-  }
-  if (currentItem && 'createdAt' in currentItem) {
-    return currentItem.id;
-  }
-  return activeProjectId.value || projects.value[0]?.id || null;
-});
-
-const selectedIntegrationItem = computed<ProjectIntegration | null>(() => {
-  if (isIntegrationItem(selectedItem.value)) {
-    return selectedItem.value;
-  }
-  const projectId = currentProjectId.value;
-  if (!projectId) return null;
-  return {
-    id: `${projectId}-integration`,
-    projectId,
-    type: 'integration',
-    name: '整合',
-  };
-});
-
-const hasAnyProject = computed(() => projects.value.length > 0);
-
 const handleSelection = (item: Project | EnhancedLandmark | EnhancedForce | EnhancedRegion | ProjectIntegration) => {
   coreHandleSelection(item);
   graphProjectId.value = null;
-  activeTab.value = isIntegrationItem(item) ? 'integration' : 'editor';
+  if (isMobile.value) {
+    mobileDrawerVisible.value = false;
+  }
 };
 
 const handleSelectionFromChild = (
@@ -282,18 +186,18 @@ const handleSelectionFromChild = (
 ) => {
   coreHandleSelection(item);
   graphProjectId.value = null;
-  activeTab.value = isIntegrationItem(item) ? 'integration' : 'editor';
 };
 
 const handleEditFromGraph = (item: EnhancedLandmark) => {
   coreHandleSelection(item);
   graphProjectId.value = null;
-  activeTab.value = 'editor';
 };
 
 const handleOpenGraph = (projectId: string) => {
   graphProjectId.value = projectId;
-  activeTab.value = 'graph';
+  if (isMobile.value) {
+    mobileDrawerVisible.value = false;
+  }
 };
 
 const {
@@ -312,6 +216,9 @@ const handleAdd = (type: 'project' | 'landmark' | 'force' | 'region') => {
   } else {
     handleAddEntity(type);
   }
+  if (isMobile.value) {
+    mobileDrawerVisible.value = false;
+  }
 };
 
 const handleCreateProjectFromPanel = () => {
@@ -323,6 +230,9 @@ const handleEdit = (item: Project | EnhancedLandmark | EnhancedForce | EnhancedR
     handleEditProject(item as Project);
   } else {
     handleSelection(item);
+  }
+  if (isMobile.value) {
+    mobileDrawerVisible.value = false;
   }
 };
 
