@@ -99,8 +99,8 @@
 </template>
 
 <script setup lang="ts">
-import type { EnhancedLandmark, EnhancedRegion } from '@/types/world-editor';
-import { LandmarkType } from '@/types/world-editor';
+import type { EnhancedLandmark, EnhancedRegion } from '@/types/worldeditor/world-editor';
+import { LandmarkType } from '@/types/worldeditor/world-editor';
 import type { LandmarkNodeForce } from '@/types/worldeditor/worldGraphNodes';
 import { getLandmarkTypeLabel } from '@/utils/worldeditor/typeMeta';
 import { Icon } from '@iconify/vue';

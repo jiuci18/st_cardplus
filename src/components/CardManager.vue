@@ -160,7 +160,7 @@ import { useCharacterCardAutoSave, type AutoSaveMode } from '@/composables/chara
 import { useCharacterCardCollection } from '@/composables/characterCard/useCharacterCardCollection';
 import { useCharacterCardEditorSessions } from '@/composables/characterCard/useCharacterCardEditorSessions';
 import { useTabManager } from '@/composables/characterCard/useTabManager';
-import type { CharacterCardV3 } from '@/types/character-card-v3';
+import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 import type { SillyTavernRegexScript } from '@/composables/regex/types';
 import { isTauriApp, type HostingProvider } from '@/utils/imageHosting';
 import { getSetting } from '@/utils/localStorageUtils';

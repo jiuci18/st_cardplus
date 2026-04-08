@@ -1,4 +1,4 @@
-import type { EnhancedLandmark } from '@/types/world-editor';
+import type { EnhancedLandmark } from '@/types/worldeditor/world-editor';
 import { getParentLandmarkId } from '@/utils/worldeditor/landmarkHierarchy';
 import {
   getBridgeHandlePoint,

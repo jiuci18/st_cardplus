@@ -488,8 +488,8 @@ import {
   ElButton,
 } from 'element-plus';
 import { Icon } from '@iconify/vue';
-import type { EnhancedLandmark, EnhancedForce, EnhancedRegion } from '@/types/world-editor';
-import { LandmarkType } from '@/types/world-editor';
+import type { EnhancedLandmark, EnhancedForce, EnhancedRegion } from '@/types/worldeditor/world-editor';
+import { LandmarkType } from '@/types/worldeditor/world-editor';
 import { getLandmarkTypeLabel } from '@/utils/worldeditor/typeMeta';
 import { useValidation } from '@/composables/worldeditor/useValidation';
 import { collectDescendantIds, getParentLandmarkId, setLandmarkParent } from '@/utils/worldeditor/landmarkHierarchy';

@@ -74,7 +74,7 @@ import type {
   EnhancedRegion,
   Project,
   ProjectIntegration,
-} from '@/types/world-editor';
+} from '@/types/worldeditor/world-editor';
 import ForceEditor from './editorPacel/ForceEditor.vue';
 import IntegratedPanel from './editorPacel/IntegratedPanel.vue';
 import LandmarkEditor from './editorPacel/LandmarkEditor.vue';

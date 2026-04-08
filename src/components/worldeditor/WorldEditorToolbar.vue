@@ -171,7 +171,7 @@ import type {
   EnhancedForce,
   EnhancedRegion,
   ProjectIntegration,
-} from '../../types/world-editor';
+} from '@/types/worldeditor/world-editor';
 import { getLandmarkTypeIcon } from '@/utils/worldeditor/typeMeta';
 import { getParentLandmarkId } from '@/utils/worldeditor/landmarkHierarchy';
 

@@ -1,5 +1,5 @@
 import type { Ref } from 'vue';
-import type { EnhancedLandmark, EnhancedForce, EnhancedRegion } from '@/types/world-editor';
+import type { EnhancedLandmark, EnhancedForce, EnhancedRegion } from '@/types/worldeditor/world-editor';
 import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
 import { collectDescendantIds, setLandmarkParent } from '@/utils/worldeditor/landmarkHierarchy';
 

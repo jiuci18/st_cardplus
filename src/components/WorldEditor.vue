@@ -133,7 +133,7 @@ import type {
   EnhancedForce,
   EnhancedRegion,
   ProjectIntegration,
-} from '@/types/world-editor';
+} from '@/types/worldeditor/world-editor';
 import WorldEditorToolbar from '@/components/worldeditor/WorldEditorToolbar.vue';
 import WorldEditorMainPanel from './worldeditor/WorldEditorMainPanel.vue';
 import WorldGraph from './worldeditor/WorldGraph.vue';

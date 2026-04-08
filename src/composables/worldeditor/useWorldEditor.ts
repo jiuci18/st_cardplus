@@ -5,8 +5,8 @@ import type {
   EnhancedForce,
   EnhancedRegion,
   ProjectIntegration,
-} from '@/types/world-editor';
-import { LandmarkType, ImportanceLevel, ForceType, PowerLevel } from '@/types/world-editor';
+} from '@/types/worldeditor/world-editor';
+import { LandmarkType, ImportanceLevel, ForceType, PowerLevel } from '@/types/worldeditor/world-editor';
 import { v4 as uuidv4 } from 'uuid';
 import { saveToLocalStorage, loadFromLocalStorage } from '@/utils/localStorageUtils';
 import { nowIso } from '@/utils/datetime';

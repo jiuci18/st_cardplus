@@ -1,6 +1,6 @@
 import { reactive } from 'vue';
-import type { ValidationRule } from '@/types/world-editor';
-import { ValidationType } from '@/types/world-editor';
+import type { ValidationRule } from '@/types/worldeditor/world-editor';
+import { ValidationType } from '@/types/worldeditor/world-editor';
 
 export function useValidation() {
   const errors = reactive<Record<string, string>>({});

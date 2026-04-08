@@ -208,7 +208,7 @@ import type {
   EnhancedLandmark,
   EnhancedRegion,
   Project,
-} from '@/types/world-editor';
+} from '@/types/worldeditor/world-editor';
 import { formatRoadLinkLabel, getRoadConnectionLengthText } from '@/composables/worldeditor/graph/worldGraphLinks';
 import { copyToClipboard } from '@/utils/clipboard';
 import { cleanObject, removeEmptyFields } from '@/utils/objectUtils';

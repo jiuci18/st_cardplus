@@ -137,7 +137,7 @@
 
 <script setup lang="ts">
 import { useWorldGraphView } from '@/composables/worldeditor/graph/useWorldGraphView';
-import type { EnhancedForce, EnhancedLandmark, EnhancedRegion, Project } from '@/types/world-editor';
+import type { EnhancedForce, EnhancedLandmark, EnhancedRegion, Project } from '@/types/worldeditor/world-editor';
 import { Icon } from '@iconify/vue';
 import { Background } from '@vue-flow/background';
 import { Controls } from '@vue-flow/controls';

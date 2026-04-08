@@ -98,7 +98,7 @@
 <script setup lang="ts">
 import { ElScrollbar, ElForm, ElInput, ElColorPicker, ElEmpty } from 'element-plus';
 import { Icon } from '@iconify/vue';
-import type { EnhancedRegion } from '@/types/world-editor';
+import type { EnhancedRegion } from '@/types/worldeditor/world-editor';
 import { REGION_COLOR_PALETTE } from '@/utils/worldeditor/regionColors';
 import '@/css/worldbook.css';
 

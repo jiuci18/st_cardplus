@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import type { Project, EnhancedLandmark, EnhancedForce } from '@/types/world-editor';
+import type { Project, EnhancedLandmark, EnhancedForce } from '@/types/worldeditor/world-editor';
 
 export function useWorldEditorUI(handleProjectSubmit: (projectData: Project, editingProject: Project | null) => void) {
   const isModalVisible = ref(false);

@@ -34,7 +34,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Project } from '@/types/world-editor';
+import type { Project } from '@/types/worldeditor/world-editor';
 import { ElForm, ElFormItem, ElInput, ElButton, ElMessageBox } from 'element-plus';
 
 interface Props {

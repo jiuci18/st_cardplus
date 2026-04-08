@@ -329,7 +329,7 @@ import type { SillyTavernRegexScript } from '@/composables/regex/types';
 import { SUBSTITUTE_FIND_REGEX, type RegexScript } from '@/composables/regex/types';
 import { useRegexCollection } from '@/composables/regex/useRegexCollection';
 import { useRegexSimulator } from '@/composables/regex/useRegexSimulator';
-import type { CharacterCardV3 } from '@/types/character-card-v3';
+import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 import { v4 as uuidv4 } from 'uuid';
 import RegexScriptSelectorDialog from '../components/RegexScriptSelectorDialog.vue';
 

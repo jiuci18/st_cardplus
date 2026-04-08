@@ -120,8 +120,8 @@
 
 <script setup lang="ts">
 import { serializeCharacterInfo } from '@/composables/characterInfo/useCardDataHandler';
-import type { CharacterCard, CharacterProject } from '@/types/character';
-import type { CharacterCardV3 } from '@/types/character-card-v3';
+import type { CharacterCard, CharacterProject } from '@/types/character/character';
+import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 import { readLocalStorageJSON } from '@/utils/localStorageUtils';
 import { bindDelimitedPaste, mergeUniqueValues } from '@/utils/multiValuePaste';
 import { ElButton, ElDialog, ElEmpty, ElForm, ElFormItem, ElInput, ElMessage, ElMessageBox, ElOption, ElScrollbar, ElSelect, ElTag } from 'element-plus';

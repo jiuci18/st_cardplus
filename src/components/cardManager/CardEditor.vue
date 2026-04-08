@@ -101,7 +101,7 @@ import BasicInfoPanel from '@/components/cardManager/main/BasicInfoPanel.vue';
 import GreetingsPanel from '@/components/cardManager/main/GreetingsPanel.vue';
 import ImagePanel from '@/components/cardManager/main/ImagePanel.vue';
 import InfoDisplayPanel from '@/components/cardManager/main/InfoDisplayPanel.vue';
-import type { CharacterCardV3 } from '@/types/character-card-v3';
+import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 import { Icon } from '@iconify/vue';
 import { ElCollapseTransition } from 'element-plus';
 
