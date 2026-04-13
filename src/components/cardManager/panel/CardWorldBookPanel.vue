@@ -442,7 +442,6 @@ const mockCollection = computed<WorldBookCollection>(() => {
 const {
   selectedEntry,
   editableEntry,
-  // activeTab,
   addNewEntry: addEntry,
   handleSelectEntry: selectEntry,
   saveCurrentEntry: saveEntry,
