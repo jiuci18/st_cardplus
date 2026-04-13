@@ -1,5 +1,5 @@
 import { type Ref } from 'vue';
-import type { WorldBookEntry, WorldBook } from '../../types/types';
+import type { WorldBookEntry, WorldBook } from '@/types/worldbook';
 import { useWorldBookEntryState } from './entry/useWorldBookEntryState';
 import { useWorldBookEntryActions } from './entry/useWorldBookEntryActions';
 import { useWorldBookEntryIO } from './entry/useWorldBookEntryIO';

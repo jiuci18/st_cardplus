@@ -58,7 +58,7 @@
 
 <script setup lang="ts">
 import { ElDescriptions, ElDescriptionsItem, ElTag, ElScrollbar, ElEmpty } from 'element-plus';
-import type { CharacterCardV3 } from '@/types/character-card-v3';
+import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 
 defineProps<{
   type: 'regex';

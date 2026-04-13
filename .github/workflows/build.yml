@@ -231,10 +231,6 @@ jobs:
         cache: 'pnpm'
         cache-dependency-path: pnpm-lock.yaml
 
-    - name: Sync app version to release tag
-      if: needs.prepare-release.outputs.release_enabled == 'true'
-      run: node scripts/set-version.mjs "${{ needs.prepare-release.outputs.tag_name }}"
-
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
 
@@ -271,10 +267,6 @@ jobs:
         node-version: '24'
         cache: 'pnpm'
         cache-dependency-path: pnpm-lock.yaml
-
-    - name: Sync app version to release tag
-      if: needs.prepare-release.outputs.release_enabled == 'true'
-      run: node scripts/set-version.mjs "${{ needs.prepare-release.outputs.tag_name }}"
 
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
@@ -328,10 +320,6 @@ jobs:
         node-version: '24'
         cache: 'pnpm'
         cache-dependency-path: pnpm-lock.yaml
-
-    - name: Sync app version to release tag
-      if: needs.prepare-release.outputs.release_enabled == 'true'
-      run: node scripts/set-version.mjs "${{ needs.prepare-release.outputs.tag_name }}"
 
     - name: Install Linux dependencies
       run: |

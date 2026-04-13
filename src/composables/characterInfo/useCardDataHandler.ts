@@ -3,7 +3,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { copyToClipboard as copyUtil } from '../../utils/clipboard';
 import { clearLocalStorage } from '../../utils/localStorageUtils';
 import { createDefaultCharacterCard } from './useCharacterCard';
-import type { CharacterCard, Attire, Appearance, Trait, Relationship, Skill, Note, CharacterData } from '../../types/character';
+import type { CharacterCard, Attire, Appearance, Trait, Relationship, Skill, Note, CharacterData } from '@/types/character/character';
 import { cleanObject, removeEmptyFields } from '../../utils/objectUtils';
 import { saveFile } from '../../utils/fileSave';
 

@@ -1,7 +1,7 @@
 import { computed, ref, watch, type ComputedRef, type Ref } from 'vue';
 
-import type { CharacterCardCollection, CharacterCardItem } from '@/types/character-card-collection';
-import type { CharacterCardV3 } from '@/types/character-card-v3';
+import type { CharacterCardCollection, CharacterCardItem } from '@/types/character/character-card-collection';
+import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 
 import { createDefaultCharacterCardData, normalizeCharacterCardData } from './useV3CharacterCard';
 

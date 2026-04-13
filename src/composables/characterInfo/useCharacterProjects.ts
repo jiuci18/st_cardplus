@@ -1,7 +1,7 @@
 import { computed, type Ref } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { v4 as uuidv4 } from 'uuid';
-import type { CharacterProject } from '../../types/character';
+import type { CharacterProject } from '@/types/character/character';
 
 interface ProjectState {
   projects: Record<string, CharacterProject>;

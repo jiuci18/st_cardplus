@@ -6,7 +6,7 @@ import {
   clearAutoSave,
   getSetting,
 } from '../../utils/localStorageUtils';
-import type { CharacterCard } from '../../types/character';
+import type { CharacterCard } from '@/types/character/character';
 
 export function useCharacterCardLifecycle(form: Ref<CharacterCard>, processLoadedData: (data: any) => CharacterCard) {
   let autoSaveTimer: number | null = null;

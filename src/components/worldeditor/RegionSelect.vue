@@ -38,7 +38,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { ElSelect, ElOption } from 'element-plus';
-import type { EnhancedRegion } from '@/types/world-editor';
+import type { EnhancedRegion } from '@/types/worldeditor/world-editor';
 
 interface Props {
   modelValue?: string;

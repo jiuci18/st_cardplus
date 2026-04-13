@@ -1,6 +1,6 @@
 import { ElMessage } from 'element-plus';
 import { copyToClipboard } from '../../../utils/clipboard';
-import type { WorldBookEntry, WorldBook } from '../../../types/types';
+import type { WorldBookEntry, WorldBook } from '@/types/worldbook';
 import type { Ref } from 'vue';
 import { saveFile } from '../../../utils/fileSave';
 

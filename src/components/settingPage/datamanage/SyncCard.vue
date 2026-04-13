@@ -100,7 +100,7 @@
 
 <script setup lang="ts">
 import { syncInjectionKey } from '@/composables/dataManagement/useSync';
-import ExternalLink from '@/components/common/ExternalLink.vue';
+import ExternalLink from '@/components/ui/common/ExternalLink.vue';
 import { Icon } from '@iconify/vue';
 import { computed, inject } from 'vue';
 

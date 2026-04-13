@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { read as readPngMetadata } from '@/utils/pngCardMetadata';
-import type { CharacterCardV3 } from '@/types/character-card-v3';
+import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 
 /**
  * 一个轻量级的 Hook，用于处理角色卡编辑器中的 PNG 导入和图片预览。

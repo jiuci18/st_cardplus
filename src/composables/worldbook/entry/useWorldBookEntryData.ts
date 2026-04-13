@@ -1,4 +1,4 @@
-import type { WorldBookEntry } from '../../../types/types';
+import type { WorldBookEntry } from '@/types/worldbook';
 
 export const createDefaultEntryData = (uid: number): WorldBookEntry => ({
   uid: uid,

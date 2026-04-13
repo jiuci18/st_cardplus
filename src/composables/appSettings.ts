@@ -37,6 +37,7 @@ export type SettingOption = SwitchSetting | NumberInputSetting | PasswordInputSe
 interface AppSettingsModels {
   betaFeaturesEnabled: Ref<boolean>;
   umamiEnabled: Ref<boolean>;
+  disableSyncSnapshotRecovery: Ref<boolean>;
   autoSaveInterval: Ref<number>;
   autoSaveDebounce: Ref<number>;
   imgbbApiKey: Ref<string>;
@@ -44,6 +45,7 @@ interface AppSettingsModels {
 interface AppSettingsHandlers {
   onBetaFeaturesToggle: (value: boolean) => void;
   onUmamiToggle: (value: boolean) => void;
+  onDisableSyncSnapshotRecoveryToggle: (value: boolean) => void;
   onAutoSaveIntervalChange: (value: number | undefined) => void;
   onAutoSaveDebounceChange: (value: number | undefined) => void;
   onImgbbApiKeyChange: (value: string) => void;
@@ -70,6 +72,16 @@ export const getAppSettings = (models: AppSettingsModels, handlers: AppSettingsH
       type: 'switch',
       model: models.umamiEnabled,
       handler: handlers.onUmamiToggle,
+    },
+    {
+      id: 'disableSyncSnapshotRecovery',
+      label: '不启用缓存恢复（关闭溢出警告）',
+      icon: 'material-symbols:restore-page-outline',
+      iconColor: 'var(--el-color-danger)',
+      description: '开启后，云同步拉取数据前不再创建本地恢复点，因此不会再出现缓存区超限导致的撤销/溢出提示',
+      type: 'switch',
+      model: models.disableSyncSnapshotRecovery,
+      handler: handlers.onDisableSyncSnapshotRecoveryToggle,
     },
     {
       id: 'imgbbApiKey',

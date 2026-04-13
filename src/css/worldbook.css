@@ -10,6 +10,23 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  position: relative;
+}
+
+.worldbook-mobile-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.worldbook-mobile-drawer-pane {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
 }
 
 .worldbook-tabs-mobile {
@@ -76,6 +93,7 @@
   font-weight: 600;
   color: var(--el-text-color-primary);
   margin: 0;
+  min-width: 0;
 }
 
 .content-panel-icon {
@@ -127,7 +145,6 @@
 .worldbook-add-icon {
   font-size: 20px;
 }
-
 
 .worldbook-empty-list {
   padding: 40px 20px;
@@ -229,30 +246,30 @@
 
 /* 移动端：为底部导航栏预留空间 */
 @media (max-width: 767px) {
-  #pane-list > .content-panel-header {
+  .worldbook-mobile-drawer-pane > .content-panel-header {
     flex-direction: row;
   }
 
-  #pane-editor .content-panel-header {
+  .worldbook-mobile-panel .content-panel-header {
     flex-direction: column;
     align-items: stretch;
     gap: 8px;
     padding: 8px 0;
   }
 
-  #pane-editor .content-panel-title {
+  .worldbook-mobile-panel .content-panel-title {
     justify-content: center;
     font-size: 16px;
     overflow: hidden;
   }
 
-  #pane-editor .content-panel-text-highlight {
+  .worldbook-mobile-panel .content-panel-text-highlight {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  #pane-editor .worldbook-editor-buttons {
+  .worldbook-mobile-panel .worldbook-editor-buttons {
     justify-content: center;
   }
 
@@ -267,7 +284,7 @@
     text-align: center;
   }
 
-  .card-worldbook-panel .content-panel-body  {
+  .card-worldbook-panel .content-panel-body {
     padding-bottom: 0;
   }
 }

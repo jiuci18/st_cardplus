@@ -15,6 +15,7 @@ export type { MenuItemConfig, MenuItemType, SidebarConfig };
 interface AppSettings {
   betaFeaturesEnabled: boolean;
   umamiEnabled: boolean;
+  disableSyncSnapshotRecovery: boolean;
   autoSaveInterval: number;
   autoSaveDebounce: number;
   imgbbApiKey: string;
@@ -171,6 +172,7 @@ export const writeSessionStorageJSON = (key: string, value: unknown): void => {
 const defaultSettings: AppSettings = {
   betaFeaturesEnabled: false,
   umamiEnabled: true,
+  disableSyncSnapshotRecovery: false,
   autoSaveInterval: 5,
   autoSaveDebounce: 1.5,
   imgbbApiKey: '',

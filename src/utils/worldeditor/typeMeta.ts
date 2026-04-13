@@ -1,4 +1,4 @@
-import { ForceType, LandmarkType } from '@/types/world-editor';
+import { ForceType, LandmarkType } from '@/types/worldeditor/world-editor';
 
 const LANDMARK_TYPE_LABELS: Record<string, string> = {
   [LandmarkType.CITY]: '城市',

@@ -1,6 +1,6 @@
 {
   "productName": "sillytavern-char_cardplus",
-  "version": "0.1.19",
+  "version": "0.1.20",
   "identifier": "com.awaae001.cardplus",
   "build": {
     "beforeDevCommand": "pnpm dev:web",

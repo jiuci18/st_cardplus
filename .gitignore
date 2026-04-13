@@ -31,3 +31,4 @@ generated/
 doc/
 
 temp/*
+.codex

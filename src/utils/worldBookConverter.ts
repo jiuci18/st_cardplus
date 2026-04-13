@@ -1,5 +1,5 @@
-import type { WorldBook, WorldBookEntry } from '../types/types';
-import type { CharacterBook, CharacterBookEntry } from '../types/character-book';
+import type { WorldBook, WorldBookEntry } from '@/types/worldbook';
+import type { CharacterBook, CharacterBookEntry } from '@/types/character/character-book';
 import { nowIso } from './datetime';
 
 // 完整的 world_info_position 定义

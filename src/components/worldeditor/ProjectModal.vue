@@ -51,7 +51,7 @@
 import { ref, watch, computed } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElDialog, ElForm, ElFormItem, ElInput, ElButton } from 'element-plus';
-import type { Project } from '@/types/world-editor';
+import type { Project } from '@/types/worldeditor/world-editor';
 
 interface Props {
   visible: boolean;

@@ -1,4 +1,4 @@
-import type { CharacterCardV3 } from '@/types/character-card-v3';
+import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 
 // 默认的角色卡数据结构，用于初始化和重置
 export const createDefaultCharacterCardData = (): CharacterCardV3 => ({

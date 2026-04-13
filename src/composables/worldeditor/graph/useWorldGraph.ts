@@ -9,7 +9,7 @@ import {
   type Connection,
   type EdgeChange,
 } from '@vue-flow/core';
-import type { Project, EnhancedLandmark, EnhancedForce, EnhancedRegion, RoadConnection } from '@/types/world-editor';
+import type { Project, EnhancedLandmark, EnhancedForce, EnhancedRegion, RoadConnection } from '@/types/worldeditor/world-editor';
 import type { LandmarkNodeData, LandmarkNodeForce } from '@/types/worldeditor/worldGraphNodes';
 import {
   linkLandmarks,

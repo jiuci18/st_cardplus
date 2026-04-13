@@ -1,7 +1,7 @@
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { copyToClipboard } from '../../../utils/clipboard';
 import { createDefaultEntryData } from './useWorldBookEntryData';
-import type { WorldBookEntry, WorldBook } from '../../../types/types';
+import type { WorldBookEntry, WorldBook } from '@/types/worldbook';
 import type { Ref } from 'vue';
 
 type EntryCallbacks = {

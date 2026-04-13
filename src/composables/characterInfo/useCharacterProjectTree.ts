@@ -1,6 +1,6 @@
 import { computed, type Ref } from 'vue';
 import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
-import type { CharacterCard, CharacterProject } from '../../types/character';
+import type { CharacterCard, CharacterProject } from '@/types/character/character';
 
 export interface CharacterOrderPatch {
   id: string;

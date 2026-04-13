@@ -1,131 +1,103 @@
 <template>
   <div class="worldbook-container">
     <div class="worldbook-mobile-layout">
-      <el-tabs
-        v-model="activeTab"
-        type="border-card"
-        class="worldbook-tabs-mobile"
+      <div class="worldbook-mobile-panel">
+        <div class="content-panel-header">
+          <h2 class="content-panel-title">
+            <Icon
+              icon="ph:note-pencil-duotone"
+              class="content-panel-icon"
+            />
+            编辑:
+            <span class="content-panel-text-highlight">
+              {{ selectedEntry ? selectedEntry.comment || '新条目' : '未选择条目' }}
+            </span>
+          </h2>
+          <div class="worldbook-editor-header-actions">
+            <span class="worldbook-import-notice">导入须知：请使用从酒馆导出的世界书进行导入</span>
+            <WorldBookActions
+              context="editor"
+              :has-selection="!!selectedEntry"
+              :save-status="saveStatus"
+              :auto-save-mode="autoSaveMode"
+              @toggle-mode="toggleAutoSaveMode"
+              @copy-entry="copySelectedEntry"
+              @save-entry="saveCurrentEntry"
+              @delete-entry="deleteSelectedEntry"
+            />
+          </div>
+        </div>
+        <WorldBookEditor
+          :entry="selectedEntry"
+          v-model="editableEntry"
+          :all-keywords="allKeywords"
+          :current-entry-index="currentEntryIndex"
+          :total-entries="totalEntries"
+          @go-to-previous="goToPreviousEntry"
+          @go-to-next="goToNextEntry"
+          :is-next-entry-in-different-book="isNextEntryInDifferentBook"
+          :is-previous-entry-in-different-book="isPreviousEntryInDifferentBook"
+          :save-status="saveStatus"
+        />
+      </div>
+
+      <MobileBookmarkDrawer
+        v-model:visible="mobileDrawerVisible"
+        v-model:active-tab="mobilePanelTab"
+        :items="mobileBookmarkItems"
+        drawer-size="88%"
       >
-        <el-tab-pane
-          name="list"
-          class="worldbook-tab-pane"
-        >
-          <template #label>
-            <span class="worldbook-tab-label">
-              <Icon
-                icon="ph:list-bullets-duotone"
-                class="worldbook-tab-icon"
-              />
-              <span class="worldbook-tab-text">条目列表</span>
-            </span>
-          </template>
-
-          <div class="content-panel-header">
-            <h2 class="content-panel-title">
-              <Icon
-                icon="ph:list-bullets-duotone"
-                class="content-panel-icon"
-              />
-              <span class="content-panel-text">世界书条目</span>
-            </h2>
-            <el-tooltip
-              content="新增条目"
-              placement="top"
-              :show-arrow="false"
-              :offset="8"
-              :hide-after="0"
-            >
-              <button
-                @click="() => addNewEntry()"
-                class="btn-adv btn-primary-adv worldbook-add-button"
-                aria-label="新增条目"
-                :disabled="!activeBook"
-              >
+        <template #pane-list>
+          <div class="worldbook-mobile-drawer-pane">
+            <div class="content-panel-header">
+              <h2 class="content-panel-title">
                 <Icon
-                  icon="ph:plus-circle-duotone"
-                  class="worldbook-add-icon"
+                  icon="ph:list-bullets-duotone"
+                  class="content-panel-icon"
                 />
-              </button>
-            </el-tooltip>
-          </div>
-          <WorldBookList
-            :collection="worldBookCollection"
-            :active-book-id="activeBookId"
-            @select-book="handleSelectBook"
-            @create-book="handleCreateBook"
-            @rename-book="handleRenameBook"
-            @delete-book="handleDeleteBook"
-            @select-entry="handleSelectEntry"
-            @add-entry="addNewEntry"
-            @duplicate-entry="handleDuplicateEntry"
-            @delete-entry="handleDeleteEntryFromList"
-            :selected-entry="selectedEntry"
-            @copy-book="copyWorldBookToClipboard"
-            @export-json="exportToJson"
-            @import-book-file="handleImportBookFile"
-            @clear-all="clearAllEntries"
-            :drag-drop-handlers="dragDropHandlers"
-          />
-        </el-tab-pane>
-
-        <el-tab-pane
-          name="editor"
-          class="worldbook-tab-pane"
-          :disabled="!selectedEntry"
-        >
-          <template #label>
-            <span class="worldbook-tab-label">
-              <Icon
-                icon="ph:note-pencil-duotone"
-                class="worldbook-tab-icon"
-              />
-              <span class="worldbook-tab-text-truncated">
-                {{ selectedEntry ? selectedEntry.comment || '编辑中' : '编辑条目' }}
-              </span>
-            </span>
-          </template>
-
-          <div class="content-panel-header">
-            <h2 class="content-panel-title">
-              <Icon
-                icon="ph:note-pencil-duotone"
-                class="content-panel-icon"
-              />
-              <span class="content-panel-text-truncated">
-                编辑:
-                <span class="content-panel-text-highlight">
-                  {{ selectedEntry ? selectedEntry.comment || '新条目' : '未选择' }}
-                </span>
-              </span>
-            </h2>
-            <div class="worldbook-editor-header-actions">
-              <span class="worldbook-import-notice">导入须知：请使用从酒馆导出的世界书进行导入</span>
-              <WorldBookActions
-                context="editor"
-                :has-selection="!!selectedEntry"
-                :save-status="saveStatus"
-                :auto-save-mode="autoSaveMode"
-                @toggle-mode="toggleAutoSaveMode"
-                @copy-entry="copySelectedEntry"
-                @save-entry="saveCurrentEntry"
-                @delete-entry="deleteSelectedEntry"
-              />
+                <span class="content-panel-text">世界书条目</span>
+              </h2>
+              <el-tooltip
+                content="新增条目"
+                placement="top"
+                :show-arrow="false"
+                :offset="8"
+                :hide-after="0"
+              >
+                <button
+                  @click="() => addNewEntry()"
+                  class="btn-adv btn-primary-adv worldbook-add-button"
+                  aria-label="新增条目"
+                  :disabled="!activeBook"
+                >
+                  <Icon
+                    icon="ph:plus-circle-duotone"
+                    class="worldbook-add-icon"
+                  />
+                </button>
+              </el-tooltip>
             </div>
+            <WorldBookList
+              :collection="worldBookCollection"
+              :active-book-id="activeBookId"
+              @select-book="handleSelectBook"
+              @create-book="handleCreateBook"
+              @rename-book="handleRenameBook"
+              @delete-book="handleDeleteBook"
+              @select-entry="handleSelectEntry"
+              @add-entry="addNewEntry"
+              @duplicate-entry="handleDuplicateEntry"
+              @delete-entry="handleDeleteEntryFromList"
+              :selected-entry="selectedEntry"
+              @copy-book="copyWorldBookToClipboard"
+              @export-json="exportToJson"
+              @import-book-file="handleImportBookFile"
+              @clear-all="clearAllEntries"
+              :drag-drop-handlers="dragDropHandlers"
+            />
           </div>
-          <WorldBookEditor
-            :entry="selectedEntry"
-            v-model="editableEntry"
-            :all-keywords="allKeywords"
-            :current-entry-index="currentEntryIndex"
-            :total-entries="totalEntries"
-            @go-to-previous="goToPreviousEntry"
-            @go-to-next="goToNextEntry"
-            :is-next-entry-in-different-book="isNextEntryInDifferentBook"
-            :is-previous-entry-in-different-book="isPreviousEntryInDifferentBook"
-            :save-status="saveStatus"
-          />
-        </el-tab-pane>
-      </el-tabs>
+        </template>
+      </MobileBookmarkDrawer>
     </div>
 
     <div class="worldbook-desktop-layout">
@@ -211,20 +183,22 @@
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
-import { ElMessage, ElTabPane, ElTabs, ElTooltip } from 'element-plus';
+import { ElMessage, ElTooltip } from 'element-plus';
 import { Pane, Splitpanes } from 'splitpanes';
 import 'splitpanes/dist/splitpanes.css';
 import '../css/worldbook.css';
 
+import { useDevice } from '../composables/useDevice';
 import { useWorldBookCollection } from '../composables/worldbook/useWorldBookCollection';
 import { useWorldBookDragDrop } from '../composables/worldbook/useWorldBookDragDrop';
 import { useWorldBookEntry } from '../composables/worldbook/useWorldBookEntry';
-import type { WorldBookEntry } from '../types/types';
+import type { WorldBookEntry } from '@/types/worldbook';
+import MobileBookmarkDrawer from './ui/common/MobileBookmarkDrawer.vue';
 import WorldBookActions from './worldbook/WorldBookActions.vue';
 import WorldBookEditor from './worldbook/WorldBookEditor.vue';
 import WorldBookList from './worldbook/WorldBookList.vue';
 
-import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 
 const sidebarPaneRef = ref(null);
 const sidebarWidth = ref(0);
@@ -251,6 +225,7 @@ onUnmounted(() => {
 
 const {
   worldBookCollection,
+  isLoading,
   activeBookId,
   activeBook,
   handleSelectBook: selectBook,
@@ -292,6 +267,36 @@ const {
   addEntry: handleAddEntry,
   deleteEntry: handleDeleteEntry,
 });
+
+const { isMobile } = useDevice();
+const mobileDrawerVisible = ref(false);
+const mobilePanelTab = ref('list');
+const mobileBookmarkItems = [
+  {
+    key: 'list',
+    label: '列表',
+    drawerLabel: '条目列表',
+    title: '世界书条目',
+    icon: 'ph:list-bullets-duotone',
+  },
+];
+
+watch(
+  [isMobile, activeTab, isLoading],
+  ([mobile, tab, loading]) => {
+    if (!mobile || loading) {
+      mobileDrawerVisible.value = false;
+      return;
+    }
+    if (tab === 'list') {
+      mobilePanelTab.value = 'list';
+      mobileDrawerVisible.value = true;
+      return;
+    }
+    mobileDrawerVisible.value = false;
+  },
+  { immediate: true }
+);
 
 const currentEntryIndex = computed(() => {
   if (!activeBook.value || !selectedEntry.value) {
@@ -382,12 +387,19 @@ const dragDropHandlers = useWorldBookDragDrop(
   forceUpdateEntries
 );
 
+const closeMobileDrawer = () => {
+  if (isMobile.value) {
+    mobileDrawerVisible.value = false;
+  }
+};
+
 const handleSelectBook = (bookId: string) => {
   selectBook(bookId);
   nextTick(() => {
     if (activeBook.value && activeBook.value.entries.length > 0) {
       selectEntry('0');
       activeTab.value = 'editor';
+      closeMobileDrawer();
     } else {
       selectEntry(null); // Clear selection
       activeTab.value = 'list';
@@ -401,14 +413,16 @@ const handleSelectEntry = (bookId: string, entryIndex: number) => {
     nextTick(() => {
       selectEntry(String(entryIndex));
       activeTab.value = 'editor';
+      closeMobileDrawer();
     });
   } else {
     selectEntry(String(entryIndex));
     activeTab.value = 'editor';
+    closeMobileDrawer();
   }
 };
 
-const addNewEntry = (bookId?: string) => {
+const addNewEntry = async (bookId?: string) => {
   const targetBookId = bookId || activeBookId.value;
   if (!targetBookId) {
     ElMessage.error('请先选择一个世界书 ');
@@ -416,23 +430,23 @@ const addNewEntry = (bookId?: string) => {
   }
   if (activeBookId.value !== targetBookId) {
     selectBook(targetBookId);
-    nextTick(() => {
-      addEntry();
-    });
+    await nextTick();
+    await addEntry();
   } else {
-    addEntry();
+    await addEntry();
   }
+  closeMobileDrawer();
 };
 
-const handleDuplicateEntry = (bookId: string, entryIndex: number) => {
+const handleDuplicateEntry = async (bookId: string, entryIndex: number) => {
   if (activeBookId.value !== bookId) {
     selectBook(bookId);
-    nextTick(() => {
-      duplicateEntry(entryIndex);
-    });
+    await nextTick();
+    await duplicateEntry(entryIndex);
   } else {
-    duplicateEntry(entryIndex);
+    await duplicateEntry(entryIndex);
   }
+  closeMobileDrawer();
 };
 
 const handleDeleteEntryFromList = (bookId: string, entryIndex: number) => {

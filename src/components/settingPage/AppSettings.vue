@@ -187,7 +187,7 @@
 </template>
 
 <script setup lang="ts">
-import ExternalLink from '@/components/common/ExternalLink.vue';
+import ExternalLink from '@/components/ui/common/ExternalLink.vue';
 import { getAppSettings } from '@/composables/appSettings';
 import { useAppUpdate } from '@/composables/useAppUpdate';
 import { openExternalUrl } from '@/utils/externalLink';
@@ -199,6 +199,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 
 const betaFeaturesEnabled = ref(false);
 const umamiEnabled = ref(true);
+const disableSyncSnapshotRecovery = ref(false);
 const autoSaveInterval = ref(5);
 const autoSaveDebounce = ref(1.5);
 const imgbbApiKey = ref('');
@@ -287,6 +288,10 @@ const onAutoSaveDebounceChange = (value: number | undefined) => {
 const onUmamiToggle = (value: boolean) => {
   setSetting('umamiEnabled', value);
   window.dispatchEvent(new CustomEvent('umamiToggle', { detail: value }));
+};
+
+const onDisableSyncSnapshotRecoveryToggle = (value: boolean) => {
+  setSetting('disableSyncSnapshotRecovery', value);
 };
 
 const onImgbbApiKeyChange = (value: string) => {
@@ -400,6 +405,7 @@ const settings = computed(() =>
     {
       betaFeaturesEnabled,
       umamiEnabled,
+      disableSyncSnapshotRecovery,
       autoSaveInterval,
       autoSaveDebounce,
       imgbbApiKey,
@@ -407,6 +413,7 @@ const settings = computed(() =>
     {
       onBetaFeaturesToggle,
       onUmamiToggle,
+      onDisableSyncSnapshotRecoveryToggle,
       onAutoSaveIntervalChange,
       onAutoSaveDebounceChange,
       onImgbbApiKeyChange,
@@ -417,6 +424,7 @@ const settings = computed(() =>
 onMounted(() => {
   betaFeaturesEnabled.value = getSetting('betaFeaturesEnabled');
   umamiEnabled.value = getSetting('umamiEnabled');
+  disableSyncSnapshotRecovery.value = getSetting('disableSyncSnapshotRecovery');
   autoSaveInterval.value = getSetting('autoSaveInterval');
   autoSaveDebounce.value = getSetting('autoSaveDebounce');
   imgbbApiKey.value = getSetting('imgbbApiKey');

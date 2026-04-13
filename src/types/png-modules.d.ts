@@ -21,7 +21,3 @@ declare module 'png-chunk-text' {
 
   export default PNGtext;
 }
-
-declare module 'crc' {
-  export function crc32(buffer: Buffer | string | Uint8Array, previous?: number): number;
-}

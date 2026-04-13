@@ -310,9 +310,9 @@ import WorldBookSelectorDialog from '@/components/cardManager/components/WorldBo
 import { useWorldBookDragDrop } from '@/composables/worldbook/useWorldBookDragDrop';
 import { useWorldBookEntry } from '@/composables/worldbook/useWorldBookEntry';
 import { worldBookService } from '@/database/worldBookService';
-import type { CharacterBook } from '@/types/character-book';
-import type { CharacterCardV3 } from '@/types/character-card-v3';
-import type { WorldBook, WorldBookCollection, WorldBookEntry } from '@/types/types';
+import type { CharacterBook } from '@/types/character/character-book';
+import type { CharacterCardV3 } from '@/types/character/character-card-v3';
+import type { WorldBook, WorldBookCollection, WorldBookEntry } from '@/types/worldbook';
 import { convertCharacterBookToWorldBook, convertWorldBookToCharacterBook } from '@/utils/worldBookConverter';
 import ConfirmDialog from '../components/ConfirmDialog.vue';
 
@@ -442,7 +442,6 @@ const mockCollection = computed<WorldBookCollection>(() => {
 const {
   selectedEntry,
   editableEntry,
-  // activeTab,
   addNewEntry: addEntry,
   handleSelectEntry: selectEntry,
   saveCurrentEntry: saveEntry,

@@ -5,16 +5,27 @@ import type {
   EnhancedForce,
   EnhancedRegion,
   ProjectIntegration,
-} from '@/types/world-editor';
-import { LandmarkType, ImportanceLevel, ForceType, PowerLevel } from '@/types/world-editor';
+} from '@/types/worldeditor/world-editor';
+import { LandmarkType, ImportanceLevel, ForceType, PowerLevel } from '@/types/worldeditor/world-editor';
 import { v4 as uuidv4 } from 'uuid';
 import { saveToLocalStorage, loadFromLocalStorage } from '@/utils/localStorageUtils';
 import { nowIso } from '@/utils/datetime';
 import { pickRandomRegionColor } from '@/utils/worldeditor/regionColors';
 import { normalizeLandmarkHierarchy, removeLandmarkFromHierarchy } from '@/utils/worldeditor/landmarkHierarchy';
 import { removeLandmarkLinksForIds } from '@/composables/worldeditor/graph/worldGraphLinks';
+import { saveFile } from '@/utils/fileSave';
+import { ElMessage } from 'element-plus';
 
 const WORLD_EDITOR_DATA_KEY = 'world-editor-data';
+
+interface WorldProjectPackage {
+  version: 1;
+  exportedAt: string;
+  project: Project;
+  landmarks: EnhancedLandmark[];
+  forces: EnhancedForce[];
+  regions: EnhancedRegion[];
+}
 
 export function useWorldEditor() {
   // State Management
@@ -274,6 +285,101 @@ export function useWorldEditor() {
     }
   };
 
+  const exportProject = async (projectId: string) => {
+    const project = projects.value.find((item) => item.id === projectId);
+    if (!project) {
+      ElMessage.error('未找到当前项目');
+      return;
+    }
+
+    const exportData: WorldProjectPackage = {
+      version: 1,
+      exportedAt: nowIso(),
+      project: JSON.parse(JSON.stringify(project)),
+      landmarks: landmarks.value.filter((item) => item.projectId === projectId).map((item) => JSON.parse(JSON.stringify(item))),
+      forces: forces.value.filter((item) => item.projectId === projectId).map((item) => JSON.parse(JSON.stringify(item))),
+      regions: regions.value.filter((item) => item.projectId === projectId).map((item) => JSON.parse(JSON.stringify(item))),
+    };
+
+    const safeName = (project.name || '未命名项目').replace(/[\\/:*?"<>|]/g, '-');
+    await saveFile({
+      data: new TextEncoder().encode(JSON.stringify(exportData, null, 2)),
+      fileName: `${safeName}.json`,
+      mimeType: 'application/json;charset=utf-8',
+    });
+    ElMessage.success(`项目「${project.name || '未命名项目'}」已导出`);
+  };
+
+  const replaceProjectContent = (projectId: string, imported: WorldProjectPackage) => {
+    const projectIndex = projects.value.findIndex((item) => item.id === projectId);
+    const currentProject = projects.value[projectIndex];
+    if (projectIndex === -1 || !currentProject) {
+      throw new Error('当前项目不存在');
+    }
+
+    const nextProject: Project = {
+      ...currentProject,
+      name: imported.project?.name?.trim() || currentProject.name,
+      description: imported.project?.description || '',
+      updatedAt: nowIso(),
+    };
+
+    const nextLandmarks = imported.landmarks.map((item) => ({ ...item, projectId }));
+    const nextForces = imported.forces.map((item) => ({ ...item, projectId }));
+    const nextRegions = imported.regions.map((item) => ({ ...item, projectId }));
+
+    projects.value.splice(projectIndex, 1, nextProject);
+    landmarks.value = landmarks.value.filter((item) => item.projectId !== projectId).concat(nextLandmarks);
+    forces.value = forces.value.filter((item) => item.projectId !== projectId).concat(nextForces);
+    regions.value = regions.value.filter((item) => item.projectId !== projectId).concat(nextRegions);
+    normalizeLandmarkHierarchy(landmarks.value);
+
+    if (selectedItem.value && 'createdAt' in selectedItem.value && selectedItem.value.id === projectId) {
+      selectedItem.value = nextProject;
+    }
+  };
+
+  const importProjectOverwrite = (projectId: string) => {
+    const project = projects.value.find((item) => item.id === projectId);
+    if (!project) {
+      ElMessage.error('未找到当前项目');
+      return;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        try {
+          const content = String(loadEvent.target?.result || '');
+          const parsed = JSON.parse(content) as Partial<WorldProjectPackage>;
+          if (
+            !parsed ||
+            typeof parsed !== 'object' ||
+            !parsed.project ||
+            !Array.isArray(parsed.landmarks) ||
+            !Array.isArray(parsed.forces) ||
+            !Array.isArray(parsed.regions)
+          ) {
+            throw new Error('文件格式不正确，无法覆盖当前项目');
+          }
+
+          replaceProjectContent(projectId, parsed as WorldProjectPackage);
+          ElMessage.success(`项目「${project.name || '未命名项目'}」已覆盖导入`);
+        } catch (error) {
+          ElMessage.error(error instanceof Error ? error.message : '导入失败');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
   // Data Loading and Mock Data Generation
   onMounted(() => {
     const savedData = loadFromLocalStorage(WORLD_EDITOR_DATA_KEY);
@@ -306,5 +412,7 @@ export function useWorldEditor() {
     handleDelete,
     handleCopy,
     handleProjectSubmit,
+    exportProject,
+    importProjectOverwrite,
   };
 }

@@ -158,7 +158,7 @@ import { computed } from 'vue';
 import { ElTooltip } from 'element-plus';
 import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
 import { Icon } from '@iconify/vue';
-import SidebarTreePanel from '@/components/layout/common/SidebarTreePanel.vue';
+import SidebarTreePanel from '@/components/ui/layout/common/SidebarTreePanel.vue';
 import type { RegexScriptCollection, SillyTavernRegexScript } from '@/composables/regex/types';
 
 interface Props {

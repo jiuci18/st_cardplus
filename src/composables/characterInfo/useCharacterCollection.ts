@@ -1,7 +1,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { saveToLocalStorage as saveToLS, loadFromLocalStorage as loadFromLS } from '../../utils/localStorageUtils';
-import type { CharacterCard, CharacterProject } from '../../types/character';
+import type { CharacterCard, CharacterProject } from '@/types/character/character';
 import { v4 as uuidv4 } from 'uuid';
 import { createDefaultCharacterCard } from './useCharacterCard';
 import { processLoadedData } from './useCardDataHandler';

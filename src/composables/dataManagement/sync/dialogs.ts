@@ -16,8 +16,8 @@ export async function confirmPush(): Promise<boolean> {
   }
 }
 
-export async function confirmPull(backupTimestamp: string, snapshotSaved: boolean): Promise<boolean> {
-  const snapshotWarning = !snapshotSaved
+export async function confirmPull(backupTimestamp: string, snapshotSaved?: boolean): Promise<boolean> {
+  const snapshotWarning = snapshotSaved === false
     ? '<br/><span style="color: var(--el-color-danger);">缓存区域超限，无法保存撤销快照，本次无法撤销。</span>'
     : '';
 

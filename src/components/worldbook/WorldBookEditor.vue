@@ -2,7 +2,7 @@
   <el-scrollbar class="worldbook-editor-scrollbar">
     <div class="content-panel-body">
       <div v-if="!entry" class="worldbook-editor-empty-state">
-        <el-empty description="请在列表标签页中选择或新增一个条目进行编辑 " :image-size="80"></el-empty>
+        <el-empty description="请先选择或新增一个条目进行编辑" :image-size="80"></el-empty>
       </div>
       <el-form v-if="entry && modelValue" :model="localModel" label-position="top" ref="entryFormRef"
         class="worldbook-editor-form">
@@ -71,13 +71,14 @@
               <div class="form-flex-row">
                 <el-slider v-model="localModel.probability" :min="0" :max="100" show-input class="form-slider"
                   :disabled="!localModel.useProbability" />
-                <el-checkbox v-model="localModel.useProbability" class="form-checkbox-nowrap">启用概率</el-checkbox>
+                <el-checkbox v-model="localModel.useProbability" class="form-checkbox-nowrap">
+                  启用概率
+                </el-checkbox>
               </div>
             </div>
             <div>
               <label class="form-label">顺序</label>
-              <el-input-number v-model="localModel.order" :min="0" controls-position="right"
-                class="form-full-width" />
+              <el-input-number v-model="localModel.order" :min="0" controls-position="right" class="form-full-width" />
             </div>
             <div>
               <label class="form-label">插入位置 (Position)</label>
@@ -159,7 +160,9 @@
                     <el-option label="非任何" :value="2" />
                     <el-option label="与所有" :value="3" />
                   </el-select>
-                  <el-checkbox v-model="localModel.selective" class="form-checkbox-margin-top">启用次要逻辑</el-checkbox>
+                  <el-checkbox v-model="localModel.selective" class="form-checkbox-margin-top">
+                    启用次要逻辑
+                  </el-checkbox>
                 </div>
               </div>
             </section>
@@ -283,7 +286,7 @@ import {
   ElButton,
 } from 'element-plus';
 import { Icon } from '@iconify/vue';
-import type { WorldBookEntry } from '../../types/types';
+import type { WorldBookEntry } from '@/types/worldbook';
 import { bindDelimitedPaste, mergeUniqueValues } from '@/utils/multiValuePaste';
 
 const props = defineProps<{
@@ -344,13 +347,11 @@ const bindKeywordPasteHandlers = async () => {
   clearKeywordPasteHandlers();
   await nextTick();
 
-  const primaryCleanup = bindDelimitedPaste(
-    primaryKeywordSelectRef.value?.$el,
-    (values) => updateKeywordField('key', values)
+  const primaryCleanup = bindDelimitedPaste(primaryKeywordSelectRef.value?.$el, (values) =>
+    updateKeywordField('key', values)
   );
-  const secondaryCleanup = bindDelimitedPaste(
-    secondaryKeywordSelectRef.value?.$el,
-    (values) => updateKeywordField('keysecondary', values)
+  const secondaryCleanup = bindDelimitedPaste(secondaryKeywordSelectRef.value?.$el, (values) =>
+    updateKeywordField('keysecondary', values)
   );
 
   keywordPasteCleanupFns.value = [primaryCleanup, secondaryCleanup].filter(

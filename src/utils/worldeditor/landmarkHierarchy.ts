@@ -1,4 +1,4 @@
-import type { EnhancedLandmark } from '@/types/world-editor';
+import type { EnhancedLandmark } from '@/types/worldeditor/world-editor';
 
 export const getParentLandmarkId = (landmark: EnhancedLandmark): string | null => {
   return landmark.parentLandmarkIds[0] || null;

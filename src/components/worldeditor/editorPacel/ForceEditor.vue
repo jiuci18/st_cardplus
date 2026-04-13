@@ -504,8 +504,8 @@ import {
   ElPopconfirm,
 } from 'element-plus';
 import { Icon } from '@iconify/vue';
-import type { EnhancedForce, EnhancedLandmark } from '@/types/world-editor';
-import { ForceType } from '@/types/world-editor';
+import type { EnhancedForce, EnhancedLandmark } from '@/types/worldeditor/world-editor';
+import { ForceType } from '@/types/worldeditor/world-editor';
 import { useValidation, forceValidationRules } from '@/composables/worldeditor/useValidation';
 import { getForceTypeLabel } from '@/utils/worldeditor/typeMeta';
 import { bindDelimitedPaste, mergeUniqueValues } from '@/utils/multiValuePaste';

@@ -76,9 +76,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      'ejs': path.resolve(__dirname, 'node_modules/ejs/lib/cjs/ejs.js'),
       'fs': path.resolve(__dirname, 'src/polyfills/fs.js'),
       'path': path.resolve(__dirname, 'src/polyfills/path.js'),
-      'os': path.resolve(__dirname, 'src/polyfills/os.js'),
       'vue': 'vue/dist/vue.esm-bundler.js',
     },
   },
@@ -94,22 +94,20 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['js-yaml', 'ejs', 'vue', 'vuedraggable'],
-    force: true, // 强制重新预优化
   },
   build: {
     outDir, // 打包输出目录
-    minify: 'terser',
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         chunkFileNames: 'assets/[name]-[hash].js', // 分割后的文件命名规则
+        minify: {
+          compress: {
+            dropConsole: true,
+            dropDebugger: true,
+          },
+        },
       },
     },
     chunkSizeWarningLimit: 4096,
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
-    },
   },
 });

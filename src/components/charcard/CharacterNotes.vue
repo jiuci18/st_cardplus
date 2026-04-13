@@ -105,7 +105,7 @@ import { Icon } from '@iconify/vue';
 import { ElButton, ElCard, ElFormItem, ElInput } from 'element-plus';
 import { ref, watch } from 'vue';
 import draggable from 'vuedraggable';
-import type { Note } from '../../types/character';
+import type { Note } from '@/types/character/character';
 
 interface Props {
   notes: Note[];

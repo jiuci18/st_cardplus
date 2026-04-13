@@ -2,7 +2,7 @@ import { ref, onMounted, onBeforeUnmount, watch, type Ref } from 'vue';
 import { ElMessage } from 'element-plus';
 import { initAutoSave, clearAutoSave, getSetting } from '../../../utils/localStorageUtils';
 import { now } from '../../../utils/datetime';
-import type { WorldBookEntry } from '../../../types/types';
+import type { WorldBookEntry } from '@/types/worldbook';
 
 type EntryCallbacks = {
   updateEntry: (entry: WorldBookEntry) => Promise<void>;

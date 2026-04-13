@@ -1,6 +1,6 @@
 import { computed, ref, watch, onBeforeUnmount, type CSSProperties, type ComputedRef, type Ref } from 'vue';
 import type { Connection, Edge, EdgeChange, Node } from '@vue-flow/core';
-import type { EnhancedLandmark, EnhancedRegion } from '@/types/world-editor';
+import type { EnhancedLandmark, EnhancedRegion } from '@/types/worldeditor/world-editor';
 import type { BridgeNodeData, LandmarkNodeForce } from '@/types/worldeditor/worldGraphNodes';
 import { collectDescendantIds, getParentLandmarkId } from '@/utils/worldeditor/landmarkHierarchy';
 import { readSessionStorageJSON, writeSessionStorageJSON } from '@/utils/localStorageUtils';

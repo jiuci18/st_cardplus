@@ -134,15 +134,20 @@
 import { computed, ref } from 'vue';
 import { ElTooltip, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus';
 import { Icon } from '@iconify/vue';
-import BrowserFilePicker from '@/components/common/BrowserFilePicker.vue';
-import SidebarTreePanel from '@/components/layout/common/SidebarTreePanel.vue';
-import type { CharacterCard, CharacterProject } from '../../types/character';
+import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
+import SidebarTreePanel from '@/components/ui/layout/common/SidebarTreePanel.vue';
+import type { CharacterCard, CharacterProject } from '@/types/character/character';
 import { useCharacterProjectTree, type CharacterOrderPatch } from '../../composables/characterInfo/useCharacterProjectTree';
 
 interface Props {
   characters: CharacterCard[];
   projects: CharacterProject[];
   activeCharacterId: string | null;
+}
+
+interface BrowserFilePickerExposed {
+  open: () => void;
+  reset: () => void;
 }
 
 const emit = defineEmits<{
@@ -157,7 +162,7 @@ const emit = defineEmits<{
   (e: 'rename-project', id: string): void;
 }>();
 
-const filePickerRef = ref<InstanceType<typeof BrowserFilePicker> | null>(null);
+const filePickerRef = ref<BrowserFilePickerExposed | null>(null);
 const props = defineProps<Props>();
 const defaultExpandedKeys = computed<Array<string | number>>(() =>
   props.projects.map((project) => `project:${project.id}`)

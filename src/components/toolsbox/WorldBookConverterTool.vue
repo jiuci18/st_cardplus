@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import BrowserFilePicker from '@/components/common/BrowserFilePicker.vue';
+import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
 import { ElMessage } from 'element-plus';
 import { v4 as uuidv4 } from 'uuid';
 import { ref } from 'vue';

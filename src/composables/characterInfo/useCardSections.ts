@@ -1,5 +1,5 @@
 import type { Ref } from 'vue';
-import type { CharacterCard } from '../../types/character';
+import type { CharacterCard } from '@/types/character/character';
 import { addItem, removeItem, exportSection } from './sectionHelpers';
 
 export function useCardSections(form: Ref<CharacterCard>) {

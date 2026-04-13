@@ -1,7 +1,7 @@
 import { ElMessage } from 'element-plus';
 import { write as writePngCard } from '@/utils/pngCardMetadata';
 import { saveFile } from '@/utils/fileSave';
-import type { CharacterCardV3 } from '@/types/character-card-v3';
+import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 import type { Ref } from 'vue';
 
 async function blobToPngBuffer(blob: Blob): Promise<Uint8Array> {

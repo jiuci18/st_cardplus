@@ -32,9 +32,9 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { RouterView } from 'vue-router';
 
-import AppSidebar from '@/components/layout/AppSidebar.vue';
-import MobileDrawer from '@/components/layout/MobileDrawer.vue';
-import MobileTabBar from '@/components/layout/MobileTabBar.vue';
+import AppSidebar from '@/components/ui/layout/AppSidebar.vue';
+import MobileDrawer from '@/components/ui/layout/MobileDrawer.vue';
+import MobileTabBar from '@/components/ui/layout/MobileTabBar.vue';
 import { useAppUpdate } from '@/composables/useAppUpdate';
 import { provideNavigation } from '@/composables/useNavigation';
 import { usePersonalization } from '@/composables/usePersonalization';

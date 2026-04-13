@@ -50,7 +50,6 @@ export interface WorldBook {
   order: number; // 用于排序
   // 可选的元数据
   description?: string;
-  // 来源信息 - 如果是从角色卡导入的
   sourceCharacterId?: string; // 来源角色卡ID
   sourceCharacterName?: string; // 来源角色名称
   // 为将来的功能预留
@@ -60,6 +59,5 @@ export interface WorldBook {
 export interface WorldBookCollection {
   books: Record<string, WorldBook>;
   activeBookId: string | null;
-  // 全局设置，例如默认导入/导出行为等
   settings?: Record<string, any>;
 }

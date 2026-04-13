@@ -243,7 +243,7 @@ import { nextTick, ref, watch } from 'vue';
 import { useCardDataHandler } from '../composables/characterInfo/useCardDataHandler';
 import { useCardSections } from '../composables/characterInfo/useCardSections';
 import { useCharacterCardLifecycle } from '../composables/characterInfo/useCharacterCardLifecycle';
-import type { CharacterCard } from '../types/character';
+import type { CharacterCard } from '@/types/character/character';
 import CharacterCardButtons from './charcard/CharacterCardButtons.vue';
 import AppearanceAndAttireTab from './charcard/tabs/AppearanceAndAttireTab.vue';
 import DailyAndNotesTab from './charcard/tabs/DailyAndNotesTab.vue';
