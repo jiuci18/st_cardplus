@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Icon } from '@iconify/vue';
 import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
 import { ElMessage } from 'element-plus';
 import { v4 as uuidv4 } from 'uuid';
@@ -114,8 +115,17 @@ async function downloadJson() {
 
 <template>
   <div class="converter-container">
-    <h1>世界书双向转换器</h1>
-    <p>打开一个角色卡 (`.json`) 或独立的 `WorldBook` / `CharacterBook` (`.json`) 文件，然后选择要转换的目标格式</p>
+    <div class="header">
+      <el-button type="primary" plain @click="$router.push('/toolbox')" class="back-button">
+        <Icon icon="material-symbols:arrow-back" width="16" height="16" />
+        返回工具箱
+      </el-button>
+      <h1>世界书双向转换器</h1>
+    </div>
+
+    <el-alert title="工具说明" type="info" :closable="false" class="info-alert">
+      <p>打开一个角色卡 (`.json`) 或独立的 `WorldBook` / `CharacterBook` (`.json`) 文件，然后选择要转换的目标格式</p>
+    </el-alert>
 
     <div class="io-grid">
       <div class="file-upload-area">
@@ -178,8 +188,29 @@ async function downloadJson() {
 <style scoped>
 .converter-container {
   padding: 20px;
-  max-width: 1400px;
+  width: 100%;
+  max-width: 1200px;
   margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 1rem;
+}
+
+.header h1 {
+  margin: 0;
+}
+
+.info-alert {
+  margin-bottom: 20px;
+}
+
+.info-alert p {
+  margin: 4px 0;
+  font-size: 14px;
 }
 
 .io-grid {
@@ -237,14 +268,21 @@ async function downloadJson() {
     padding: 12px;
   }
 
-  .converter-container h1 {
-    font-size: 1.3rem;
-    margin-bottom: 8px;
+  .header {
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
   }
 
-  .converter-container > p {
-    font-size: 13px;
-    line-height: 1.5;
+  .header h1 {
+    font-size: 1.3rem;
+    width: 100%;
+    order: 2;
+    margin: 0;
+  }
+
+  .back-button {
+    order: 1;
   }
 
   .io-grid {
