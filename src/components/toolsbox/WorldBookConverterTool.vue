@@ -31,7 +31,6 @@ function extractAndNormalizeBookData(data: any): object | null {
       ElMessage.info('检测到对象格式的 "entries"，已自动转换为数组');
       bookData.entries = Object.values(bookData.entries);
     }
-    // 确保 bookData.name 存在，以便后续使用
     outputFileName.value = `${bookData.name || 'worldbook'}.json`;
     return bookData;
   }
@@ -85,13 +84,9 @@ function handleConvertToCharacterBook() {
     const rawInput = JSON.parse(inputJson.value);
     const bookData = extractAndNormalizeBookData(rawInput);
     if (!bookData) return;
-
     const characterBook = convertWorldBookToCharacterBook(bookData as any);
     outputFileName.value = `${characterBook.name || 'characterbook'}.json`;
-
-    // 使用 cleanObject 来移除最终导出 JSON 中的 name 和 id 字段
     const cleanedBook = cleanObject(characterBook, ['name', 'id']);
-
     outputJson.value = JSON.stringify(cleanedBook, null, 2);
     ElMessage.success('成功转换为角色卡世界书 (CharacterBook) 格式!');
   } catch (error: any) {
