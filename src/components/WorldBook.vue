@@ -331,7 +331,6 @@ const isPreviousEntryInDifferentBook = computed(() => {
 
 const goToPreviousEntry = () => {
   if (!activeBook.value) return;
-
   const isFirstEntryInBook = currentEntryIndex.value <= 0;
 
   if (isFirstEntryInBook) {
@@ -355,7 +354,6 @@ const goToPreviousEntry = () => {
 };
 const goToNextEntry = () => {
   if (!activeBook.value) return;
-
   const isLastEntryInBook = currentEntryIndex.value >= activeBook.value.entries.length - 1;
 
   if (isLastEntryInBook) {
@@ -376,7 +374,7 @@ const allKeywords = computed((): string[] => {
     return [];
   }
   const allKeys = activeBook.value.entries.flatMap((entry: WorldBookEntry) => [...entry.key, ...entry.keysecondary]);
-  return [...new Set(allKeys.filter((key: string) => key))] as string[]; // 过滤掉空字符串或null/undefined
+  return [...new Set(allKeys.filter((key: string) => key))] as string[];
 });
 
 const dragDropHandlers = useWorldBookDragDrop(
@@ -407,7 +405,19 @@ const handleSelectBook = (bookId: string) => {
   });
 };
 
-const handleSelectEntry = (bookId: string, entryIndex: number) => {
+const handleSelectEntry = (bookId: string, entryIndex: number | null) => {
+  if (entryIndex === null) {
+    if (activeBookId.value === bookId) {
+      selectEntry(null);
+    } else {
+      selectBook(bookId);
+      nextTick(() => {
+        selectEntry(null);
+      });
+    }
+    return;
+  }
+
   if (activeBookId.value !== bookId) {
     selectBook(bookId);
     nextTick(() => {
