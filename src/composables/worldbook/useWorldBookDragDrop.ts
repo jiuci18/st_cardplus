@@ -18,7 +18,6 @@ export function useWorldBookDragDrop(
   forceUpdateEntries: () => void
 ) {
   const allowDrag = (): boolean => {
-    // 允许拖动所有项目
     return true;
   };
 
@@ -27,15 +26,11 @@ export function useWorldBookDragDrop(
     const isDropTargetBook = !dropNode.data.isEntry;
 
     if (isDraggingBook) {
-      // 如果拖动的是世界书，只允许在其他世界书前后放置
       return isDropTargetBook && type !== 'inner';
     } else {
-      // 如果拖动的是条目
       if (isDropTargetBook) {
-        // 允许将条目放入世界书
         return type === 'inner';
       } else {
-        // 允许在其他条目前后放置
         return type !== 'inner';
       }
     }
@@ -100,11 +95,9 @@ export function useWorldBookDragDrop(
       if (dropType === 'before') {
         insertIndex = dropEntryIndex;
       } else {
-        // 'after'
         insertIndex = dropEntryIndex + 1;
       }
     } else {
-      // drop into a book
       toBookId = dropNode.data.id;
       toBook = worldBookCollection.value.books[toBookId];
       insertIndex = 0; // 'inner' drop means at the top
@@ -124,12 +117,8 @@ export function useWorldBookDragDrop(
         // Adjust insertIndex if the removal affected it
         const adjustedInsertIndex = oldIndex < insertIndex ? insertIndex - 1 : insertIndex;
         newEntries.splice(adjustedInsertIndex, 0, entryToMove);
-
-        // DANGEROUS: Re-assigning UID based on the new sequence as requested.
-        // This can lead to issues with component keys and selection state.
         newEntries.forEach((entry, index) => {
-          entry.uid = index;
-          entry.order = index; // Also update the 'order' field for safer tracking
+          entry.order = index;
         });
 
         updateBookEntries(fromBookId, newEntries);
