@@ -6,65 +6,28 @@
         <slot name="header-actions" />
       </div>
     </div>
-    <div
-      v-if="$slots['header-extra']"
-      class="sidebar-panel-header-extra"
-    >
+    <div v-if="$slots['header-extra']" class="sidebar-panel-header-extra">
       <slot name="header-extra" />
     </div>
 
     <el-scrollbar class="sidebar-panel-scrollbar">
-      <el-tree
-        ref="treeRef"
-        :data="treeData"
-        :props="treeProps"
-        :node-key="nodeKey"
-        :key="treeKey"
-        :default-expanded-keys="expandedKeys"
-        :current-node-key="currentNodeKey"
-        :highlight-current="highlightCurrent"
-        :expand-on-click-node="expandOnClickNode"
-        :draggable="draggable"
-        :filter-node-method="filterNodeMethod"
-        :allow-drag="allowDrag"
-        :allow-drop="allowDrop"
-        class="sidebar-tree"
-        @node-click="handleNodeClick"
-        @node-drop="handleNodeDrop"
-        @node-expand="handleNodeExpand"
-        @node-collapse="handleNodeCollapse"
-      >
+      <el-tree ref="treeRef" :data="treeData" :props="treeProps" :node-key="nodeKey"
+        :default-expanded-keys="expandedKeys" :current-node-key="currentNodeKey" :highlight-current="highlightCurrent"
+        :expand-on-click-node="expandOnClickNode" :draggable="draggable" :filter-node-method="filterNodeMethod"
+        :allow-drag="allowDrag" :allow-drop="allowDrop" class="sidebar-tree" @node-click="handleNodeClick"
+        @node-drop="handleNodeDrop" @node-expand="handleNodeExpand" @node-collapse="handleNodeCollapse">
         <template #default="{ node, data }">
-          <div
-            class="sidebar-tree-node-slot"
-            @dblclick.stop="handleNodeDblClick(data, node, $event)"
-          >
-            <button
-              v-if="draggable"
-              class="sidebar-tree-node-drag-handle"
-              type="button"
-              aria-label="拖拽排序"
-              @click.stop
-            >
-              <Icon
-                icon="ph:dots-six-vertical-bold"
-                class="sidebar-tree-node-drag-handle-icon"
-              />
+          <div class="sidebar-tree-node-slot" @dblclick.stop="handleNodeDblClick(data, node, $event)">
+            <button v-if="draggable" class="sidebar-tree-node-drag-handle" type="button" aria-label="拖拽排序" @click.stop>
+              <Icon icon="ph:dots-six-vertical-bold" class="sidebar-tree-node-drag-handle-icon" />
             </button>
-            <slot
-              name="node"
-              :node="node"
-              :data="data"
-            />
+            <slot name="node" :node="node" :data="data" />
           </div>
         </template>
       </el-tree>
     </el-scrollbar>
 
-    <div
-      v-if="$slots.footer"
-      class="sidebar-panel-footer"
-    >
+    <div v-if="$slots.footer" class="sidebar-panel-footer">
       <slot name="footer" />
     </div>
   </div>
@@ -113,19 +76,69 @@ const emit = defineEmits<{
 }>();
 
 const treeRef = ref<InstanceType<typeof ElTree> | null>(null);
-const treeKey = ref(0);
 const expandedKeys = ref<Array<string | number>>([...props.defaultExpandedKeys]);
+const previousDefaultExpandedKeys = ref<Array<string | number>>([...props.defaultExpandedKeys]);
+
+const collectNodeKeys = (nodes: any[], keyField: string, childrenField: string, target: Set<string | number>) => {
+  nodes.forEach((node) => {
+    const key = node?.[keyField];
+    if (key !== undefined && key !== null) {
+      target.add(key);
+    }
+
+    const children = node?.[childrenField];
+    if (Array.isArray(children) && children.length > 0) {
+      collectNodeKeys(children, keyField, childrenField, target);
+    }
+  });
+};
+
+const getValidNodeKeys = (treeData: any[]) => {
+  const validKeys = new Set<string | number>();
+  const childrenField =
+    typeof props.treeProps?.children === 'string' && props.treeProps.children ? props.treeProps.children : 'children';
+
+  if (props.nodeKey) {
+    collectNodeKeys(treeData, props.nodeKey, childrenField, validKeys);
+  }
+
+  return validKeys;
+};
+
+const pruneExpandedKeys = (keys: Array<string | number>, validKeys: Set<string | number>) => {
+  return keys.filter((key) => validKeys.has(key));
+};
 
 watch(
   () => props.defaultExpandedKeys,
   (nextKeys) => {
-    expandedKeys.value = [...nextKeys];
+    const validKeys = getValidNodeKeys(props.treeData);
+    const previousDefaults = new Set(previousDefaultExpandedKeys.value);
+    const incomingDefaults = nextKeys.filter((key) => validKeys.has(key));
+    const nextExpanded = pruneExpandedKeys(expandedKeys.value, validKeys);
+
+    incomingDefaults.forEach((key) => {
+      if (!previousDefaults.has(key) && !nextExpanded.includes(key)) {
+        nextExpanded.push(key);
+      }
+    });
+
+    if (previousDefaultExpandedKeys.value.length === 0 && expandedKeys.value.length === 0) {
+      expandedKeys.value = [...incomingDefaults];
+    } else {
+      expandedKeys.value = nextExpanded;
+    }
+
+    previousDefaultExpandedKeys.value = [...nextKeys];
   }
 );
 
 watch(
   () => props.treeData,
   (nextData) => {
+    const validKeys = getValidNodeKeys(nextData);
+    expandedKeys.value = pruneExpandedKeys(expandedKeys.value, validKeys);
+
     if (!props.autoExpandFirst) return;
     if (expandedKeys.value.length > 0) return;
     if (!Array.isArray(nextData) || nextData.length === 0) return;
@@ -146,12 +159,7 @@ watch(
 
 const handleNodeDrop = (draggingNode: any, dropNode: any, dropType: ActualNodeDropType) => {
   if (!props.handleNodeDrop) return;
-
-  const success = props.handleNodeDrop(draggingNode, dropNode, dropType);
-
-  if (success) {
-    treeKey.value += 1;
-  }
+  props.handleNodeDrop(draggingNode, dropNode, dropType);
 };
 
 const handleNodeClick = (data: any, node: any, component: any, event: MouseEvent) => {
@@ -170,8 +178,8 @@ const shouldIgnoreTreeNodeEvent = (event?: MouseEvent) => {
   if (!target) return false;
   return Boolean(
     target.closest('.sidebar-tree-node-action-button') ||
-      target.closest('.sidebar-tree-node-actions') ||
-      target.closest('.el-upload')
+    target.closest('.sidebar-tree-node-actions') ||
+    target.closest('.el-upload')
   );
 };
 

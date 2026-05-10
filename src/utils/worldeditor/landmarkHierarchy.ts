@@ -6,7 +6,6 @@ export const getParentLandmarkId = (landmark: EnhancedLandmark): string | null =
 
 export const normalizeLandmarkHierarchy = (landmarks: EnhancedLandmark[]) => {
   const map = new Map(landmarks.map((landmark) => [landmark.id, landmark]));
-
   landmarks.forEach((landmark) => {
     landmark.parentLandmarkIds = landmark.parentLandmarkIds.filter((id) => map.has(id) && id !== landmark.id);
     if (landmark.parentLandmarkIds.length > 1) {

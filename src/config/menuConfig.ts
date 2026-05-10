@@ -206,6 +206,17 @@ const toolboxToolItems: MenuItemConfig[] = [
     route: '/toolbox/old-world-editor',
     description: '兼容旧版本格式的世界地标编辑器',
   },
+
+  {
+    id: 'jsonl-novel-converter',
+    type: 'tool',
+    visible: false,
+    order: 107,
+    title: 'JSONL 小说转换器',
+    icon: 'material-symbols:article-outline',
+    route: '/toolbox/jsonl-novel-converter',
+    description: '将 JSONL 聊天记录整理为可阅读的 Markdown 小说',
+  },
 ];
 
 // 获取所有默认菜单项配置

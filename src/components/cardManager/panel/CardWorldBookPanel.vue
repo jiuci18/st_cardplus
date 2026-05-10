@@ -1,10 +1,6 @@
 <template>
   <div class="card-worldbook-panel">
-    <!-- 未绑定世界书的提示 -->
-    <div
-      v-if="!hasWorldBook"
-      class="empty-state"
-    >
+    <div v-if="!hasWorldBook" class="empty-state">
       <el-empty description="当前角色卡未绑定世界书">
         <template #description>
           <div class="empty-description">
@@ -17,10 +13,7 @@
           </div>
         </template>
         <div class="empty-actions">
-          <el-button
-            type="primary"
-            @click="handleCreateNewWorldBook"
-          >
+          <el-button type="primary" @click="handleCreateNewWorldBook">
             <Icon icon="ph:plus-circle-duotone" />
             创建新世界书
           </el-button>
@@ -32,64 +25,32 @@
       </el-empty>
     </div>
 
-    <!-- 世界书编辑器 -->
-    <div
-      v-else
-      class="worldbook-editor-wrapper"
-    >
-      <!-- 桌面端：分栏布局 -->
+    <div v-else class="worldbook-editor-wrapper">
       <div class="worldbook-layout worldbook-layout-desktop">
         <Splitpanes class="default-theme">
-          <Pane
-            size="15"
-            min-size="10"
-            max-size="30"
-          >
-          <WorldBookList
-            :collection="mockCollection"
-            :active-book-id="worldbookDraft?.id || null"
-            @select-book="handleSelectCurrentBook"
-            @select-entry="onListSelectEntry"
-            @create-book="handleCreateBookFromList"
-            @rename-book="handleRenameCurrentWorldBook"
-            @delete-book="handleDeleteCurrentWorldBook"
-            @add-entry="onListAddEntry"
-            @duplicate-entry="onListDuplicateEntry"
-            @delete-entry="onListDeleteEntry"
-            @copy-book="copyWorldBookToClipboard"
-            @export-json="exportToJson"
-            @import-book-file="handleUnsupportedImportBook"
-            @clear-all="handleClearAllEntries"
-            :selected-entry="selectedEntry"
-            :drag-drop-handlers="dragDropHandlers"
-            :hide-book-selector="true"
-          />
+          <Pane size="15" min-size="10" max-size="30">
+            <WorldBookList :collection="mockCollection" :active-book-id="worldbookDraft?.id || null"
+              @select-book="handleSelectCurrentBook" @select-entry="onListSelectEntry"
+              @create-book="handleCreateBookFromList" @rename-book="handleRenameCurrentWorldBook"
+              @delete-book="handleDeleteCurrentWorldBook" @add-entry="onListAddEntry"
+              @duplicate-entry="onListDuplicateEntry" @delete-entry="onListDeleteEntry"
+              @copy-book="copyWorldBookToClipboard" @export-json="exportToJson"
+              @import-book-file="handleUnsupportedImportBook" @clear-all="handleClearAllEntries"
+              :selected-entry="selectedEntry" :drag-drop-handlers="dragDropHandlers" :hide-book-selector="true" />
           </Pane>
-          <Pane
-            size="85"
-            min-size="70"
-          >
+          <Pane size="85" min-size="70">
             <div class="worldbook-editor-panel">
               <div class="content-panel-header">
                 <h2 class="content-panel-title">
-                  <Icon
-                    icon="ph:note-pencil-duotone"
-                    class="content-panel-icon"
-                  />
+                  <Icon icon="ph:note-pencil-duotone" class="content-panel-icon" />
                   编辑:
                   <span class="content-panel-text-highlight">
                     {{ selectedEntry ? selectedEntry.comment || '新条目' : '未选择条目' }}
                   </span>
                 </h2>
                 <div class="editor-actions">
-                  <el-tooltip
-                    content="保存状态"
-                    placement="top"
-                  >
-                    <el-tag
-                      :type="saveStatusType"
-                      size="small"
-                    >
+                  <el-tooltip content="保存状态" placement="top">
+                    <el-tag :type="saveStatusType" size="small">
                       {{ saveStatusText }}
                     </el-tag>
                   </el-tooltip>
@@ -98,19 +59,11 @@
                       <Icon :icon="autoSaveMode === 'auto' ? 'ph:floppy-disk-duotone' : 'ph:hand-eye-duotone'" />
                       {{ autoSaveMode === 'auto' ? '自动保存' : '监听模式' }}
                     </el-button>
-                    <el-button
-                      v-if="selectedEntry"
-                      @click="saveCurrentEntry"
-                      :disabled="saveStatus === 'saved'"
-                    >
+                    <el-button v-if="selectedEntry" @click="saveCurrentEntry" :disabled="saveStatus === 'saved'">
                       <Icon icon="ph:floppy-disk-duotone" />
                       保存
                     </el-button>
-                    <el-button
-                      v-if="selectedEntry"
-                      type="danger"
-                      @click="deleteSelectedEntry"
-                    >
+                    <el-button v-if="selectedEntry" type="danger" @click="deleteSelectedEntry">
                       <Icon icon="ph:trash-duotone" />
                       删除
                     </el-button>
@@ -118,27 +71,13 @@
                 </div>
               </div>
               <div class="worldbook-editor-container">
-                <WorldBookEditor
-                  v-if="selectedEntry"
-                  :entry="selectedEntry"
-                  v-model="editableEntry"
-                  :all-keywords="allKeywords"
-                  :current-entry-index="currentEntryIndex"
-                  :total-entries="totalEntries"
-                  @go-to-previous="goToPreviousEntry"
-                  @go-to-next="goToNextEntry"
-                  :is-next-entry-in-different-book="false"
-                  :is-previous-entry-in-different-book="false"
-                  :save-status="saveStatus"
-                />
-                <div
-                  v-else
-                  class="editor-empty-state"
-                >
-                  <el-empty
-                    description="请选择一个条目进行编辑"
-                    :image-size="100"
-                  />
+                <WorldBookEditor v-if="selectedEntry" :entry="selectedEntry" v-model="editableEntry"
+                  :all-keywords="allKeywords" :current-entry-index="currentEntryIndex" :total-entries="totalEntries"
+                  @go-to-previous="goToPreviousEntry" @go-to-next="goToNextEntry"
+                  :is-next-entry-in-different-book="false" :is-previous-entry-in-different-book="false"
+                  :save-status="saveStatus" />
+                <div v-else class="editor-empty-state">
+                  <el-empty description="请选择一个条目进行编辑" :image-size="100" />
                 </div>
               </div>
             </div>
@@ -148,53 +87,26 @@
 
       <!-- 移动端：标签页布局 -->
       <div class="worldbook-layout worldbook-layout-mobile">
-        <el-tabs
-          v-model="mobileActiveTab"
-          type="border-card"
-          class="worldbook-mobile-tabs"
-        >
-          <el-tab-pane
-            name="list"
-            label="条目列表"
-          >
-            <WorldBookList
-              :collection="mockCollection"
-              :active-book-id="worldbookDraft?.id || null"
-              @select-book="handleSelectCurrentBook"
-              @select-entry="handleMobileSelectEntry"
-              @create-book="handleCreateBookFromList"
-              @rename-book="handleRenameCurrentWorldBook"
-              @delete-book="handleDeleteCurrentWorldBook"
-              @add-entry="onListAddEntry"
-              @duplicate-entry="onListDuplicateEntry"
-              @delete-entry="onListDeleteEntry"
-              @copy-book="copyWorldBookToClipboard"
-              @export-json="exportToJson"
-              @import-book-file="handleUnsupportedImportBook"
-              @clear-all="handleClearAllEntries"
-              :selected-entry="selectedEntry"
-              :drag-drop-handlers="dragDropHandlers"
-              :hide-book-selector="true"
-            />
+        <el-tabs v-model="mobileActiveTab" type="border-card" class="worldbook-mobile-tabs">
+          <el-tab-pane name="list" label="条目列表">
+            <WorldBookList :collection="mockCollection" :active-book-id="worldbookDraft?.id || null"
+              @select-book="handleSelectCurrentBook" @select-entry="handleMobileSelectEntry"
+              @create-book="handleCreateBookFromList" @rename-book="handleRenameCurrentWorldBook"
+              @delete-book="handleDeleteCurrentWorldBook" @add-entry="onListAddEntry"
+              @duplicate-entry="onListDuplicateEntry" @delete-entry="onListDeleteEntry"
+              @copy-book="copyWorldBookToClipboard" @export-json="exportToJson"
+              @import-book-file="handleUnsupportedImportBook" @clear-all="handleClearAllEntries"
+              :selected-entry="selectedEntry" :drag-drop-handlers="dragDropHandlers" :hide-book-selector="true" />
           </el-tab-pane>
-          <el-tab-pane
-            name="editor"
-            :label="selectedEntry ? selectedEntry.comment || '新条目' : '编辑器'"
-          >
+          <el-tab-pane name="editor" :label="selectedEntry ? selectedEntry.comment || '新条目' : '编辑器'">
             <div class="worldbook-editor-panel-mobile">
               <div class="content-panel-header-mobile">
                 <h2 class="content-panel-title-mobile">
-                  <Icon
-                    icon="ph:note-pencil-duotone"
-                    class="content-panel-icon"
-                  />
+                  <Icon icon="ph:note-pencil-duotone" class="content-panel-icon" />
                   {{ selectedEntry ? selectedEntry.comment || '新条目' : '未选择条目' }}
                 </h2>
                 <div class="editor-actions-mobile">
-                  <el-tag
-                    :type="saveStatusType"
-                    size="small"
-                  >
+                  <el-tag :type="saveStatusType" size="small">
                     {{ saveStatusText }}
                   </el-tag>
                   <el-dropdown @command="handleMobileActionCommand">
@@ -207,19 +119,11 @@
                           <Icon :icon="autoSaveMode === 'auto' ? 'ph:floppy-disk-duotone' : 'ph:hand-eye-duotone'" />
                           {{ autoSaveMode === 'auto' ? '自动保存' : '监听模式' }}
                         </el-dropdown-item>
-                        <el-dropdown-item
-                          v-if="selectedEntry"
-                          command="save"
-                          :disabled="saveStatus === 'saved'"
-                        >
+                        <el-dropdown-item v-if="selectedEntry" command="save" :disabled="saveStatus === 'saved'">
                           <Icon icon="ph:floppy-disk-duotone" />
                           保存
                         </el-dropdown-item>
-                        <el-dropdown-item
-                          v-if="selectedEntry"
-                          command="delete"
-                          divided
-                        >
+                        <el-dropdown-item v-if="selectedEntry" command="delete" divided>
                           <Icon icon="ph:trash-duotone" />
                           删除
                         </el-dropdown-item>
@@ -229,27 +133,13 @@
                 </div>
               </div>
               <div class="worldbook-editor-container">
-                <WorldBookEditor
-                  v-if="selectedEntry"
-                  :entry="selectedEntry"
-                  v-model="editableEntry"
-                  :all-keywords="allKeywords"
-                  :current-entry-index="currentEntryIndex"
-                  :total-entries="totalEntries"
-                  @go-to-previous="goToPreviousEntry"
-                  @go-to-next="goToNextEntry"
-                  :is-next-entry-in-different-book="false"
-                  :is-previous-entry-in-different-book="false"
-                  :save-status="saveStatus"
-                />
-                <div
-                  v-else
-                  class="editor-empty-state"
-                >
-                  <el-empty
-                    description="请从左侧选择一个条目进行编辑"
-                    :image-size="80"
-                  />
+                <WorldBookEditor v-if="selectedEntry" :entry="selectedEntry" v-model="editableEntry"
+                  :all-keywords="allKeywords" :current-entry-index="currentEntryIndex" :total-entries="totalEntries"
+                  @go-to-previous="goToPreviousEntry" @go-to-next="goToNextEntry"
+                  :is-next-entry-in-different-book="false" :is-previous-entry-in-different-book="false"
+                  :save-status="saveStatus" />
+                <div v-else class="editor-empty-state">
+                  <el-empty description="请从左侧选择一个条目进行编辑" :image-size="80" />
                 </div>
               </div>
             </div>
@@ -259,28 +149,15 @@
     </div>
 
     <!-- 世界书选择对话框 -->
-    <WorldBookSelectorDialog
-      v-model="showWorldBookSelector"
-      @confirm="handleBindWorldBook"
-    />
+    <WorldBookSelectorDialog v-model="showWorldBookSelector" @confirm="handleBindWorldBook" />
 
     <!-- 世界书选择对话框 (用于替换) -->
-    <WorldBookSelectorDialog
-      v-model="showReplaceWorldBookSelector"
-      @confirm="handleConfirmReplace"
-    />
+    <WorldBookSelectorDialog v-model="showReplaceWorldBookSelector" @confirm="handleConfirmReplace" />
 
     <!-- 确认对话框 -->
-    <ConfirmDialog
-      ref="confirmDialogRef"
-      :title="confirmConfig.title"
-      :message="confirmConfig.message"
-      :type="confirmConfig.type"
-      :confirm-text="confirmConfig.confirmText"
-      :cancel-text="confirmConfig.cancelText"
-      @confirm="confirmConfig.onConfirm"
-      @cancel="confirmConfig.onCancel"
-    />
+    <ConfirmDialog ref="confirmDialogRef" :title="confirmConfig.title" :message="confirmConfig.message"
+      :type="confirmConfig.type" :confirm-text="confirmConfig.confirmText" :cancel-text="confirmConfig.cancelText"
+      @confirm="confirmConfig.onConfirm" @cancel="confirmConfig.onCancel" />
   </div>
 </template>
 
@@ -371,8 +248,8 @@ const confirmConfig = ref({
   type: 'info' as 'info' | 'warning' | 'danger',
   confirmText: '确认',
   cancelText: '取消',
-  onConfirm: () => {},
-  onCancel: () => {},
+  onConfirm: () => { },
+  onCancel: () => { },
 });
 
 // 计算属性：是否有世界书
@@ -492,7 +369,6 @@ const dragDropHandlers = useWorldBookDragDrop(
   mockCollection as any,
   // moveEntryBetweenBooks
   (_entryToMove: WorldBookEntry, _fromBookId: string, _toBookId: string, _insertIndex: number) => {
-    // 只有一个世界书，不支持跨书移动
     return;
   },
   // updateBookEntries
@@ -569,9 +445,8 @@ const onListAddEntry = (_bookId: string) => {
   addEntry();
 };
 
-// WorldBookList 事件适配：入参为 (bookId, entryIndex)
-const onListSelectEntry = (_bookId: string, entryIndex: number) => {
-  selectEntry(String(entryIndex));
+const onListSelectEntry = (_bookId: string, entryIndex: number | null) => {
+  selectEntry(entryIndex === null ? null : String(entryIndex));
 };
 
 const handleSelectCurrentBook = () => {
@@ -769,10 +644,11 @@ const handleBindWorldBook = async (bookId: string) => {
   }
 };
 
-// 移动端选择条目后自动切换到编辑器标签页
-const handleMobileSelectEntry = (bookId: string, entryIndex: number) => {
+const handleMobileSelectEntry = (bookId: string, entryIndex: number | null) => {
   onListSelectEntry(bookId, entryIndex);
-  mobileActiveTab.value = 'editor';
+  if (entryIndex !== null) {
+    mobileActiveTab.value = 'editor';
+  }
 };
 
 // 移动端下拉菜单命令处理
@@ -1026,5 +902,4 @@ defineExpose({
   overflow-x: hidden;
   min-height: 0;
 }
-
 </style>

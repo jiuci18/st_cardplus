@@ -7,7 +7,6 @@ import { nowIso } from '@/utils/datetime';
 
 // 重新导出 StoredCharacterCard 类型供外部使用
 export type { StoredCharacterCard };
-
 export interface CharacterCardCollection {
   cards: Record<string, CharacterCardV3 & { id: string; createdAt: string; updatedAt: string; order: number }>;
   activeCardId: string | null;
@@ -42,8 +41,6 @@ export const characterCardService = {
         order: storedCard.order,
       };
     });
-
-    // 从 sessionStorage 获取并验证 activeCardId
     const activeCardId = getSessionStorageItem(ACTIVE_CARD_ID_KEY);
     const finalActiveCardId = activeCardId && cards[activeCardId] ? activeCardId : allCardsStored[0]?.id || null;
 
@@ -68,7 +65,6 @@ export const characterCardService = {
    * 添加一张新的角色卡
    */
   async addCard(card: StoredCharacterCard): Promise<void> {
-    // 清理数据以确保可以被 IndexedDB 克隆
     const sanitizedCard = sanitizeForIndexedDB(card);
     await db.characterCards.add(sanitizedCard);
   },
@@ -77,7 +73,6 @@ export const characterCardService = {
    * 更新一张角色卡的完整数据
    */
   async updateCard(card: StoredCharacterCard): Promise<void> {
-    // 清理数据以确保可以被 IndexedDB 克隆
     const sanitizedCard = sanitizeForIndexedDB(card);
     await db.characterCards.put(sanitizedCard);
   },
@@ -163,24 +158,4 @@ export const characterCardService = {
     await db.characterCards.clear();
   },
 
-  /**
-   * 通过名称搜索角色卡
-   */
-  async searchByName(query: string): Promise<StoredCharacterCard[]> {
-    const lowerQuery = query.toLowerCase();
-    return await db.characterCards.filter((card) => card.name.toLowerCase().includes(lowerQuery)).toArray();
-  },
-
-  /**
-   * 通过标签搜索角色卡
-   */
-  async searchByTags(tags: string[]): Promise<StoredCharacterCard[]> {
-    const lowerTags = tags.map((tag) => tag.toLowerCase());
-    return await db.characterCards
-      .filter((card) => {
-        const cardTags = (card.tags || []).map((tag) => tag.toLowerCase());
-        return lowerTags.some((tag) => cardTags.includes(tag));
-      })
-      .toArray();
-  },
 };

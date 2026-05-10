@@ -176,7 +176,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const emit = defineEmits<{
   (e: 'select-book', id: string): void;
-  (e: 'select-entry', bookId: string, entryIndex: number): void;
+  (e: 'select-entry', bookId: string, entryIndex: number | null): void;
   (e: 'create-book'): void;
   (e: 'rename-book', id: string): void;
   (e: 'delete-book', id: string): void;
@@ -224,7 +224,11 @@ const currentNodeKey = computed(() => {
 
 const handleNodeClick = (data: any) => {
   if (data.isEntry) {
-    emit('select-entry', data.bookId, data.entryIndex);
+    if (props.activeBookId === data.bookId && props.selectedEntry?.uid === data.raw.uid) {
+      emit('select-entry', data.bookId, null);
+    } else {
+      emit('select-entry', data.bookId, data.entryIndex);
+    }
   } else {
     emit('select-book', data.id);
   }

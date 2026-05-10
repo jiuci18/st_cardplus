@@ -1,6 +1,6 @@
 <template>
   <div class="image-parser-container">
-    <div class="header-top">
+    <div class="header">
       <el-button
         type="primary"
         plain
@@ -14,14 +14,16 @@
         />
         返回工具箱
       </el-button>
-      <el-alert
-        title="解析角色卡自带的json并且本地保存，方便快捷"
-        type="info"
-        :closable="false"
-        class="info-alert"
-      />
+      <h1>元数据分离器</h1>
     </div>
-    <h3 style="margin-bottom: 10px">元数据分离器</h3>
+    <el-alert
+      title="工具说明"
+      type="info"
+      :closable="false"
+      class="info-alert"
+    >
+      <p>解析角色卡自带的json并且本地保存，方便快捷</p>
+    </el-alert>
     <el-card shadow="hover">
       <el-upload
         class="upload-demo"
@@ -130,24 +132,25 @@ const saveJson = async () => {
 </script>
 
 <style scoped>
-.header-top {
+.header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
+  gap: 16px;
+  margin-bottom: 1rem;
 }
 
-.header-top .format-button {
-  margin-right: auto;
+.info-alert {
+  margin-bottom: 20px;
 }
 
-.header-top .info-alert {
-  flex: 1;
-  margin: 0;
+.info-alert p {
+  margin: 4px 0;
+  font-size: 14px;
 }
 
 .image-parser-container {
   padding: 20px;
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
 }

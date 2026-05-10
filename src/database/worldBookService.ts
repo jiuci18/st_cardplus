@@ -263,7 +263,6 @@ export const worldBookService = {
       metadata: worldBook.metadata,
     };
 
-    // 准备条目数据
     const plainEntries = JSON.parse(JSON.stringify(worldBook.entries));
     const storedEntries: StoredWorldBookEntry[] = plainEntries.map((entry: WorldBookEntry) => ({
       ...entry,
@@ -272,7 +271,7 @@ export const worldBookService = {
     const sanitizedUpdatedBook = sanitizeForIndexedDB(updatedBook);
     const sanitizedStoredEntries = sanitizeForIndexedDB(storedEntries);
 
-    // 在事务中更新书籍和替换条目
+    // 更新书籍和替换条目
     await db.transaction('rw', db.books, db.entries, async () => {
       await db.books.put(sanitizedUpdatedBook);
       await db.entries.where('bookId').equals(bookId).delete();
@@ -302,7 +301,6 @@ export const worldBookService = {
 
     const allBooks = await db.books.toArray();
     const maxOrder = allBooks.length > 0 ? Math.max(...allBooks.map((b) => b.order)) : -1;
-
     const newBook: StoredWorldBook = {
       id: worldBook.id,
       name: worldBook.name,

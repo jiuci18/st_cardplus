@@ -88,6 +88,12 @@ const router = createRouter({
       meta: { title: '旧版世界编辑器' },
     },
     {
+      path: '/toolbox/jsonl-novel-converter',
+      name: 'jsonlNovelConverter',
+      component: () => import('./components/toolsbox/JsonlNovelConverter.vue'),
+      meta: { title: 'JSONL 小说转换器' },
+    },
+    {
       path: '/regex-editor',
       name: 'regexEditor',
       component: () => import('./pages/RegexEditorPage.vue'),

@@ -24,7 +24,6 @@ const readJson = (filePath) => JSON.parse(readFileSync(filePath, 'utf8'));
 const walkFiles = (dirPath) => {
   const entries = readdirSync(dirPath, { withFileTypes: true });
   const files = [];
-
   for (const entry of entries) {
     const entryPath = path.join(dirPath, entry.name);
     if (entry.isDirectory()) {
@@ -42,7 +41,6 @@ const walkFiles = (dirPath) => {
 
 const collectUsedIcons = () => {
   const iconsByPrefix = new Map();
-
   for (const filePath of walkFiles(sourceRoot)) {
     const content = readFileSync(filePath, 'utf8');
     const matches = content.matchAll(iconPattern);
@@ -53,7 +51,6 @@ const collectUsedIcons = () => {
       if (!prefix || !name || !(prefix in iconSetPackages)) {
         continue;
       }
-
       if (!iconsByPrefix.has(prefix)) {
         iconsByPrefix.set(prefix, new Set());
       }
@@ -71,7 +68,6 @@ const buildCollection = (prefix, requestedNames) => {
   const packageName = iconSetPackages[prefix];
   const packagePath = path.join(projectRoot, 'node_modules', packageName, 'icons.json');
   const sourceCollection = readJson(packagePath);
-
   const icons = {};
   const aliases = {};
   const queue = [...requestedNames];
@@ -129,20 +125,14 @@ const generateModule = (collections, iconNames) => {
     '// Do not edit it manually.',
     '',
     "import { addCollection } from '@iconify/vue';",
-    '',
     `export const bundledIconNames = ${JSON.stringify(iconNames, null, 2)} as const;`,
-    '',
     `const collections = ${JSON.stringify(collections, null, 2)} as const;`,
-    '',
     'let iconifyIconsRegistered = false;',
-    '',
     'export const registerBundledIconifyIcons = () => {',
     '  if (iconifyIconsRegistered) return;',
-    '',
     '  for (const collection of collections) {',
     '    addCollection(collection);',
     '  }',
-    '',
     '  iconifyIconsRegistered = true;',
     '};',
     '',

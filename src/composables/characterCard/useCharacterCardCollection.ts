@@ -44,14 +44,12 @@ export function useCharacterCardCollection() {
   onMounted(loadInitialData);
 
   const handleSelectCard = (cardId: string | null) => {
-    // 显式处理清空选中的情况
     if (cardId === '' || cardId === null) {
       characterCardCollection.value.activeCardId = null;
       characterCardService.setActiveCardId(null);
       return;
     }
 
-    // 只有当卡片存在时才设置
     if (characterCardCollection.value.cards[cardId]) {
       characterCardCollection.value.activeCardId = cardId;
       characterCardService.setActiveCardId(cardId);
@@ -73,7 +71,6 @@ export function useCharacterCardCollection() {
       const storedCard = characterCardService.createStoredCard(cardId, cardData, {
         order: maxOrder + 1,
       });
-
       await characterCardService.addCard(storedCard);
 
       // 更新本地状态
@@ -121,8 +118,6 @@ export function useCharacterCardCollection() {
 
     try {
       const now = nowIso();
-
-      // data 层是真实数据源：同步到顶层时保留空字符串，不使用 || 回退
       const synchronizedCardData = {
         ...cardData,
         data: {
@@ -144,7 +139,7 @@ export function useCharacterCardCollection() {
         name: (synchronizedCardData.name ?? '').trim() || '未命名角色',
         description: synchronizedCardData.description ?? '',
         avatar: synchronizedCardData.avatar !== 'none' ? synchronizedCardData.avatar : undefined,
-        cardData: synchronizedCardData, // 使用同步后的数据
+        cardData: synchronizedCardData,
         createdAt: existingCard.createdAt,
         updatedAt: now,
         order: existingCard.order,
@@ -196,15 +191,13 @@ export function useCharacterCardCollection() {
         inputErrorMessage: '名称不能为空',
       });
       const { value: newCardName } = renameCardResult as { value: string };
-
-      // 同时更新 data 和顶层（data 是真实数据源）
       const updatedCardData = {
         ...card,
         data: {
           ...card.data,
-          name: newCardName, // data 层优先
+          name: newCardName,
         },
-        name: newCardName, // 顶层同步
+        name: newCardName,
       };
 
       await handleUpdateCard(cardId, updatedCardData);
@@ -225,7 +218,6 @@ export function useCharacterCardCollection() {
         cancelButtonText: '取消',
         type: 'warning',
       });
-
       await characterCardService.deleteCard(cardId);
 
       // 更新本地状态
@@ -316,7 +308,6 @@ export function useCharacterCardCollection() {
     }
 
     try {
-      // 创建导出数据，移除管理字段
       const { id, createdAt, updatedAt, order, ...exportData } = card;
       const jsonDataString = JSON.stringify(exportData, null, 2);
 
@@ -385,7 +376,6 @@ export function useCharacterCardCollection() {
       const defaultData: CharacterCardV3 = {
         spec: 'chara_card_v3',
         spec_version: '3.0',
-        // 顶层字段（同步自 data）
         name: cardName,
         description: '',
         personality: '',
@@ -397,7 +387,6 @@ export function useCharacterCardCollection() {
         talkativeness: 0.5,
         fav: false,
         tags: [],
-        // data 层是真实数据源
         data: {
           name: cardName,
           description: '',
