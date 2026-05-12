@@ -2,7 +2,11 @@ import { computed, ref, watch, type Ref } from 'vue';
 import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
 import type { StoredPresetFile } from '@/database/db';
 import { getPromptOrderIdentifiers } from '@/composables/preset/utils/presetPromptOrder';
-import { getPromptNodeKey, resolvePromptIdentifier } from '@/composables/preset/utils/presetTree';
+import {
+  getPresetPromptSidebarEntries,
+  getPromptNodeKey,
+  resolvePromptIdentifier,
+} from '@/composables/preset/utils/presetTree';
 
 type PresetDropType = 'before' | 'after';
 
@@ -18,11 +22,7 @@ const getNodeIdentifier = (nodeData: any) => {
   return resolvePromptIdentifier(raw, nodeData.promptIndex ?? 0);
 };
 
-const getInsertIndexAfterRemoval = (
-  fromIndex: number,
-  toIndex: number,
-  type: PresetDropType
-) => {
+const getInsertIndexAfterRemoval = (fromIndex: number, toIndex: number, type: PresetDropType) => {
   const normalizedToIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
   return type === 'before' ? normalizedToIndex : normalizedToIndex + 1;
 };
@@ -54,16 +54,6 @@ const moveSinglePreset = (currentOrder: string[], fromId: string, toId: string, 
   return next;
 };
 
-const getPromptDisplayIdentifiers = (preset: { data: { prompts?: Record<string, any>[]; prompt_order: any } }) => {
-  const prompts = ((preset.data.prompts as Record<string, any>[]) || []).slice();
-  const ordered = getPromptOrderIdentifiers(preset.data.prompt_order);
-  const used = new Set<string>(ordered);
-  const remaining = prompts
-    .map((prompt, index) => resolvePromptIdentifier(prompt, index))
-    .filter((identifier) => !used.has(identifier));
-  return [...ordered, ...remaining];
-};
-
 const movePromptIdentifiers = (
   preset: { data: { prompts?: Record<string, any>[]; prompt_order: any } },
   movingIds: string[],
@@ -71,7 +61,7 @@ const movePromptIdentifiers = (
   type: PresetDropType
 ) => {
   const currentOrder = getPromptOrderIdentifiers(preset.data.prompt_order);
-  const displayOrder = getPromptDisplayIdentifiers(preset);
+  const displayOrder = getPresetPromptSidebarEntries(preset).map((entry) => entry.identifier);
   const movingSet = new Set(movingIds);
   if (!movingSet.size || movingSet.has(anchorId)) return null;
 

@@ -7,56 +7,77 @@ export const getPromptNodeKey = (presetId: string, identifier: string) => `${pre
 export const getRegexFolderNodeKey = (presetId: string) => `${presetId}:regex-folder`;
 export const getRegexNodeKey = (presetId: string, scriptId: string) => `${presetId}:regex:${scriptId}`;
 
-const getPromptIdentifier = (prompt: Record<string, any>, index: number) => {
+export interface PresetPromptSidebarEntry {
+  identifier: string;
+  prompt: Record<string, any>;
+  promptIndex: number;
+}
+
+interface PresetPromptSidebarSource {
+  data: {
+    prompts?: Record<string, any>[];
+    prompt_order: unknown;
+  };
+}
+
+export const resolvePromptIdentifier = (prompt: Record<string, any>, index: number) => {
   if (typeof prompt?.identifier === 'string' && prompt.identifier.trim()) {
     return prompt.identifier;
   }
   return `prompt-${index}`;
 };
 
-const buildPromptNode = (preset: StoredPresetFile, prompt: Record<string, any>, index: number) => {
-  const identifier = getPromptIdentifier(prompt, index);
+const buildPromptNode = (preset: StoredPresetFile, entry: PresetPromptSidebarEntry) => {
   return {
-    id: identifier,
-    nodeKey: getPromptNodeKey(preset.id, identifier),
-    label: prompt.name || prompt.identifier || `条目 ${index + 1}`,
+    id: entry.identifier,
+    nodeKey: getPromptNodeKey(preset.id, entry.identifier),
+    label: entry.prompt.name || entry.prompt.identifier || `条目 ${entry.promptIndex + 1}`,
     icon: 'ph:note-duotone',
     isPrompt: true,
     presetId: preset.id,
-    promptIndex: index,
-    raw: prompt,
-    enabled: typeof prompt.enabled === 'boolean' ? prompt.enabled : true,
+    promptIndex: entry.promptIndex,
+    raw: entry.prompt,
+    enabled: typeof entry.prompt.enabled === 'boolean' ? entry.prompt.enabled : true,
   };
 };
 
 const splitPromptsByOrder = (prompts: Record<string, any>[], orderIdentifiers: string[]) => {
-  const map = new Map<string, { prompt: Record<string, any>; index: number }>();
-  prompts.forEach((prompt, index) => {
-    const identifier = getPromptIdentifier(prompt, index);
-    if (!map.has(identifier)) {
-      map.set(identifier, { prompt, index });
+  const entries = prompts.map((prompt, promptIndex) => ({
+    identifier: resolvePromptIdentifier(prompt, promptIndex),
+    prompt,
+    promptIndex,
+  }));
+  const map = new Map<string, PresetPromptSidebarEntry>();
+  entries.forEach((entry) => {
+    if (!map.has(entry.identifier)) {
+      map.set(entry.identifier, entry);
     }
   });
   const used = new Set<string>();
   const ordered = orderIdentifiers
     .map((identifier) => map.get(identifier))
-    .filter(Boolean)
+    .filter((item): item is PresetPromptSidebarEntry => Boolean(item))
     .map((item) => {
-      used.add(getPromptIdentifier(item!.prompt, item!.index));
-      return item!;
+      used.add(item.identifier);
+      return item;
     });
-  const remaining = prompts
-    .map((prompt, index) => ({ prompt, index }))
-    .filter((item) => !used.has(getPromptIdentifier(item.prompt, item.index)));
+  const remaining = entries.filter((item) => !used.has(item.identifier));
   return { ordered, remaining };
+};
+
+export const getPresetPromptSidebarEntries = (preset: PresetPromptSidebarSource): PresetPromptSidebarEntry[] => {
+  const prompts = ((preset.data.prompts as Record<string, any>[]) || []).slice();
+  const orderIdentifiers = getPromptOrderIdentifiers(preset.data.prompt_order);
+  const { ordered, remaining } = splitPromptsByOrder(prompts, orderIdentifiers);
+  return [...ordered, ...remaining];
 };
 
 const buildPromptNodes = (preset: StoredPresetFile) => {
   const prompts = ((preset.data.prompts as Record<string, any>[]) || []).slice();
   const orderIdentifiers = getPromptOrderIdentifiers(preset.data.prompt_order);
   const { ordered, remaining } = splitPromptsByOrder(prompts, orderIdentifiers);
-  const orderedNodes = ordered.map(({ prompt, index }) => buildPromptNode(preset, prompt, index));
-  const remainingNodes = remaining.map(({ prompt, index }) => buildPromptNode(preset, prompt, index));
+  const orderedNodes = ordered.map((entry) => buildPromptNode(preset, entry));
+  const remainingNodes = remaining.map((entry) => buildPromptNode(preset, entry));
   if (remainingNodes.length === 0) return orderedNodes;
   return [
     ...orderedNodes,
@@ -120,8 +141,4 @@ export const buildPresetTreeData = (presets: StoredPresetFile[]) => {
         ...buildPromptNodes(preset),
       ],
     }));
-};
-
-export const resolvePromptIdentifier = (prompt: Record<string, any>, index: number) => {
-  return getPromptIdentifier(prompt, index);
 };

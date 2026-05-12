@@ -1,5 +1,6 @@
 import type { StoredPresetFile } from '@/database/db';
 import { computed, ref, type ComputedRef, type Ref } from 'vue';
+import { getPresetPromptSidebarEntries } from '@/composables/preset/utils/presetTree';
 
 type MobilePanelTab = 'list' | 'clipboard' | 'preview';
 
@@ -52,13 +53,16 @@ export function usePresetPageNavigation(options: UsePresetPageNavigationOptions)
     () => activePresetOrderIndex.value >= 0 && activePresetOrderIndex.value < orderedPresets.value.length - 1
   );
 
-  const promptCount = computed(() => {
-    const prompts = activePreset.value?.data?.prompts;
-    return Array.isArray(prompts) ? prompts.length : 0;
-  });
-  const hasPreviousPrompt = computed(() => selectedPromptIndex.value !== null && selectedPromptIndex.value > 0);
+  const sidebarPromptIndexes = computed(() =>
+    activePreset.value ? getPresetPromptSidebarEntries(activePreset.value).map((entry) => entry.promptIndex) : []
+  );
+  const selectedPromptSidebarIndex = computed(() =>
+    selectedPromptIndex.value === null ? -1 : sidebarPromptIndexes.value.indexOf(selectedPromptIndex.value)
+  );
+  const hasPreviousPrompt = computed(() => selectedPromptSidebarIndex.value > 0);
   const hasNextPrompt = computed(
-    () => selectedPromptIndex.value !== null && selectedPromptIndex.value < promptCount.value - 1
+    () =>
+      selectedPromptSidebarIndex.value >= 0 && selectedPromptSidebarIndex.value < sidebarPromptIndexes.value.length - 1
   );
 
   const withPresetById = (presetId: string, handler: (preset: StoredPresetFile) => void | Promise<void>) => {
@@ -103,8 +107,8 @@ export function usePresetPageNavigation(options: UsePresetPageNavigationOptions)
 
   const navigatePrompt = (step: -1 | 1) => {
     if (!activePresetId.value || selectedPromptIndex.value === null) return;
-    const nextIndex = selectedPromptIndex.value + step;
-    if (nextIndex < 0 || nextIndex >= promptCount.value) return;
+    const nextIndex = sidebarPromptIndexes.value[selectedPromptSidebarIndex.value + step];
+    if (nextIndex === undefined) return;
     selectPrompt(activePresetId.value, nextIndex);
   };
 
@@ -114,20 +118,16 @@ export function usePresetPageNavigation(options: UsePresetPageNavigationOptions)
     selectHeader(target.id);
   };
 
-  const goToPreviousPrompt = () => navigatePrompt(-1);
-  const goToNextPrompt = () => navigatePrompt(1);
-  const goToPreviousPreset = () => hasPreviousPreset.value && navigatePreset(-1);
-  const goToNextPreset = () => hasNextPreset.value && navigatePreset(1);
-
   const navigateByEditorTab = (direction: 'previous' | 'next') => {
     if (activeEditorTab.value === 'header') {
-      direction === 'previous' ? goToPreviousPreset() : goToNextPreset();
+      const canNavigate = direction === 'previous' ? hasPreviousPreset.value : hasNextPreset.value;
+      if (canNavigate) navigatePreset(direction === 'previous' ? -1 : 1);
       return;
     }
     if (activeEditorTab.value === 'regex') {
       return;
     }
-    direction === 'previous' ? goToPreviousPrompt() : goToNextPrompt();
+    navigatePrompt(direction === 'previous' ? -1 : 1);
   };
 
   const goToPrevious = () => navigateByEditorTab('previous');

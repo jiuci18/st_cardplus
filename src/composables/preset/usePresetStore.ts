@@ -146,10 +146,7 @@ export function usePresetStore() {
     activatePreset(presetId, { type: 'header' });
   };
 
-  const selectHeader = (presetId: string) => {
-    selectPreset(presetId);
-    selected.value = { type: 'header' };
-  };
+  const selectHeader = selectPreset;
 
   const selectPrompt = (presetId: string, promptIndex: number) => {
     activatePreset(presetId, { type: 'prompt', promptIndex });

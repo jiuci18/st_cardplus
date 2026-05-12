@@ -348,15 +348,12 @@ const toggleItemVisibility = (itemId: string, visible: boolean) => {
   }
 
   updateMenuItemVisibility(itemId, visible);
-
   sidebarConfig.value = getSidebarConfig();
 
-  // 如果是导航栏，需要重新排序
   if (visible) {
     const updatedItem = sidebarConfig.value.items.find((i) => i.id === itemId);
     if (updatedItem) {
       const sortedVisibleItems = visibleItems.value.filter((i) => i.id !== itemId).sort((a, b) => a.order - b.order);
-
       const firstFixedIndex = sortedVisibleItems.findIndex((i) => i.fixed);
 
       if (firstFixedIndex !== -1) {
@@ -379,16 +376,11 @@ const toggleItemVisibility = (itemId: string, visible: boolean) => {
       sidebarConfig.value = getSidebarConfig();
     }
   }
-
-  ElMessage.success(visible ? '已添加到导航栏' : '已移至工具箱');
 };
 
 const toggleTabBarVisibility = (itemId: string, showInTabBar: boolean) => {
   updateMenuItemTabBar(itemId, showInTabBar);
-
   sidebarConfig.value = getSidebarConfig();
-
-  ElMessage.success(showInTabBar ? '已添加到移动端快捷入口' : '已从快捷入口移除');
 };
 
 // 检查是否允许移动

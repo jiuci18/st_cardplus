@@ -10,18 +10,14 @@
         @open-first-prompt="handleOpenFirstPrompt" @select-regex="selectRegex" @add-regex="handleAddRegexFromEditor"
         @delete-regex="handleDeleteRegexFromEditor" @go-previous="goToPrevious" @go-next="goToNext" />
 
-      <MobileBookmarkDrawer
-        v-model:visible="mobileDrawerVisible"
-        v-model:active-tab="mobilePanelTab"
-        :items="mobileBookmarkItems"
-      >
+      <MobileBookmarkDrawer v-model:visible="mobileDrawerVisible" v-model:active-tab="mobilePanelTab"
+        :items="mobileBookmarkItems">
         <template #pane-list>
-          <PresetList :presets="presets" :active-preset-id="activePresetId"
-            :selected-prompt-index="selectedPromptIndex" :selected-regex-index="selectedRegexIndex"
-            :selected-is-header="selectedIsHeader" :multi-selected-node-keys="multiSelectedNodeKeys"
-            :drag-drop-handlers="dragDropHandlers" @create-preset="createPreset" @rename-preset="handleRenamePreset"
-            @delete-preset="handleDeletePreset" @select-preset="handleSelectPreset"
-            @select-header="handleSelectHeader" @select-prompt="handleSelectPrompt"
+          <PresetList :presets="presets" :active-preset-id="activePresetId" :selected-prompt-index="selectedPromptIndex"
+            :selected-regex-index="selectedRegexIndex" :selected-is-header="selectedIsHeader"
+            :multi-selected-node-keys="multiSelectedNodeKeys" :drag-drop-handlers="dragDropHandlers"
+            @create-preset="createPreset" @rename-preset="handleRenamePreset" @delete-preset="handleDeletePreset"
+            @select-preset="handleSelectPreset" @select-header="handleSelectHeader" @select-prompt="handleSelectPrompt"
             @select-regex="handleSelectRegex" @toggle-prompt-enabled="togglePromptEnabled"
             @toggle-node-selection="handleToggleNodeSelection" @add-prompt="addPrompt" @add-regex="addRegexScript"
             @duplicate-prompt="duplicatePrompt" @delete-prompt="removePrompt" @delete-regex="removeRegexScript"
@@ -97,6 +93,7 @@ import {
   getPromptOrderIdentifiers,
   upsertPromptOrderEntry,
 } from '@/composables/preset/utils/presetPromptOrder';
+import { getPresetPromptSidebarEntries } from '@/composables/preset/utils/presetTree';
 import { useDevice } from '@/composables/useDevice';
 import { ElMessage } from 'element-plus';
 import { saveFile } from '@/utils/fileSave';
@@ -170,7 +167,6 @@ const { multiSelectedNodeKeys, handleToggleNodeSelection, dragDropHandlers } = u
   updatePromptOrder,
 });
 
-
 const {
   mobileDrawerVisible,
   mobilePanelTab,
@@ -200,7 +196,6 @@ const {
   renamePreset,
   removePreset,
 });
-
 
 const handleExportPreset = async () => {
   if (!activePreset.value) {
@@ -276,10 +271,10 @@ const handleDeleteRegexFromEditor = (regexIndex: number) => {
 };
 
 const handleOpenFirstPrompt = () => {
-  if (!activePresetId.value) return;
-  const prompts = (activePreset.value?.data?.prompts as Record<string, any>[]) || [];
-  if (prompts.length === 0) return;
-  selectPrompt(activePresetId.value, 0);
+  if (!activePresetId.value || !activePreset.value) return;
+  const firstPrompt = getPresetPromptSidebarEntries(activePreset.value)[0];
+  if (!firstPrompt) return;
+  selectPrompt(activePresetId.value, firstPrompt.promptIndex);
 };
 
 watch(

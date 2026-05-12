@@ -200,7 +200,10 @@
           :offset="8"
           :hide-after="0"
         >
-          <BrowserFilePicker accept=".json" @select-first="handleImportPreset">
+          <BrowserFilePicker
+            accept=".json"
+            @select-first="$emit('import-preset', $event)"
+          >
             <button class="btn-adv btn-warning-adv preset-bottom-button-text">
               <Icon
                 icon="ph:file-text-duotone"
@@ -342,10 +345,6 @@ const isMultiSelected = (data: any) => {
   const nodeKey = data?.nodeKey;
   if (!nodeKey) return false;
   return props.multiSelectedNodeKeys.includes(nodeKey);
-};
-
-const handleImportPreset = (file: File) => {
-  emit('import-preset', file);
 };
 
 const isProtectedPrompt = (prompt: Record<string, any> | undefined) => {
