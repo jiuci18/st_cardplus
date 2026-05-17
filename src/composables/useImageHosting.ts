@@ -10,36 +10,49 @@ const ensureImgBBApiKey = async (): Promise<string | null> => {
   return null;
 };
 
+export async function uploadImageFileToHosting(
+  file: File,
+  provider: HostingProvider | null | undefined
+): Promise<string | null> {
+  if (!isTauriApp()) {
+    ElMessage.warning('该功能仅在桌面 APP 版本可用');
+    return null;
+  }
+
+  if (!provider) {
+    ElMessage.warning('请先选择图片上传驱动');
+    return null;
+  }
+
+  let imgbbApiKey: string | undefined;
+  if (provider === 'imgbb') {
+    const key = await ensureImgBBApiKey();
+    if (!key) {
+      return null;
+    }
+    imgbbApiKey = key;
+  }
+
+  return uploadImageToHostingViaTauri(file, provider, imgbbApiKey);
+}
+
 export function useImageHosting(
   currentImageFile: Ref<File | null>,
   setCurrentSessionAvatarUrl: (url: string) => void
 ) {
-  const isDesktopApp = isTauriApp();
-
-  const handleUploadToHosting = async (provider: HostingProvider) => {
-    if (!isDesktopApp) {
-      ElMessage.warning('该功能仅在桌面 APP 版本可用');
-      return;
-    }
-
+  const handleUploadToHosting = async (provider: HostingProvider | null | undefined) => {
     if (!currentImageFile.value) {
       ElMessage.warning('请先选择一张本地头像图片');
       return;
     }
 
     try {
-      let imgbbApiKey: string | undefined;
-      if (provider === 'imgbb') {
-        const key = await ensureImgBBApiKey();
-        if (!key) {
-          return;
-        }
-        imgbbApiKey = key;
-      }
+      const uploadedUrl = await uploadImageFileToHosting(currentImageFile.value, provider);
+      if (!uploadedUrl) return;
 
-      const uploadedUrl = await uploadImageToHostingViaTauri(currentImageFile.value, provider, imgbbApiKey);
       setCurrentSessionAvatarUrl(uploadedUrl);
-      ElMessage.success(`上传到 ${provider === 'catbox' ? 'Catbox' : 'ImgBB'} 成功，已写入角色 image URL`);
+      const providerLabel = provider === 'catbox' ? 'Catbox' : 'ImgBB';
+      ElMessage.success(`上传到 ${providerLabel} 成功，已写入角色 image URL`);
     } catch (error) {
       const errorInfo =
         error instanceof Error

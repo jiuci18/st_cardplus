@@ -7,6 +7,8 @@ import type { CharacterCardCollection, CharacterCardItem } from '@/types/charact
 import { characterCardService, type StoredCharacterCard } from '@/database/characterCardService';
 import { nowIso } from '@/utils/datetime';
 import { saveFile } from '@/utils/fileSave';
+import { isTauriApp, type HostingProvider } from '@/utils/imageHosting';
+import { uploadImageFileToHosting } from '@/composables/useImageHosting';
 
 export function useCharacterCardCollection() {
   const characterCardCollection = ref<CharacterCardCollection>({
@@ -285,6 +287,73 @@ export function useCharacterCardCollection() {
       const cardData = await parseCardFromFile(file);
 
       if (cardData) {
+        const isPngFile = file.type === 'image/png' || file.name.endsWith('.png');
+        if (isTauriApp() && isPngFile) {
+          try {
+            const result = await ElMessageBox.confirm(
+              '检测到 PNG 图片，是否清洗并上传到图床？上传成功后会自动写入角色卡的 image URL。',
+              '图片上传',
+              {
+                confirmButtonText: '上传',
+                cancelButtonText: '跳过',
+                type: 'info',
+                distinguishCancelAndClose: true,
+              }
+            );
+
+            if (result === 'confirm') {
+              const providerResult = await ElMessageBox.prompt(
+                '请选择图床：输入 catbox 或 imgbb',
+                '选择图床',
+                {
+                  confirmButtonText: '确定',
+                  cancelButtonText: '取消',
+                  inputPlaceholder: 'catbox 或 imgbb',
+                  inputValidator: (value) => {
+                    const trimmed = value?.trim().toLowerCase();
+                    if (trimmed === 'catbox' || trimmed === 'imgbb') {
+                      return true;
+                    }
+                    return '请输入 catbox 或 imgbb';
+                  },
+                }
+              );
+
+              const provider = (providerResult.value as string).trim().toLowerCase() as HostingProvider;
+              const providerName = provider === 'catbox' ? 'Catbox' : 'ImgBB';
+
+              // 显示上传进度提示
+              const loadingMessage = ElMessage.info({
+                message: `正在清洗图片并上传到 ${providerName}，请稍候...`,
+                duration: 0,
+                showClose: false,
+              });
+
+              try {
+                // 上传图片
+                const uploadedUrl = await uploadImageFileToHosting(file, provider);
+                loadingMessage.close();
+
+                if (uploadedUrl) {
+                  cardData.avatar = uploadedUrl;
+                  if (cardData.data) {
+                    cardData.data.avatar = uploadedUrl;
+                    cardData.data.image = uploadedUrl;
+                  }
+                }
+              } catch (uploadError) {
+                loadingMessage.close();
+                throw uploadError;
+              }
+            }
+          } catch (error) {
+            if (error !== 'cancel' && error !== 'close') {
+              console.error('图片上传失败:', error);
+              ElMessage.warning('图片上传失败，将继续导入角色卡');
+            }
+          }
+        }
+
         const cardId = await handleImportCard(cardData);
         if (cardId) {
           ElMessage.success(`角色卡 "${cardData.name || (cardData.data as any)?.name || '未命名'}" 已成功导入！`);

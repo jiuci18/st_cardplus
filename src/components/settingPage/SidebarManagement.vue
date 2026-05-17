@@ -3,149 +3,72 @@
     <div class="nav-card">
       <div class="nav-card-header">
         <div class="nav-card-title">
-          <Icon
-            icon="fluent:navigation-24-regular"
-            width="20"
-            height="20"
-            class="title-icon"
-          />
+          <Icon icon="fluent:navigation-24-regular" width="20" height="20" class="title-icon" />
           <span>导航栏管理</span>
         </div>
-        <el-button
-          @click="resetToDefault"
-          size="small"
-          type="info"
-          plain
-        >
-          <Icon
-            icon="material-symbols:refresh"
-            width="16"
-            height="16"
-          />
+        <el-button @click="resetToDefault" size="small" type="info" plain>
+          <Icon icon="material-symbols:refresh" width="16" height="16" />
           重置默认
         </el-button>
       </div>
       <!-- 标签栏 -->
       <div class="tab-container">
-        <button
-          @click="activeTab = 'desktop'"
-          class="tab-button"
-          :class="{ active: activeTab === 'desktop' }"
-        >
-          <Icon
-            icon="heroicons:computer-desktop"
-            width="20"
-            height="20"
-          />
+        <button @click="activeTab = 'desktop'" class="tab-button" :class="{ active: activeTab === 'desktop' }">
+          <Icon icon="heroicons:computer-desktop" width="20" height="20" />
           <span class="tab-text">PC 视图</span>
         </button>
-        <button
-          @click="activeTab = 'tabbar'"
-          class="tab-button"
-          :class="{ active: activeTab === 'tabbar' }"
-        >
-          <Icon
-            icon="heroicons:device-phone-mobile"
-            width="20"
-            height="20"
-          />
+        <button @click="activeTab = 'tabbar'" class="tab-button" :class="{ active: activeTab === 'tabbar' }">
+          <Icon icon="heroicons:device-phone-mobile" width="20" height="20" />
           <span class="tab-text">移动视图</span>
         </button>
       </div>
 
       <!-- 内容区域 -->
       <div class="nav-card-content">
-        <div
-          v-show="activeTab === 'desktop'"
-          class="pc-view-grid"
-        >
+        <div v-show="activeTab === 'desktop'" class="pc-view-grid">
           <section class="view-panel">
             <div class="view-panel-header">
               <h3 class="view-panel-title">导航栏</h3>
             </div>
 
             <div class="menu-list">
-              <draggable
-                v-model="localVisibleItems"
-                item-key="id"
-                handle=".drag-handle"
-                :animation="150"
-                :move="checkMove"
-                ghost-class="sortable-ghost"
-                chosen-class="sortable-chosen"
-                drag-class="sortable-drag"
-                :force-fallback="isMobileOrTablet"
-                :fallback-class="'sortable-fallback'"
-                :fallback-on-body="isMobileOrTablet"
-                :touch-start-threshold="3"
-                @end="handleDragEnd"
-              >
+              <draggable v-model="localVisibleItems" item-key="id" handle=".drag-handle" :animation="150"
+                :move="checkMove" ghost-class="sortable-ghost" chosen-class="sortable-chosen" drag-class="sortable-drag"
+                :force-fallback="isMobileOrTablet" :fallback-class="'sortable-fallback'"
+                :fallback-on-body="isMobileOrTablet" :touch-start-threshold="3" @end="handleDragEnd">
                 <template #item="{ element: item }">
-                  <div
-                    class="menu-item"
-                    :class="{ 'is-fixed': item.fixed }"
-                  >
+                  <div class="menu-item" :class="{ 'is-fixed': item.fixed }">
                     <div class="item-content">
-                      <Icon
-                        :icon="getIconName(item.icon)"
-                        width="20"
-                        height="20"
-                        class="item-icon"
-                      />
+                      <Icon :icon="getIconName(item.icon)" width="20" height="20" class="item-icon" />
                       <div class="item-info">
                         <div class="item-main-line">
                           <span class="item-title">{{ item.title }}</span>
                           <div class="item-tags">
-                            <span
-                              v-if="item.type === 'tool'"
-                              class="item-type"
-                            >
+                            <span v-if="item.type === 'tool'" class="item-type">
                               工具
                             </span>
-                            <span
-                              v-if="item.beta"
-                              class="item-type beta"
-                            >
+                            <span v-if="item.beta" class="item-type beta">
                               测试版
                             </span>
                           </div>
                         </div>
-                        <span
-                          v-if="item.description"
-                          class="item-description"
-                        >
+                        <span v-if="item.description" class="item-description">
                           {{ item.description }}
                         </span>
                       </div>
                     </div>
                     <div class="item-actions">
-                      <el-switch
-                        :model-value="true"
-                        :disabled="item.fixed"
-                        @change="toggleItemVisibility(item.id, false)"
-                        size="small"
-                      />
-                      <Icon
-                        icon="material-symbols:drag-indicator"
-                        width="20"
-                        height="20"
-                        class="drag-handle"
-                        :class="{ disabled: item.fixed }"
-                      />
+                      <el-switch :model-value="true" :disabled="item.fixed"
+                        @change="toggleItemVisibility(item.id, false)" size="small" />
+                      <Icon icon="material-symbols:drag-indicator" width="20" height="20" class="drag-handle"
+                        :class="{ disabled: item.fixed }" />
                     </div>
                   </div>
                 </template>
               </draggable>
 
-              <div
-                v-if="visibleItems.length === 0"
-                class="empty-state"
-              >
-                <Icon
-                  icon="heroicons:inbox"
-                  width="32"
-                  height="32"
-                />
+              <div v-if="visibleItems.length === 0" class="empty-state">
+                <Icon icon="heroicons:inbox" width="32" height="32" />
                 <p>暂无导航栏项目</p>
               </div>
             </div>
@@ -157,68 +80,35 @@
             </div>
 
             <div class="menu-list">
-              <TransitionGroup
-                name="list"
-                tag="div"
-                class="menu-list-inner"
-              >
-                <div
-                  v-for="item in hiddenItems"
-                  :key="item.id"
-                  class="menu-item hidden-item"
-                >
+              <TransitionGroup name="list" tag="div" class="menu-list-inner">
+                <div v-for="item in hiddenItems" :key="item.id" class="menu-item hidden-item">
                   <div class="item-content">
-                    <Icon
-                      :icon="getIconName(item.icon)"
-                      width="20"
-                      height="20"
-                      class="item-icon"
-                    />
+                    <Icon :icon="getIconName(item.icon)" width="20" height="20" class="item-icon" />
                     <div class="item-info">
                       <div class="item-main-line">
                         <span class="item-title">{{ item.title }}</span>
                         <div class="item-tags">
-                          <span
-                            v-if="item.type === 'tool'"
-                            class="item-type"
-                          >
+                          <span v-if="item.type === 'tool'" class="item-type">
                             工具
                           </span>
-                          <span
-                            v-if="item.beta"
-                            class="item-type beta"
-                          >
+                          <span v-if="item.beta" class="item-type beta">
                             测试版
                           </span>
                         </div>
                       </div>
-                      <span
-                        v-if="item.description"
-                        class="item-description"
-                      >
+                      <span v-if="item.description" class="item-description">
                         {{ item.description }}
                       </span>
                     </div>
                   </div>
                   <div class="item-actions">
-                    <el-switch
-                      :model-value="false"
-                      @change="toggleItemVisibility(item.id, true)"
-                      size="small"
-                    />
+                    <el-switch :model-value="false" @change="toggleItemVisibility(item.id, true)" size="small" />
                   </div>
                 </div>
               </TransitionGroup>
 
-              <div
-                v-if="hiddenItems.length === 0"
-                class="empty-state empty-state-success"
-              >
-                <Icon
-                  icon="heroicons:check-circle"
-                  width="32"
-                  height="32"
-                />
+              <div v-if="hiddenItems.length === 0" class="empty-state empty-state-success">
+                <Icon icon="heroicons:check-circle" width="32" height="32" />
                 <p>所有项目都已在导航栏中</p>
               </div>
             </div>
@@ -226,44 +116,21 @@
         </div>
 
         <!-- 移动视图配置 -->
-        <div
-          v-show="activeTab === 'tabbar'"
-          class="menu-list"
-        >
+        <div v-show="activeTab === 'tabbar'" class="menu-list">
           <div class="tabbar-tips">
-            <Icon
-              icon="heroicons:information-circle"
-              width="20"
-              height="20"
-            />
+            <Icon icon="heroicons:information-circle" width="20" height="20" />
             <span>选择要在移动端底部快捷入口显示的项目（建议 3-4 个，避免过多导致拥挤）</span>
           </div>
 
-          <TransitionGroup
-            name="list"
-            tag="div"
-            class="menu-list-inner"
-          >
-            <div
-              v-for="item in visibleItems"
-              :key="item.id"
-              class="menu-item tabbar-item"
-            >
+          <TransitionGroup name="list" tag="div" class="menu-list-inner">
+            <div v-for="item in visibleItems" :key="item.id" class="menu-item tabbar-item">
               <div class="item-content">
-                <Icon
-                  :icon="getIconName(item.icon)"
-                  width="20"
-                  height="20"
-                  class="item-icon"
-                />
+                <Icon :icon="getIconName(item.icon)" width="20" height="20" class="item-icon" />
                 <div class="item-info">
                   <div class="item-main-line">
                     <span class="item-title">{{ item.title }}</span>
                     <div class="item-tags">
-                      <span
-                        v-if="item.showInTabBar"
-                        class="item-type tabbar-active"
-                      >
+                      <span v-if="item.showInTabBar" class="item-type tabbar-active">
                         已添加
                       </span>
                     </div>
@@ -271,24 +138,14 @@
                 </div>
               </div>
               <div class="item-actions">
-                <el-switch
-                  :model-value="item.showInTabBar === true"
-                  @change="toggleTabBarVisibility(item.id, $event as boolean)"
-                  size="small"
-                />
+                <el-switch :model-value="item.showInTabBar === true"
+                  @change="toggleTabBarVisibility(item.id, $event as boolean)" size="small" />
               </div>
             </div>
           </TransitionGroup>
 
-          <div
-            v-if="visibleItems.length === 0"
-            class="empty-state"
-          >
-            <Icon
-              icon="heroicons:inbox"
-              width="32"
-              height="32"
-            />
+          <div v-if="visibleItems.length === 0" class="empty-state">
+            <Icon icon="heroicons:inbox" width="32" height="32" />
             <p>没有可添加到快捷入口的项目</p>
           </div>
         </div>
@@ -891,7 +748,7 @@ onUnmounted(() => {
   right: 0;
 }
 
-.sidebar-management .sortable-ghost > * {
+.sidebar-management .sortable-ghost>* {
   display: none !important;
 }
 

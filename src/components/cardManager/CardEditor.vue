@@ -102,6 +102,7 @@ import GreetingsPanel from '@/components/cardManager/main/GreetingsPanel.vue';
 import ImagePanel from '@/components/cardManager/main/ImagePanel.vue';
 import InfoDisplayPanel from '@/components/cardManager/main/InfoDisplayPanel.vue';
 import type { CharacterCardV3 } from '@/types/character/character-card-v3';
+import type { HostingProvider } from '@/utils/imageHosting';
 import { Icon } from '@iconify/vue';
 import { ElCollapseTransition } from 'element-plus';
 
@@ -110,7 +111,7 @@ const props = defineProps<{
   imagePreviewUrl?: string;
   avatarUrl?: string;
   isDesktopApp?: boolean;
-  selectedProvider?: 'catbox' | 'imgbb';
+  selectedProvider?: HostingProvider | null;
   advancedOptionsVisible: boolean;
   allTags?: string[];
 }>();
@@ -118,8 +119,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'imageChange', file: File): void;
   (e: 'imageUrlChange', url: string): void;
-  (e: 'providerChange', provider: 'catbox' | 'imgbb'): void;
-  (e: 'uploadToHosting', provider: 'catbox' | 'imgbb'): void;
+  (e: 'providerChange', provider: HostingProvider | null): void;
+  (e: 'uploadToHosting', provider: HostingProvider | null): void;
   (e: 'update-field', payload: {
     field: keyof CharacterCardV3['data'];
     value: CharacterCardV3['data'][keyof CharacterCardV3['data']];

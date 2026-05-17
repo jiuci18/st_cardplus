@@ -24,7 +24,7 @@ const bytesToBase64 = (bytes: Uint8Array): string => {
   return btoa(binary);
 };
 
-const sanitizeImageBytesForUpload = async (file: File): Promise<Uint8Array> => {
+export const sanitizeImageBytesForUpload = async (file: File): Promise<Uint8Array> => {
   const bytes = new Uint8Array(await file.arrayBuffer());
   const isPngFile = file.type === 'image/png' || file.name.toLowerCase().endsWith('.png') || hasPngSignature(bytes);
 

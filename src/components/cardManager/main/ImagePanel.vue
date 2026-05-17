@@ -32,7 +32,8 @@
         </p>
         <el-divider border-style="dashed" />
         <p class="upload-dialog-tip">选择托管提供商后上传，成功后会自动写入角色 image URL。</p>
-        <el-select v-model="providerModel" class="provider-select" :disabled="!isDesktopApp">
+        <el-select v-model="providerModel" class="provider-select" :disabled="!isDesktopApp" clearable
+          placeholder="请选择上传驱动">
           <el-option label="Catbox" value="catbox" />
           <el-option label="ImgBB" value="imgbb" />
         </el-select>
@@ -42,7 +43,8 @@
       </div>
       <template #footer>
         <div class="dialog-footer">
-          <el-button type="primary" :disabled="!isDesktopApp || !selectedImageName" @click="handleUploadInDialog">
+          <el-button type="primary" :disabled="!isDesktopApp || !selectedImageName || !providerModel"
+            @click="handleUploadInDialog">
             上传
           </el-button>
           <el-button @click="uploadDialogVisible = false">取消</el-button>
@@ -66,22 +68,22 @@ const props = defineProps<{
   previewUrl?: string;
   avatarUrl?: string;
   isDesktopApp?: boolean;
-  selectedProvider?: HostingProvider;
+  selectedProvider?: HostingProvider | null;
 }>();
 
 const emit = defineEmits<{
   (e: 'image-change', file: File): void;
   (e: 'image-url-change', url: string): void;
-  (e: 'provider-change', provider: HostingProvider): void;
-  (e: 'upload-to-hosting', provider: HostingProvider): void;
+  (e: 'provider-change', provider: HostingProvider | null): void;
+  (e: 'upload-to-hosting', provider: HostingProvider | null): void;
 }>();
 
 const uploadRef = ref<UploadInstance>();
 const uploadDialogVisible = ref(false);
 const selectedImageName = ref('');
-const providerModel = computed<HostingProvider>({
-  get: () => props.selectedProvider || 'catbox',
-  set: (value) => emit('provider-change', value),
+const providerModel = computed<HostingProvider | null>({
+  get: () => props.selectedProvider ?? null,
+  set: (value) => emit('provider-change', value || null),
 });
 
 const handleImageChange = (uploadFile: UploadFile, uploadFiles: UploadFiles) => {
@@ -107,6 +109,10 @@ const openUploadDialog = () => {
 const handleUploadInDialog = () => {
   if (!selectedImageName.value) {
     ElMessage.warning('请先选择图片');
+    return;
+  }
+  if (!providerModel.value) {
+    ElMessage.warning('请先选择图片上传驱动');
     return;
   }
   emit('upload-to-hosting', providerModel.value);

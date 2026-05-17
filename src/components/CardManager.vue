@@ -32,6 +32,18 @@
                   @save-as-new="handleSaveAsNewCard" @update-card="handleUpdateActiveCard"
                   @export-current="handleExportCurrentCard" />
                 <el-divider direction="vertical" />
+                <el-select
+                  v-if="isDesktopApp"
+                  v-model="selectedProvider"
+                  size="small"
+                  class="header-provider-select"
+                  clearable
+                  placeholder="上传驱动"
+                  :disabled="isUploading"
+                >
+                  <el-option label="Catbox" value="catbox" />
+                  <el-option label="ImgBB" value="imgbb" />
+                </el-select>
                 <BrowserFilePicker accept="image/png" :disabled="isUploading" @select-first="handleFileSelected">
                   <el-button type="primary" size="small" :loading="isUploading" :disabled="isUploading">
                     <Icon icon="ph:file-image-duotone" v-if="!isUploading" />
@@ -143,7 +155,7 @@
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
-import { ElButton, ElDivider, ElMessage, ElTabPane, ElTabs } from 'element-plus';
+import { ElButton, ElDivider, ElMessage, ElOption, ElSelect, ElTabPane, ElTabs } from 'element-plus';
 import { computed, onUnmounted, ref, watch } from 'vue';
 
 import CardEditor from '@/components/cardManager/CardEditor.vue';
@@ -329,7 +341,7 @@ const handleImageUrlUpdate = (url: string) => {
 };
 
 const isDesktopApp = isTauriApp();
-const selectedProvider = ref<HostingProvider>('catbox');
+const selectedProvider = ref<HostingProvider | null>(null);
 
 const avatarUrl = computed(() => {
   if (currentDraft.value.avatar && currentDraft.value.avatar !== 'none') {
@@ -360,7 +372,11 @@ const imagePreviewUrl = computed(() => localPreviewUrl.value || avatarUrl.value 
 const { isUploading, uploadProgress, handleFileSelected } = useCardImport((card) => {
   replaceCurrentSessionDraft(card, { markAsPersisted: false });
   rightEditorTab.value = 'card';
-}, handleImageUpdate);
+}, handleImageUpdate, {
+  isDesktopApp,
+  selectedProvider,
+  setImageUrl: setCurrentSessionAvatarUrl,
+});
 const { handleSave } = useCardExport(currentDraft, currentImageFile, imagePreviewUrl);
 
 const handleRegexChanged = async () => {
@@ -568,6 +584,10 @@ onUnmounted(() => {
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.header-provider-select {
+  width: 120px;
 }
 
 .bookmark-tabs {
