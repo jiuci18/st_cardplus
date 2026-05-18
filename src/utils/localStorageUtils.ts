@@ -21,6 +21,7 @@ interface AppSettings {
   imgbbApiKey: string;
   updateIgnoreUntil: string;
   autoExpandSidebar: boolean;
+  mobileDominantHand: 'left' | 'right';
   sidebarConfig: SidebarConfig;
 }
 
@@ -178,6 +179,7 @@ const defaultSettings: AppSettings = {
   imgbbApiKey: '',
   updateIgnoreUntil: '',
   autoExpandSidebar: true,
+  mobileDominantHand: 'right',
   sidebarConfig: createDefaultSidebarConfig(),
 };
 
@@ -199,6 +201,9 @@ const normalizeSettingValue = <K extends AppSettingsKey>(key: K, value: AppSetti
   }
   if (key === 'updateIgnoreUntil') {
     return String(value ?? '').trim() as AppSettings[K];
+  }
+  if (key === 'mobileDominantHand') {
+    return (value === 'left' ? 'left' : 'right') as AppSettings[K];
   }
   return value;
 };

@@ -1,69 +1,33 @@
 <template>
-  <div class="mobile-bookmark-drawer">
-    <div
-      class="mobile-bookmark-group"
-      :style="groupStyle"
-    >
-      <button
-        v-for="item in items"
-        :key="item.key"
-        type="button"
-        class="mobile-bookmark-btn"
-        :class="{ active: activeTab === item.key && visible }"
-        @click="openItem(item.key)"
-      >
-        <Icon
-          v-if="item.icon"
-          :icon="item.icon"
-          class="bookmark-icon"
-        />
+  <div class="mobile-bookmark-drawer" :class="[`is-${dominantHand}-handed`]">
+    <div class="mobile-bookmark-group" :style="groupStyle">
+      <button v-for="item in items" :key="item.key" type="button" class="mobile-bookmark-btn"
+        :class="{ active: activeTab === item.key && visible }" @click="openItem(item.key)">
+        <Icon v-if="item.icon" :icon="item.icon" class="bookmark-icon" />
         <span>{{ item.buttonLabel ?? item.label }}</span>
       </button>
     </div>
 
-    <el-drawer
-      v-model="visible"
-      direction="rtl"
-      :with-header="false"
-      :size="drawerSize"
-      :append-to-body="appendToBody"
-      class="mobile-bookmark-drawer-panel"
-    >
+    <el-drawer v-model="visible" :direction="dominantHand === 'left' ? 'ltr' : 'rtl'" :with-header="false"
+      :size="drawerSize" :append-to-body="appendToBody" class="mobile-bookmark-drawer-panel">
       <div class="mobile-bookmark-drawer-inner">
         <div class="mobile-bookmark-drawer-header">
           <div class="mobile-bookmark-drawer-title">{{ activeItemTitle }}</div>
-          <el-button
-            size="small"
-            text
-            @click="visible = false"
-          >
+          <el-button size="small" text @click="visible = false">
             关闭
           </el-button>
         </div>
 
-        <div
-          class="mobile-bookmark-drawer-tabs"
-          :style="{ '--mobile-bookmark-tab-count': String(items.length) }"
-        >
-          <button
-            v-for="item in items"
-            :key="item.key"
-            type="button"
-            class="mobile-bookmark-drawer-tab"
-            :class="{ active: activeTab === item.key }"
-            @click="activeTab = item.key"
-          >
+        <div class="mobile-bookmark-drawer-tabs" :style="{ '--mobile-bookmark-tab-count': String(items.length) }">
+          <button v-for="item in items" :key="item.key" type="button" class="mobile-bookmark-drawer-tab"
+            :class="{ active: activeTab === item.key }" @click="activeTab = item.key">
             {{ item.drawerLabel ?? item.label }}
           </button>
         </div>
 
         <div class="mobile-bookmark-drawer-body">
-          <div
-            v-for="item in items"
-            :key="item.key"
-            v-show="activeTab === item.key"
-            class="mobile-bookmark-drawer-pane"
-          >
+          <div v-for="item in items" :key="item.key" v-show="activeTab === item.key"
+            class="mobile-bookmark-drawer-pane">
             <slot :name="`pane-${item.key}`" />
           </div>
         </div>
@@ -74,7 +38,8 @@
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
-import { computed, type CSSProperties } from 'vue';
+import { computed, type CSSProperties, ref, watch } from 'vue';
+import { getSetting } from '@/utils/localStorageUtils';
 
 export interface MobileBookmarkDrawerItem {
   key: string;
@@ -99,6 +64,14 @@ const props = withDefaults(defineProps<{
 const visible = defineModel<boolean>('visible', { default: false });
 const activeTab = defineModel<string>('activeTab', { required: true });
 
+const dominantHand = ref(getSetting('mobileDominantHand'));
+
+watch(visible, (val) => {
+  if (val) {
+    dominantHand.value = getSetting('mobileDominantHand');
+  }
+});
+
 const activeItem = computed(() => props.items.find((item) => item.key === activeTab.value) ?? props.items[0]);
 const activeItemTitle = computed(() => activeItem.value?.title ?? activeItem.value?.drawerLabel ?? activeItem.value?.label ?? '');
 
@@ -111,7 +84,6 @@ function openItem(key: string) {
 <style scoped>
 .mobile-bookmark-group {
   position: fixed;
-  right: 0;
   top: 50%;
   z-index: 30;
   display: flex;
@@ -120,10 +92,27 @@ function openItem(key: string) {
   transform: translateY(-50%);
 }
 
+.is-right-handed .mobile-bookmark-group {
+  right: 0;
+  left: auto;
+}
+
+.is-left-handed .mobile-bookmark-group {
+  left: 0;
+  right: auto;
+}
+
+.is-right-handed .mobile-bookmark-btn {
+  border-radius: 12px 0 0 12px;
+}
+
+.is-left-handed .mobile-bookmark-btn {
+  border-radius: 0 12px 12px 0;
+}
+
 .mobile-bookmark-btn {
   width: 42px;
   border: none;
-  border-radius: 12px 0 0 12px;
   background: linear-gradient(160deg, var(--el-color-primary-light-7), var(--el-color-primary-light-5));
   color: var(--el-color-primary-dark-2);
   box-shadow: 0 8px 20px color-mix(in srgb, var(--el-color-primary) 20%, transparent);
