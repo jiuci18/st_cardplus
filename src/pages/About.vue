@@ -63,16 +63,16 @@
           </span>
         </ExternalLink>
         <ExternalLink
-          href="https://discord.gg/KH6rHAGBXD"
+          href="https://t.me/jiuci_channel"
           class="link-item"
         >
           <Icon
-            icon="qlementine-icons:discord-fill-16"
+            icon="mdi:telegram"
             width="16"
             height="16"
           />
           <span>
-            Discord
+            Telegram
             <small>获取帮助与反馈</small>
           </span>
         </ExternalLink>
