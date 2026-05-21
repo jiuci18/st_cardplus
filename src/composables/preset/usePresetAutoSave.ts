@@ -120,7 +120,7 @@ export function usePresetAutoSave(options: PresetAutoSaveOptions) {
 
     const messages = {
       auto: `已切换到自动保存模式：每 ${Math.max(1, Math.round(intervalMs.value / 1000))} 秒自动保存`,
-      watch: `已切换到监听模式：检测到修改后 ${Math.max(0.1, Math.round(debounceMs.value * 10) / 10)} 秒自动保存`,
+      watch: `已切换到监听模式：检测到修改后 ${Math.max(0.1, Math.round((debounceMs.value / 1000) * 10) / 10)} 秒自动保存`,
       manual: '已切换到手动模式：自动保存已禁用',
     } as const;
 

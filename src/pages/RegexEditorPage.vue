@@ -3,134 +3,64 @@
     <!-- 主内容区域 -->
     <div class="main-content">
       <!-- 移动端布局 -->
-      <div
-        v-if="isMobileOrTablet"
-        class="mobile-layout"
-      >
+      <div v-if="isMobileOrTablet" class="mobile-layout">
         <div class="mobile-nav">
-          <el-segmented
-            v-model="mobileActivePanel"
-            :options="[
-              { label: '脚本', value: 'scripts' },
-              { label: '编辑', value: 'editor' },
-              { label: '模拟', value: 'simulator' },
-            ]"
-            size="small"
-          />
+          <el-segmented v-model="mobileActivePanel" :options="[
+            { label: '脚本', value: 'scripts' },
+            { label: '编辑', value: 'editor' },
+            { label: '模拟', value: 'simulator' },
+          ]" size="small" />
         </div>
         <div class="mobile-panel-content">
-          <div
-            v-show="mobileActivePanel === 'scripts'"
-            class="mobile-panel mobile-scripts-panel"
-          >
+          <div v-show="mobileActivePanel === 'scripts'" class="mobile-panel mobile-scripts-panel">
             <div class="mobile-scripts-content">
-              <RegexScriptList
-                :collection="regexCollection"
-                :active-category-id="activeCategoryId"
-                :selected-script="selectedScript"
-                :drag-drop-handlers="dragDropHandlers"
-                @select-category="handleSelectCategory"
-                @select-script="handleSelectScript"
-                @create-category="handleCreateCategory"
-                @rename-category="handleRenameCategory"
-                @delete-category="handleDeleteCategory"
-                @add-script="handleAddScript"
-                @rename-script="handleRenameScript"
-                @delete-script="handleDeleteScript"
-                @export-script="handleExportSingleScript"
-              />
+              <RegexScriptList :collection="regexCollection" :active-category-id="activeCategoryId"
+                :selected-script="selectedScript" :drag-drop-handlers="dragDropHandlers"
+                @select-category="handleSelectCategory" @select-script="handleSelectScript"
+                @create-category="handleCreateCategory" @rename-category="handleRenameCategory"
+                @delete-category="handleDeleteCategory" @add-script="handleAddScript"
+                @rename-script="handleRenameScript" @delete-script="handleDeleteScript"
+                @export-script="handleExportSingleScript" />
             </div>
             <div class="sidebar-actions mobile-sidebar-actions">
               <el-button-group>
-                <el-button
-                  :icon="DocumentAdd"
-                  @click="handleImportScript"
-                  size="small"
-                >
+                <el-button :icon="DocumentAdd" @click="handleImportScript" size="small">
                   导入脚本
                 </el-button>
-                <el-button
-                  :icon="Download"
-                  @click="handleExportScript"
-                  size="small"
-                  :disabled="!selectedScriptId"
-                >
+                <el-button :icon="Download" @click="handleExportScript" size="small" :disabled="!selectedScriptId">
                   导出脚本
                 </el-button>
-                <el-button
-                  :icon="Plus"
-                  @click="handleCreateScript"
-                  size="small"
-                  type="primary"
-                >
+                <el-button :icon="Plus" @click="handleCreateScript" size="small" type="primary">
                   新建
                 </el-button>
               </el-button-group>
             </div>
           </div>
-          <div
-            v-show="mobileActivePanel === 'editor'"
-            class="mobile-panel"
-          >
-            <div
-              v-if="selectedScriptId"
-              class="mobile-editor-content"
-            >
-              <el-form
-                :model="formState"
-                label-position="top"
-              >
-                <RegexEditorCore
-                  v-model:script-name="formState.scriptName"
-                  v-model:find-regex="formState.findRegex"
-                  v-model:replace-string="formState.replaceString"
-                  v-model:trim-strings="trimStrings"
-                  v-model:substitute-regex="formState.substituteRegex"
-                />
-                <SmartRegexGenerator
-                  v-model:input-text="smartInputText"
-                  @regex-generated="handleSmartRegexGenerated"
-                />
+          <div v-show="mobileActivePanel === 'editor'" class="mobile-panel">
+            <div v-if="selectedScriptId" class="mobile-editor-content">
+              <el-form :model="formState" label-position="top">
+                <RegexEditorCore v-model:script-name="formState.scriptName" v-model:find-regex="formState.findRegex"
+                  v-model:replace-string="formState.replaceString" v-model:trim-strings="trimStrings"
+                  v-model:substitute-regex="formState.substituteRegex" />
+                <SmartRegexGenerator v-model:input-text="smartInputText" @regex-generated="handleSmartRegexGenerated" />
                 <RegexAdvancedSettings v-model="formState" />
               </el-form>
             </div>
-            <div
-              v-else
-              class="empty-state"
-            >
-              <Icon
-                icon="ph:note-pencil-duotone"
-                class="empty-icon"
-              />
+            <div v-else class="empty-state">
+              <Icon icon="ph:note-pencil-duotone" class="empty-icon" />
               <p>请先选择或创建一个脚本</p>
             </div>
           </div>
-          <div
-            v-show="mobileActivePanel === 'simulator'"
-            class="mobile-panel"
-          >
-            <div
-              v-if="selectedScriptId"
-              class="mobile-simulator-content"
-            >
+          <div v-show="mobileActivePanel === 'simulator'" class="mobile-panel">
+            <div v-if="selectedScriptId" class="mobile-simulator-content">
               <el-form label-position="top">
-                <RegexSimulatorPanel
-                  v-model:test-string="testString"
-                  v-model:render-html="renderHtml"
-                  v-model:user-macro-value="userMacroValue"
-                  v-model:char-macro-value="charMacroValue"
-                  :simulated-result="simulatedResult"
-                />
+                <RegexSimulatorPanel v-model:test-string="testString" v-model:render-html="renderHtml"
+                  v-model:user-macro-value="userMacroValue" v-model:char-macro-value="charMacroValue"
+                  :simulated-result="simulatedResult" />
               </el-form>
             </div>
-            <div
-              v-else
-              class="empty-state"
-            >
-              <Icon
-                icon="ph:test-tube-duotone"
-                class="empty-icon"
-              />
+            <div v-else class="empty-state">
+              <Icon icon="ph:test-tube-duotone" class="empty-icon" />
               <p>请先选择或创建一个脚本</p>
             </div>
           </div>
@@ -138,64 +68,31 @@
       </div>
 
       <!-- 桌面端布局 -->
-      <splitpanes
-        v-else
-        class="default-theme desktop-splitpanes"
-        :horizontal="false"
-      >
+      <splitpanes v-else class="default-theme desktop-splitpanes" :horizontal="false">
         <!-- 脚本列表侧边栏 -->
-        <pane
-          min-size="10"
-          :size="15"
-        >
+        <pane min-size="10" :size="15">
           <div class="sidebar-panel">
             <div class="sidebar-content">
-              <RegexScriptList
-                :collection="regexCollection"
-                :active-category-id="activeCategoryId"
-                :selected-script="selectedScript"
-                :drag-drop-handlers="dragDropHandlers"
-                @select-category="handleSelectCategory"
-                @select-script="handleSelectScript"
-                @create-category="handleCreateCategory"
-                @rename-category="handleRenameCategory"
-                @delete-category="handleDeleteCategory"
-                @add-script="handleAddScript"
-                @rename-script="handleRenameScript"
-                @delete-script="handleDeleteScript"
-                @export-script="handleExportSingleScript"
-              />
+              <RegexScriptList :collection="regexCollection" :active-category-id="activeCategoryId"
+                :selected-script="selectedScript" :drag-drop-handlers="dragDropHandlers"
+                @select-category="handleSelectCategory" @select-script="handleSelectScript"
+                @create-category="handleCreateCategory" @rename-category="handleRenameCategory"
+                @delete-category="handleDeleteCategory" @add-script="handleAddScript"
+                @rename-script="handleRenameScript" @delete-script="handleDeleteScript"
+                @export-script="handleExportSingleScript" />
             </div>
             <div class="sidebar-actions">
-              <el-button
-                @click="toggleTesterPanel"
-                :icon="testerPanelVisible ? Hide : View"
-                size="small"
-              >
+              <el-button @click="toggleTesterPanel" :icon="testerPanelVisible ? Hide : View" size="small">
                 {{ testerPanelVisible ? '隐藏测试器' : '显示测试器' }}
               </el-button>
               <el-button-group>
-                <el-button
-                  :icon="DocumentAdd"
-                  @click="handleImportScript"
-                  size="small"
-                >
+                <el-button :icon="DocumentAdd" @click="handleImportScript" size="small">
                   导入脚本
                 </el-button>
-                <el-button
-                  :icon="Download"
-                  @click="handleExportScript"
-                  size="small"
-                  :disabled="!selectedScriptId"
-                >
+                <el-button :icon="Download" @click="handleExportScript" size="small" :disabled="!selectedScriptId">
                   导出脚本
                 </el-button>
-                <el-button
-                  :icon="Plus"
-                  @click="handleCreateScript"
-                  size="small"
-                  type="primary"
-                >
+                <el-button :icon="Plus" @click="handleCreateScript" size="small" type="primary">
                   新建
                 </el-button>
               </el-button-group>
@@ -203,81 +100,38 @@
           </div>
         </pane>
 
-        <pane
-          :min-size="testerPanelVisible ? 40 : 75"
-          :size="testerPanelVisible ? 60 : 85"
-        >
+        <pane :min-size="testerPanelVisible ? 40 : 75" :size="testerPanelVisible ? 60 : 85">
           <div class="editor-panel">
-            <div
-              v-if="selectedScriptId"
-              class="panel-content"
-            >
+            <div v-if="selectedScriptId" class="panel-content">
               <div class="panel-header">
                 <h3>规则编辑器</h3>
-                <el-text
-                  v-if="!isEditingName"
-                  type="info"
-                  size="small"
-                  @click="startEditingName"
-                  class="editable-script-name"
-                >
+                <el-text v-if="!isEditingName" type="info" size="small" @click="startEditingName"
+                  class="editable-script-name">
                   {{ formState.scriptName || '未命名规则' }}
-                  <Icon
-                    icon="ph:pencil-simple-duotone"
-                    class="edit-icon"
-                  />
+                  <Icon icon="ph:pencil-simple-duotone" class="edit-icon" />
                 </el-text>
-                <el-input
-                  v-else
-                  ref="scriptNameInput"
-                  v-model="formState.scriptName"
-                  size="small"
-                  @blur="finishEditingName"
-                  @keyup.enter="finishEditingName"
-                  placeholder="请输入规则名称"
-                />
+                <el-input v-else ref="scriptNameInput" v-model="formState.scriptName" size="small"
+                  @blur="finishEditingName" @keyup.enter="finishEditingName" placeholder="请输入规则名称" />
               </div>
               <div class="panel-scroll">
-                <el-form
-                  :model="formState"
-                  label-position="top"
-                  class="editor-form"
-                >
-                  <RegexEditorCore
-                    v-model:script-name="formState.scriptName"
-                    v-model:find-regex="formState.findRegex"
-                    v-model:replace-string="formState.replaceString"
-                    v-model:trim-strings="trimStrings"
-                    v-model:substitute-regex="formState.substituteRegex"
-                  />
+                <el-form :model="formState" label-position="top" class="editor-form">
+                  <RegexEditorCore v-model:script-name="formState.scriptName" v-model:find-regex="formState.findRegex"
+                    v-model:replace-string="formState.replaceString" v-model:trim-strings="trimStrings"
+                    v-model:substitute-regex="formState.substituteRegex" />
                   <el-divider content-position="left">智能生成</el-divider>
-                  <SmartRegexGenerator
-                    v-model:input-text="smartInputText"
-                    @regex-generated="handleSmartRegexGenerated"
-                  />
+                  <SmartRegexGenerator v-model:input-text="smartInputText"
+                    @regex-generated="handleSmartRegexGenerated" />
                   <el-divider content-position="left">高级设置</el-divider>
                   <RegexAdvancedSettings v-model="formState" />
                 </el-form>
               </div>
             </div>
-            <div
-              v-else
-              class="welcome-screen"
-            >
-              <Icon
-                icon="ph:files-duotone"
-                class="welcome-icon"
-              />
+            <div v-else class="welcome-screen">
+              <Icon icon="ph:files-duotone" class="welcome-icon" />
               <h2 class="welcome-title">欢迎使用正则编辑器</h2>
               <p class="welcome-text">从左侧列表选择一个脚本开始编辑，或创建一个新脚本。</p>
-              <el-button
-                type="primary"
-                @click="handleCreateScript"
-              >
-                <Icon
-                  icon="ph:plus-circle-duotone"
-                  style="margin-right: 8px"
-                />
+              <el-button type="primary" @click="handleCreateScript">
+                <Icon icon="ph:plus-circle-duotone" style="margin-right: 8px" />
                 创建新脚本
               </el-button>
             </div>
@@ -285,47 +139,25 @@
         </pane>
 
         <!-- 模拟测试面板 -->
-        <pane
-          :min-size="testerPanelVisible ? 15 : 0"
-          :size="testerPanelVisible ? 25 : 0"
-        >
+        <pane :min-size="testerPanelVisible ? 15 : 0" :size="testerPanelVisible ? 25 : 0">
           <div class="simulator-panel">
-            <div
-              v-if="selectedScriptId"
-              class="panel-content"
-            >
+            <div v-if="selectedScriptId" class="panel-content">
               <div class="panel-header">
                 <h3>模拟测试</h3>
-                <el-text
-                  type="info"
-                  size="small"
-                >
+                <el-text type="info" size="small">
                   实时查看正则表达式的匹配和替换效果
                 </el-text>
               </div>
               <div class="panel-scroll">
-                <el-form
-                  label-position="top"
-                  class="simulator-form"
-                >
-                  <RegexSimulatorPanel
-                    v-model:test-string="testString"
-                    v-model:render-html="renderHtml"
-                    v-model:user-macro-value="userMacroValue"
-                    v-model:char-macro-value="charMacroValue"
-                    :simulated-result="simulatedResult"
-                  />
+                <el-form label-position="top" class="simulator-form">
+                  <RegexSimulatorPanel v-model:test-string="testString" v-model:render-html="renderHtml"
+                    v-model:user-macro-value="userMacroValue" v-model:char-macro-value="charMacroValue"
+                    :simulated-result="simulatedResult" />
                 </el-form>
               </div>
             </div>
-            <div
-              v-else
-              class="welcome-screen"
-            >
-              <Icon
-                icon="ph:test-tube-duotone"
-                class="welcome-icon"
-              />
+            <div v-else class="welcome-screen">
+              <Icon icon="ph:test-tube-duotone" class="welcome-icon" />
               <h2 class="welcome-title">准备测试</h2>
               <p class="welcome-text">选择一个脚本后，您可以在此进行模拟测试。</p>
             </div>
@@ -455,10 +287,7 @@ async function handleImportScript() {
       try {
         const text = await file.text();
         const jsonData = JSON.parse(text);
-
-        console.log('[导入脚本] 开始导入，当前类别：', activeCategory.value?.name);
-        console.log('[导入脚本] 导入前脚本数量：', activeCategory.value?.scripts.length);
-
+        
         const scriptsToParse = Array.isArray(jsonData) ? jsonData : [jsonData];
         const newScripts = scriptsToParse.map((script: any, index: number) => ({
           ...createDefaultScript(),
@@ -650,7 +479,6 @@ function handleSmartRegexGenerated({ regex, replaceString }: { regex: string; re
   formState.value.replaceString = replaceString;
   testString.value = smartInputText.value;
   mobileActivePanel.value = 'simulator';
-  ElMessage.success('已自动生成正则表达式和替换字符串！');
 }
 let saveTimer: NodeJS.Timeout | null = null;
 
@@ -674,7 +502,6 @@ watch(
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       if (selectedScript.value && activeCategory.value) {
-        // 更新选中的脚本
         const scriptIndex = activeCategory.value.scripts.findIndex((s) => s.id === selectedScript.value!.id);
         if (scriptIndex !== -1) {
           const updatedScript = {
