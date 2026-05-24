@@ -1,6 +1,6 @@
 {
   "productName": "sillytavern-char_cardplus",
-  "version": "0.1.20",
+  "version": "0.1.21",
   "identifier": "com.awaae001.cardplus",
   "build": {
     "beforeDevCommand": "pnpm dev:web",
@@ -20,7 +20,13 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "$APPDATA/images/**"
+        ]
+      }
     }
   },
   "bundle": {

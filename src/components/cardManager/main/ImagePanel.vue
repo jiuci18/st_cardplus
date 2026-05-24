@@ -31,12 +31,17 @@
           未选择图片
         </p>
         <el-divider border-style="dashed" />
-        <p class="upload-dialog-tip">选择托管提供商后上传，成功后会自动写入角色 image URL。</p>
+        <p class="upload-dialog-tip">
+          选择托管提供商后上传，成功后会自动写入角色 image URL。
+        </p>
         <el-select v-model="providerModel" class="provider-select" :disabled="!isDesktopApp" clearable
           placeholder="请选择上传驱动">
-          <el-option label="Catbox" value="catbox" />
-          <el-option label="ImgBB" value="imgbb" />
+          <el-option v-for="option in HOSTING_PROVIDER_OPTIONS" :key="option.value" :label="option.label"
+            :value="option.value" />
         </el-select>
+        <el-checkbox v-model="saveAsDefault" :disabled="!isDesktopApp || !providerModel" class="save-default-checkbox">
+          设为下次默认
+        </el-checkbox>
         <p v-if="!isDesktopApp" class="upload-dialog-disabled">
           Web 无法激活上传模块绕过CORS跨域拦截，请使用桌面版。
         </p>
@@ -49,9 +54,7 @@
           </el-button>
           <el-button @click="uploadDialogVisible = false">取消</el-button>
           <span class="dialog-divider">|</span>
-          <el-button @click="handleConfirmProvider">
-            确认
-          </el-button>
+          <el-button @click="handleConfirmProvider"> 确认 </el-button>
         </div>
       </template>
     </el-dialog>
@@ -59,10 +62,25 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { ElImage, ElUpload, ElButton, ElMessage, ElMessageBox, ElSelect, ElOption, ElDialog } from 'element-plus';
-import type { UploadFile, UploadFiles, UploadInstance } from 'element-plus';
-import type { HostingProvider } from '@/utils/imageHosting';
+import { computed, ref } from "vue";
+import {
+  ElImage,
+  ElUpload,
+  ElButton,
+  ElMessage,
+  ElMessageBox,
+  ElSelect,
+  ElOption,
+  ElDialog,
+  ElCheckbox,
+} from "element-plus";
+import type { UploadFile, UploadFiles, UploadInstance } from "element-plus";
+import {
+  HOSTING_PROVIDER_OPTIONS,
+  getHostingProviderLabel,
+  type HostingProvider,
+} from "@/utils/imageHosting";
+import { setSetting } from "@/utils/localStorageUtils";
 
 const props = defineProps<{
   previewUrl?: string;
@@ -72,33 +90,41 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'image-change', file: File): void;
-  (e: 'image-url-change', url: string): void;
-  (e: 'provider-change', provider: HostingProvider | null): void;
-  (e: 'upload-to-hosting', provider: HostingProvider | null): void;
+  (e: "image-change", file: File): void;
+  (e: "image-url-change", url: string): void;
+  (e: "provider-change", provider: HostingProvider | null): void;
+  (e: "upload-to-hosting", provider: HostingProvider | null): void;
 }>();
 
 const uploadRef = ref<UploadInstance>();
 const uploadDialogVisible = ref(false);
-const selectedImageName = ref('');
+const selectedImageName = ref("");
+const saveAsDefault = ref(false);
 const providerModel = computed<HostingProvider | null>({
   get: () => props.selectedProvider ?? null,
-  set: (value) => emit('provider-change', value || null),
+  set: (value) => emit("provider-change", value || null),
 });
 
-const handleImageChange = (uploadFile: UploadFile, uploadFiles: UploadFiles) => {
-  console.log('ImagePanel: handleImageChange called with:', uploadFile);
-  console.log('ImagePanel: uploadFiles length:', uploadFiles.length);
+const handleImageChange = (
+  uploadFile: UploadFile,
+  uploadFiles: UploadFiles,
+) => {
+  console.log("ImagePanel: handleImageChange called with:", uploadFile);
+  console.log("ImagePanel: uploadFiles length:", uploadFiles.length);
 
   if (uploadFile.raw) {
-    console.log('ImagePanel: Emitting image-change event with file:', uploadFile.raw.name, uploadFile.raw.size);
+    console.log(
+      "ImagePanel: Emitting image-change event with file:",
+      uploadFile.raw.name,
+      uploadFile.raw.size,
+    );
     selectedImageName.value = uploadFile.raw.name;
-    emit('image-change', uploadFile.raw);
+    emit("image-change", uploadFile.raw);
     setTimeout(() => {
       uploadRef.value?.clearFiles();
     }, 100);
   } else {
-    console.warn('ImagePanel: No raw file found in uploadFile');
+    console.warn("ImagePanel: No raw file found in uploadFile");
   }
 };
 
@@ -108,53 +134,72 @@ const openUploadDialog = () => {
 
 const handleUploadInDialog = () => {
   if (!selectedImageName.value) {
-    ElMessage.warning('请先选择图片');
+    ElMessage.warning("请先选择图片");
     return;
   }
   if (!providerModel.value) {
-    ElMessage.warning('请先选择图片上传驱动');
+    ElMessage.warning("请先选择图片上传驱动");
     return;
   }
-  emit('upload-to-hosting', providerModel.value);
+  if (saveAsDefault.value && providerModel.value) {
+    setSetting("defaultImageProvider", providerModel.value);
+    ElMessage.success(
+      `已将 ${getHostingProviderLabel(providerModel.value)} 设为默认图床`,
+    );
+  }
+  emit("upload-to-hosting", providerModel.value);
   uploadDialogVisible.value = false;
 };
 
 const handleConfirmProvider = () => {
+  if (saveAsDefault.value && providerModel.value) {
+    setSetting("defaultImageProvider", providerModel.value);
+    ElMessage.success(
+      `已将 ${getHostingProviderLabel(providerModel.value)} 设为默认图床`,
+    );
+  }
   uploadDialogVisible.value = false;
 };
 
 const handleError = (error: Error) => {
-  console.error('ImagePanel: Upload error:', error);
-  ElMessage.error('图片选择失败');
+  console.error("ImagePanel: Upload error:", error);
+  ElMessage.error("图片选择失败");
 };
 
 const openImageUrlEditor = async () => {
   try {
-    const result = await ElMessageBox.prompt('请输入角色图片 URL（留空可清除）', '修改角色 image URL', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      inputValue: props.avatarUrl || '',
-      inputPlaceholder: 'https://example.com/avatar.png',
-      inputValidator: (inputValue: string) => {
-        const trimmed = inputValue.trim();
-        if (!trimmed) return true;
-        try {
-          const url = new URL(trimmed);
-          if (!['http:', 'https:'].includes(url.protocol)) {
-            return '仅支持 http/https URL';
+    const result = await ElMessageBox.prompt(
+      "请输入角色图片 URL（留空可清除）",
+      "修改角色 image URL",
+      {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        inputValue: props.avatarUrl || "",
+        inputPlaceholder: "https://example.com/avatar.png",
+        inputValidator: (inputValue: string) => {
+          const trimmed = inputValue.trim();
+          if (!trimmed) return true;
+          try {
+            const url = new URL(trimmed);
+            if (!["http:", "https:"].includes(url.protocol)) {
+              return "仅支持 http/https URL";
+            }
+            return true;
+          } catch {
+            return "请输入有效的 URL";
           }
-          return true;
-        } catch {
-          return '请输入有效的 URL';
-        }
+        },
       },
-    });
+    );
 
-    emit('image-url-change', String((result as { value?: string }).value || '').trim());
+    emit(
+      "image-url-change",
+      String((result as { value?: string }).value || "").trim(),
+    );
   } catch (error) {
-    if (error !== 'cancel' && error !== 'close') {
-      console.error('ImagePanel: openImageUrlEditor failed:', error);
-      ElMessage.error('修改图片 URL 失败');
+    if (error !== "cancel" && error !== "close") {
+      console.error("ImagePanel: openImageUrlEditor failed:", error);
+      ElMessage.error("修改图片 URL 失败");
     }
   }
 };
@@ -238,6 +283,10 @@ const openImageUrlEditor = async () => {
 
 .provider-select {
   width: 100%;
+}
+
+.save-default-checkbox {
+  margin-top: 4px;
 }
 
 .dialog-footer {

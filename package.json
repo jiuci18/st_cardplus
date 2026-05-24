@@ -3,7 +3,7 @@
   "author": "awaae001",
   "description": "快速卡片格式化工具",
   "private": true,
-  "version": "0.1.20",
+  "version": "0.1.21",
   "type": "module",
   "scripts": {
     "dev": "tauri dev",
@@ -90,9 +90,6 @@
     "ignoreExportsUsedInFile": true
   },
   "pnpm": {
-    "overrides": {
-      "minimatch@>=9.0.0 <9.0.6": "9.0.6"
-    },
     "ignoredBuiltDependencies": [
       "esbuild"
     ],

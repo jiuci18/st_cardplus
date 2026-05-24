@@ -1,8 +1,8 @@
 <template>
   <div class="card-manager-container">
     <div class="card-manager-layout">
-      <CharacterCardTabs :tabs="tabs" :active-tab-id="activeTabId" @switch-tab="switchToTab"
-        @close-tab="handleTabClose" @reorder-tabs="reorderTabs" />
+      <CharacterCardTabs :tabs="tabs" :active-tab-id="activeTabId" @switch-tab="switchToTab" @close-tab="handleTabClose"
+        @reorder-tabs="reorderTabs" />
 
       <div class="tab-content-area">
         <div v-if="currentTab?.type === 'home'" class="tab-content-panel">
@@ -19,10 +19,12 @@
                 <Icon :icon="headerIcon" class="content-panel-icon" />
                 {{ headerTitle }}
                 <span v-if="rightEditorTab === 'card' && currentCardInTab" class="content-panel-text-highlight">
-                  - {{ currentCardInTab.name || '未命名角色' }}
+                  - {{ currentCardInTab.name || "未命名角色" }}
                 </span>
-                <span v-else-if="rightEditorTab === 'worldbook' && worldbookPanelRef?.hasWorldBook"
-                  class="content-panel-text-highlight">
+                <span v-else-if="
+                  rightEditorTab === 'worldbook' &&
+                  worldbookPanelRef?.hasWorldBook
+                " class="content-panel-text-highlight">
                   - {{ worldbookPanelRef?.currentWorldBookName }}
                 </span>
               </h2>
@@ -32,22 +34,17 @@
                   @save-as-new="handleSaveAsNewCard" @update-card="handleUpdateActiveCard"
                   @export-current="handleExportCurrentCard" />
                 <el-divider direction="vertical" />
-                <el-select
-                  v-if="isDesktopApp"
-                  v-model="selectedProvider"
-                  size="small"
-                  class="header-provider-select"
-                  clearable
-                  placeholder="上传驱动"
-                  :disabled="isUploading"
-                >
-                  <el-option label="Catbox" value="catbox" />
-                  <el-option label="ImgBB" value="imgbb" />
+                <el-select v-if="isDesktopApp" v-model="selectedProvider" size="small" class="header-provider-select"
+                  clearable placeholder="上传驱动" :disabled="isUploading">
+                  <el-option v-for="option in HOSTING_PROVIDER_OPTIONS" :key="option.value" :label="option.label"
+                    :value="option.value" />
                 </el-select>
                 <BrowserFilePicker accept="image/png" :disabled="isUploading" @select-first="handleFileSelected">
                   <el-button type="primary" size="small" :loading="isUploading" :disabled="isUploading">
                     <Icon icon="ph:file-image-duotone" v-if="!isUploading" />
-                    <span class="button-text">{{ isUploading ? uploadProgress : '加载PNG' }}</span>
+                    <span class="button-text">{{
+                      isUploading ? uploadProgress : "加载PNG"
+                      }}</span>
                   </el-button>
                 </BrowserFilePicker>
                 <el-button type="success" @click="handleSave" size="small">
@@ -85,13 +82,15 @@
                 </el-tooltip>
                 <el-divider direction="vertical" />
                 <el-tooltip content="将角色卡的正则脚本发送到正则编辑器（副本），之后完全独立" placement="bottom">
-                  <el-button size="small" @click="regexPanelRef?.handleSendToRegexEditor()" :disabled="!hasRegexScripts">
+                  <el-button size="small" @click="regexPanelRef?.handleSendToRegexEditor()"
+                    :disabled="!hasRegexScripts">
                     <Icon icon="ph:upload-duotone" />
                     <span class="button-text">发送到编辑器</span>
                   </el-button>
                 </el-tooltip>
                 <el-tooltip content="用正则编辑器中的脚本替换角色卡的所有正则脚本" placement="bottom">
-                  <el-button size="small" @click="regexPanelRef?.handleReplaceFromRegexEditor()" :disabled="!currentCardInTab">
+                  <el-button size="small" @click="regexPanelRef?.handleReplaceFromRegexEditor()"
+                    :disabled="!currentCardInTab">
                     <Icon icon="ph:arrow-counter-clockwise-duotone" />
                     <span class="button-text">从编辑器替换</span>
                   </el-button>
@@ -125,8 +124,7 @@
                 </template>
                 <div class="tab-full-content">
                   <CardWorldBookPanel ref="worldbookPanelRef" :key="`worldbook-${currentEditorCardId}`"
-                    :character="currentDraft"
-                    @update:character-book="handleCharacterBookUpdate"
+                    :character="currentDraft" @update:character-book="handleCharacterBookUpdate"
                     @worldbookChanged="handleWorldBookChanged" />
                 </div>
               </el-tab-pane>
@@ -140,8 +138,7 @@
                 </template>
                 <div class="tab-full-content">
                   <CardRegexPanel ref="regexPanelRef" :character="currentDraft"
-                    @update:regex-scripts="handleRegexScriptsUpdate"
-                    @regexChanged="handleRegexChanged" />
+                    @update:regex-scripts="handleRegexScriptsUpdate" @regexChanged="handleRegexChanged" />
                 </div>
               </el-tab-pane>
             </el-tabs>
@@ -149,34 +146,48 @@
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
 <script setup lang="ts">
-import { Icon } from '@iconify/vue';
-import { ElButton, ElDivider, ElMessage, ElOption, ElSelect, ElTabPane, ElTabs } from 'element-plus';
-import { computed, onUnmounted, ref, watch } from 'vue';
+import { Icon } from "@iconify/vue";
+import {
+  ElButton,
+  ElDivider,
+  ElMessage,
+  ElOption,
+  ElSelect,
+  ElTabPane,
+  ElTabs,
+} from "element-plus";
+import { computed, onUnmounted, ref, watch } from "vue";
 
-import CardEditor from '@/components/cardManager/CardEditor.vue';
-import CharacterCardActions from '@/components/cardManager/components/CharacterCardActions.vue';
-import CharacterCardHome from '@/components/cardManager/components/CharacterCardHome.vue';
-import CharacterCardTabs from '@/components/cardManager/components/CharacterCardTabs.vue';
-import CardRegexPanel from '@/components/cardManager/panel/CardRegexPanel.vue';
-import CardWorldBookPanel from '@/components/cardManager/panel/CardWorldBookPanel.vue';
-import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
+import CardEditor from "@/components/cardManager/CardEditor.vue";
+import CharacterCardActions from "@/components/cardManager/components/CharacterCardActions.vue";
+import CharacterCardHome from "@/components/cardManager/components/CharacterCardHome.vue";
+import CharacterCardTabs from "@/components/cardManager/components/CharacterCardTabs.vue";
+import CardRegexPanel from "@/components/cardManager/panel/CardRegexPanel.vue";
+import CardWorldBookPanel from "@/components/cardManager/panel/CardWorldBookPanel.vue";
+import BrowserFilePicker from "@/components/ui/common/BrowserFilePicker.vue";
 
-import { useCardExport } from '@/composables/characterCard/useCardExport';
-import { useCardImport } from '@/composables/characterCard/useCardImport';
-import { useCharacterCardAutoSave, type AutoSaveMode } from '@/composables/characterCard/useCharacterCardAutoSave';
-import { useCharacterCardCollection } from '@/composables/characterCard/useCharacterCardCollection';
-import { useCharacterCardEditorSessions } from '@/composables/characterCard/useCharacterCardEditorSessions';
-import { useTabManager } from '@/composables/characterCard/useTabManager';
-import type { CharacterCardV3 } from '@/types/character/character-card-v3';
-import type { SillyTavernRegexScript } from '@/composables/regex/types';
-import { isTauriApp, type HostingProvider } from '@/utils/imageHosting';
-import { getSetting } from '@/utils/localStorageUtils';
-import { useImageHosting } from '@/composables/useImageHosting';
+import { useCardExport } from "@/composables/characterCard/useCardExport";
+import { useCardImport } from "@/composables/characterCard/useCardImport";
+import {
+  useCharacterCardAutoSave,
+  type AutoSaveMode,
+} from "@/composables/characterCard/useCharacterCardAutoSave";
+import { useCharacterCardCollection } from "@/composables/characterCard/useCharacterCardCollection";
+import { useCharacterCardEditorSessions } from "@/composables/characterCard/useCharacterCardEditorSessions";
+import { useTabManager } from "@/composables/characterCard/useTabManager";
+import type { CharacterCardV3 } from "@/types/character/character-card-v3";
+import type { SillyTavernRegexScript } from "@/composables/regex/types";
+import {
+  HOSTING_PROVIDER_OPTIONS,
+  isTauriApp,
+  type HostingProvider,
+} from "@/utils/imageHosting";
+import { getSetting } from "@/utils/localStorageUtils";
+import { useImageHosting } from "@/composables/useImageHosting";
 
 const {
   tabs,
@@ -206,29 +217,29 @@ const {
   handleCreateNewCard: handleCreateNewCardFromCollection,
 } = useCharacterCardCollection();
 
-const rightEditorTab = ref<'card' | 'worldbook' | 'regex'>('card');
+const rightEditorTab = ref<"card" | "worldbook" | "regex">("card");
 const headerTitle = computed(() => {
-  if (rightEditorTab.value === 'worldbook') return '世界书';
-  if (rightEditorTab.value === 'regex') return '正则编辑器';
-  return '角色卡编辑器';
+  if (rightEditorTab.value === "worldbook") return "世界书";
+  if (rightEditorTab.value === "regex") return "正则编辑器";
+  return "角色卡编辑器";
 });
 const headerIcon = computed(() => {
-  if (rightEditorTab.value === 'worldbook') return 'ph:books-duotone';
-  if (rightEditorTab.value === 'regex') return 'ph:brackets-curly-duotone';
-  return 'ph:note-pencil-duotone';
+  if (rightEditorTab.value === "worldbook") return "ph:books-duotone";
+  if (rightEditorTab.value === "regex") return "ph:brackets-curly-duotone";
+  return "ph:note-pencil-duotone";
 });
 const advancedOptionsVisible = ref(false);
 
 const currentTab = computed(() => getActiveTab());
 const currentCardInTab = computed(() => {
   const tab = currentTab.value;
-  if (tab?.type === 'character-card' && tab.cardId) {
+  if (tab?.type === "character-card" && tab.cardId) {
     return characterCardCollection.value.cards[tab.cardId];
   }
   return null;
 });
 const currentCardId = computed(() => currentCardInTab.value?.id || null);
-const currentEditorCardId = computed(() => currentCardId.value || 'none');
+const currentEditorCardId = computed(() => currentCardId.value || "none");
 
 const {
   currentSession,
@@ -246,14 +257,14 @@ const {
   currentCardId,
 });
 
-const { handleUploadToHosting } = useImageHosting(currentImageFile, setCurrentSessionAvatarUrl);
+const { handleUploadToHosting } = useImageHosting(
+  currentImageFile,
+  setCurrentSessionAvatarUrl,
+);
 
-const autoSaveMode = ref<AutoSaveMode>('watch');
+const autoSaveMode = ref<AutoSaveMode>("watch");
 
-const {
-  saveStatus,
-  manualSave,
-} = useCharacterCardAutoSave({
+const { saveStatus, manualSave } = useCharacterCardAutoSave({
   currentSession,
   autoSaveMode,
   onSave: async (cardId, data) => {
@@ -261,16 +272,18 @@ const {
   },
 });
 
-type CharacterDataField = keyof CharacterCardV3['data'];
+type CharacterDataField = keyof CharacterCardV3["data"];
 
-const syncTopLevelFieldMap: Partial<Record<CharacterDataField, keyof CharacterCardV3>> = {
-  name: 'name',
-  description: 'description',
-  personality: 'personality',
-  scenario: 'scenario',
-  first_mes: 'first_mes',
-  mes_example: 'mes_example',
-  tags: 'tags',
+const syncTopLevelFieldMap: Partial<
+  Record<CharacterDataField, keyof CharacterCardV3>
+> = {
+  name: "name",
+  description: "description",
+  personality: "personality",
+  scenario: "scenario",
+  first_mes: "first_mes",
+  mes_example: "mes_example",
+  tags: "tags",
 };
 
 const updateCurrentDraft = (updater: (draft: CharacterCardV3) => void) => {
@@ -287,7 +300,7 @@ const cloneFieldValue = <T,>(value: T): T => {
 
 const handleCardEditorFieldUpdate = (payload: {
   field: CharacterDataField;
-  value: CharacterCardV3['data'][CharacterDataField];
+  value: CharacterCardV3["data"][CharacterDataField];
 }) => {
   updateCurrentDraft((draft) => {
     const nextValue = cloneFieldValue(payload.value);
@@ -300,7 +313,9 @@ const handleCardEditorFieldUpdate = (payload: {
   });
 };
 
-const handleCharacterBookUpdate = (characterBook: CharacterCardV3['data']['character_book']) => {
+const handleCharacterBookUpdate = (
+  characterBook: CharacterCardV3["data"]["character_book"],
+) => {
   updateCurrentDraft((draft) => {
     draft.data.character_book = characterBook;
   });
@@ -316,17 +331,23 @@ const handleRegexScriptsUpdate = (scripts: SillyTavernRegexScript[]) => {
 };
 
 const toggleAutoSaveMode = () => {
-  const modes: AutoSaveMode[] = ['auto', 'watch', 'manual'];
+  const modes: AutoSaveMode[] = ["auto", "watch", "manual"];
   const currentIndex = modes.indexOf(autoSaveMode.value);
   const nextIndex = (currentIndex + 1) % modes.length;
   autoSaveMode.value = modes[nextIndex];
 
-  const intervalSeconds = Math.max(1, Math.round(getSetting('autoSaveInterval')));
-  const debounceSeconds = Math.max(0.1, Math.round(getSetting('autoSaveDebounce') * 10) / 10);
+  const intervalSeconds = Math.max(
+    1,
+    Math.round(getSetting("autoSaveInterval")),
+  );
+  const debounceSeconds = Math.max(
+    0.1,
+    Math.round(getSetting("autoSaveDebounce") * 10) / 10,
+  );
   const messages = {
     auto: `已切换到自动保存模式：每 ${intervalSeconds} 秒自动保存`,
     watch: `已切换到监听模式：检测到修改后 ${debounceSeconds} 秒自动保存`,
-    manual: '已切换到手动模式：自动保存已禁用',
+    manual: "已切换到手动模式：自动保存已禁用",
   };
 
   ElMessage.info(messages[autoSaveMode.value]);
@@ -341,13 +362,15 @@ const handleImageUrlUpdate = (url: string) => {
 };
 
 const isDesktopApp = isTauriApp();
-const selectedProvider = ref<HostingProvider | null>(null);
+const selectedProvider = ref<HostingProvider | null>(
+  (getSetting("defaultImageProvider") as HostingProvider | "") || null,
+);
 
 const avatarUrl = computed(() => {
-  if (currentDraft.value.avatar && currentDraft.value.avatar !== 'none') {
+  if (currentDraft.value.avatar && currentDraft.value.avatar !== "none") {
     return currentDraft.value.avatar;
   }
-  return '';
+  return "";
 });
 
 const localPreviewUrl = ref<string>();
@@ -364,31 +387,43 @@ watch(
       localPreviewUrl.value = URL.createObjectURL(file);
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
-const imagePreviewUrl = computed(() => localPreviewUrl.value || avatarUrl.value || undefined);
+const imagePreviewUrl = computed(
+  () => localPreviewUrl.value || avatarUrl.value || undefined,
+);
 
-const { isUploading, uploadProgress, handleFileSelected } = useCardImport((card) => {
-  replaceCurrentSessionDraft(card, { markAsPersisted: false });
-  rightEditorTab.value = 'card';
-}, handleImageUpdate, {
-  isDesktopApp,
-  selectedProvider,
-  setImageUrl: setCurrentSessionAvatarUrl,
-});
-const { handleSave } = useCardExport(currentDraft, currentImageFile, imagePreviewUrl);
+const { isUploading, uploadProgress, handleFileSelected } = useCardImport(
+  (card) => {
+    replaceCurrentSessionDraft(card, { markAsPersisted: false });
+    rightEditorTab.value = "card";
+  },
+  handleImageUpdate,
+  {
+    isDesktopApp,
+    selectedProvider,
+    setImageUrl: setCurrentSessionAvatarUrl,
+  },
+);
+const { handleSave } = useCardExport(
+  currentDraft,
+  currentImageFile,
+  imagePreviewUrl,
+);
 
 const handleRegexChanged = async () => {
   if (currentSession.value) {
     try {
       await manualSave();
     } catch (error) {
-      console.error('保存正则更改失败:', error);
-      ElMessage.warning('正则脚本已更新，但保存到数据库失败。请手动保存角色卡。');
+      console.error("保存正则更改失败:", error);
+      ElMessage.warning(
+        "正则脚本已更新，但保存到数据库失败。请手动保存角色卡。",
+      );
     }
   } else {
-    ElMessage.info('正则脚本已更新。请保存角色卡以将更改持久化。');
+    ElMessage.info("正则脚本已更新。请保存角色卡以将更改持久化。");
   }
 };
 
@@ -398,11 +433,11 @@ watch(
     if (loading) return;
 
     const tab = tabs.value.find((item) => item.id === tabId);
-    if (tab?.type === 'character-card' && tab.cardId) {
+    if (tab?.type === "character-card" && tab.cardId) {
       ensureSession(tab.cardId);
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
 
 const handleSaveCurrentAsNew = async () => {
@@ -410,8 +445,8 @@ const handleSaveCurrentAsNew = async () => {
   if (cardId) {
     const newCard = characterCardCollection.value.cards[cardId];
     if (newCard) {
-      rightEditorTab.value = 'card';
-      openCharacterCardTab(cardId, newCard.name || '未命名角色');
+      rightEditorTab.value = "card";
+      openCharacterCardTab(cardId, newCard.name || "未命名角色");
       ensureSession(cardId);
     }
   }
@@ -423,7 +458,10 @@ const handleSaveAsNewCard = async () => {
 
 const handleUpdateActiveCard = async () => {
   if (currentSession.value) {
-    await handleUpdateCard(currentSession.value.cardId, currentSession.value.draft);
+    await handleUpdateCard(
+      currentSession.value.cardId,
+      currentSession.value.draft,
+    );
     replaceCurrentSessionDraft(currentSession.value.draft, {
       preserveImageFile: true,
       markAsPersisted: true,
@@ -442,14 +480,14 @@ const handleCreateNewCard = async () => {
   if (cardId) {
     const newCard = characterCardCollection.value.cards[cardId];
     if (newCard) {
-      rightEditorTab.value = 'card';
-      openCharacterCardTab(cardId, newCard.name || '未命名角色');
+      rightEditorTab.value = "card";
+      openCharacterCardTab(cardId, newCard.name || "未命名角色");
     }
   }
 };
 
 const handleOpenCardFromHome = (cardId: string, cardName: string) => {
-  rightEditorTab.value = 'card';
+  rightEditorTab.value = "card";
   openCharacterCardTab(cardId, cardName);
 };
 
@@ -462,11 +500,11 @@ const handleRenameCard = async (cardId: string) => {
   await handleRenameCardOriginal(cardId);
   const card = characterCardCollection.value.cards[cardId];
   if (card) {
-    updateTabLabel(cardId, card.name || '未命名角色');
+    updateTabLabel(cardId, card.name || "未命名角色");
     const session = getSession(cardId);
     if (session) {
-      session.draft.name = card.name || '';
-      session.draft.data.name = card.name || '';
+      session.draft.name = card.name || "";
+      session.draft.data.name = card.name || "";
     }
   }
 };
@@ -480,7 +518,10 @@ const handleDeleteCard = async (cardId: string) => {
 const handleClearAllCards = async () => {
   const previousCount = Object.keys(characterCardCollection.value.cards).length;
   await handleClearAllCardsFromCollection();
-  if (previousCount > 0 && Object.keys(characterCardCollection.value.cards).length === 0) {
+  if (
+    previousCount > 0 &&
+    Object.keys(characterCardCollection.value.cards).length === 0
+  ) {
     closeAllSessions();
     closeAllCharacterCardTabs();
   }
@@ -491,11 +532,11 @@ const handleWorldBookChanged = async () => {
     try {
       await manualSave();
     } catch (error) {
-      console.error('保存世界书更改失败:', error);
-      ElMessage.warning('世界书已更新，但保存到数据库失败。请手动保存角色卡。');
+      console.error("保存世界书更改失败:", error);
+      ElMessage.warning("世界书已更新，但保存到数据库失败。请手动保存角色卡。");
     }
   } else {
-    ElMessage.info('世界书已更新。请保存角色卡以将更改持久化。');
+    ElMessage.info("世界书已更新。请保存角色卡以将更改持久化。");
   }
 };
 
@@ -516,7 +557,6 @@ const hasRegexScripts = computed(() => {
   return scripts && scripts.length > 0;
 });
 
-
 onUnmounted(() => {
   if (localPreviewUrl.value) {
     URL.revokeObjectURL(localPreviewUrl.value);
@@ -525,7 +565,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-@import '@/css/card-manager-panels.css';
+@import "@/css/card-manager-panels.css";
 
 .card-manager-container {
   display: flex;
@@ -577,7 +617,6 @@ onUnmounted(() => {
   height: 100%;
   background-color: var(--el-bg-color);
 }
-
 
 .header-actions {
   display: flex;

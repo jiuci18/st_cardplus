@@ -1,4 +1,5 @@
 use std::process::{Command, Stdio};
+use tauri::{AppHandle, Manager};
 
 fn normalize_http_url(raw: &str) -> Result<String, String> {
     let url = raw.trim();
@@ -49,4 +50,50 @@ pub fn open_external_url(url: String) -> Result<(), String> {
 
     #[allow(unreachable_code)]
     Err("当前平台暂不支持打开外部链接".to_string())
+}
+
+#[tauri::command]
+pub fn open_local_directory(app: AppHandle) -> Result<(), String> {
+    let app_data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| format!("获取本地数据目录失败: {error}"))?;
+
+    if !app_data_dir.exists() {
+        std::fs::create_dir_all(&app_data_dir)
+            .map_err(|error| format!("创建本地数据目录失败: {error}"))?;
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        Command::new("explorer")
+            .arg(&app_data_dir)
+            .spawn()
+            .map(|_| ())
+            .map_err(|error| format!("打开本地目录失败: {error}"))?;
+        return Ok(());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        Command::new("open")
+            .arg(&app_data_dir)
+            .spawn()
+            .map(|_| ())
+            .map_err(|error| format!("打开本地目录失败: {error}"))?;
+        return Ok(());
+    }
+
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        Command::new("xdg-open")
+            .arg(&app_data_dir)
+            .spawn()
+            .map(|_| ())
+            .map_err(|error| format!("打开本地目录失败: {error}"))?;
+        return Ok(());
+    }
+
+    #[allow(unreachable_code)]
+    Err("当前平台暂不支持打开本地目录".to_string())
 }

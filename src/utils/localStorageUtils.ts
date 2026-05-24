@@ -5,9 +5,9 @@ import {
   createDefaultSidebarConfig,
   migrateMenuConfig,
   validateMenuConfig,
-} from '@/config/menuConfig';
+} from "@/config/menuConfig";
 
-const SETTINGS_KEY = 'settings';
+const SETTINGS_KEY = "settings";
 
 // 重新导出类型供其他模块使用
 export type { MenuItemConfig, MenuItemType, SidebarConfig };
@@ -19,9 +19,10 @@ interface AppSettings {
   autoSaveInterval: number;
   autoSaveDebounce: number;
   imgbbApiKey: string;
+  defaultImageProvider: string;
   updateIgnoreUntil: string;
   autoExpandSidebar: boolean;
-  mobileDominantHand: 'left' | 'right';
+  mobileDominantHand: "left" | "right";
   sidebarConfig: SidebarConfig;
 }
 
@@ -32,7 +33,7 @@ const getLocalStorageItem = (key: string): string | null => {
   try {
     return localStorage.getItem(key);
   } catch (error) {
-    console.error('读取本地存储失败:', error);
+    console.error("读取本地存储失败:", error);
     return null;
   }
 };
@@ -41,7 +42,7 @@ const setLocalStorageItem = (key: string, value: string): void => {
   try {
     localStorage.setItem(key, value);
   } catch (error) {
-    console.error('写入本地存储失败:', error);
+    console.error("写入本地存储失败:", error);
   }
 };
 
@@ -49,7 +50,7 @@ const removeLocalStorageItem = (key: string): void => {
   try {
     localStorage.removeItem(key);
   } catch (error) {
-    console.error('移除本地存储失败:', error);
+    console.error("移除本地存储失败:", error);
   }
 };
 
@@ -57,7 +58,7 @@ const clearAllLocalStorage = (): void => {
   try {
     localStorage.clear();
   } catch (error) {
-    console.error('清空本地存储失败:', error);
+    console.error("清空本地存储失败:", error);
   }
 };
 
@@ -69,12 +70,14 @@ const getLocalStorageKeys = (): string[] => {
       if (key) keys.push(key);
     }
   } catch (error) {
-    console.error('读取本地存储键失败:', error);
+    console.error("读取本地存储键失败:", error);
   }
   return keys;
 };
 
-export const getLocalStorageSnapshot = (options?: { excludeKeys?: string[] }): LocalStorageSnapshot => {
+export const getLocalStorageSnapshot = (options?: {
+  excludeKeys?: string[];
+}): LocalStorageSnapshot => {
   const snapshot: LocalStorageSnapshot = {};
   const excludeSet = new Set(options?.excludeKeys ?? []);
   getLocalStorageKeys().forEach((key) => {
@@ -87,7 +90,7 @@ export const getLocalStorageSnapshot = (options?: { excludeKeys?: string[] }): L
 
 export const restoreLocalStorageSnapshot = (
   snapshot: LocalStorageSnapshot,
-  options?: { preserveKeys?: string[] }
+  options?: { preserveKeys?: string[] },
 ): void => {
   const preserved: LocalStorageSnapshot = {};
   (options?.preserveKeys ?? []).forEach((key) => {
@@ -110,7 +113,7 @@ export const getSessionStorageItem = (key: string): string | null => {
   try {
     return sessionStorage.getItem(key);
   } catch (error) {
-    console.error('读取会话存储失败:', error);
+    console.error("读取会话存储失败:", error);
     return null;
   }
 };
@@ -119,7 +122,7 @@ export const setSessionStorageItem = (key: string, value: string): void => {
   try {
     sessionStorage.setItem(key, value);
   } catch (error) {
-    console.error('写入会话存储失败:', error);
+    console.error("写入会话存储失败:", error);
   }
 };
 
@@ -127,7 +130,7 @@ export const removeSessionStorageItem = (key: string): void => {
   try {
     sessionStorage.removeItem(key);
   } catch (error) {
-    console.error('移除会话存储失败:', error);
+    console.error("移除会话存储失败:", error);
   }
 };
 
@@ -176,34 +179,46 @@ const defaultSettings: AppSettings = {
   disableSyncSnapshotRecovery: false,
   autoSaveInterval: 5,
   autoSaveDebounce: 1.5,
-  imgbbApiKey: '',
-  updateIgnoreUntil: '',
+  imgbbApiKey: "",
+  defaultImageProvider: "",
+  updateIgnoreUntil: "",
   autoExpandSidebar: true,
-  mobileDominantHand: 'right',
+  mobileDominantHand: "right",
   sidebarConfig: createDefaultSidebarConfig(),
 };
 
-const normalizeSettingValue = <K extends AppSettingsKey>(key: K, value: AppSettings[K]): AppSettings[K] => {
-  if (key === 'autoSaveInterval') {
+const normalizeSettingValue = <K extends AppSettingsKey>(
+  key: K,
+  value: AppSettings[K],
+): AppSettings[K] => {
+  if (key === "autoSaveInterval") {
     const interval = Number(value);
     const fallback = defaultSettings.autoSaveInterval;
     const safeInterval = Number.isFinite(interval) ? interval : fallback;
     return Math.max(1, Math.min(60, safeInterval)) as AppSettings[K];
   }
-  if (key === 'autoSaveDebounce') {
+  if (key === "autoSaveDebounce") {
     const debounce = Number(value);
     const fallback = defaultSettings.autoSaveDebounce;
     const safeDebounce = Number.isFinite(debounce) ? debounce : fallback;
     return Math.max(0.1, Math.min(10, safeDebounce)) as AppSettings[K];
   }
-  if (key === 'imgbbApiKey') {
-    return String(value ?? '').trim() as AppSettings[K];
+  if (key === "imgbbApiKey") {
+    return String(value ?? "").trim() as AppSettings[K];
   }
-  if (key === 'updateIgnoreUntil') {
-    return String(value ?? '').trim() as AppSettings[K];
+  if (key === "updateIgnoreUntil") {
+    return String(value ?? "").trim() as AppSettings[K];
   }
-  if (key === 'mobileDominantHand') {
-    return (value === 'left' ? 'left' : 'right') as AppSettings[K];
+  if (key === "defaultImageProvider") {
+    const v = String(value ?? "")
+      .trim()
+      .toLowerCase();
+    return (
+      v === "catbox" || v === "imgbb" || v === "local" ? v : ""
+    ) as AppSettings[K];
+  }
+  if (key === "mobileDominantHand") {
+    return (value === "left" ? "left" : "right") as AppSettings[K];
   }
   return value;
 };
@@ -217,12 +232,15 @@ const getSettings = (): AppSettings => {
     const savedSettings = getLocalStorageItem(SETTINGS_KEY);
     if (savedSettings) {
       const parsed = JSON.parse(savedSettings);
-      const currentImgbbApiKey = typeof parsed.imgbbApiKey === 'string' ? parsed.imgbbApiKey.trim() : '';
-      const legacyImgbbApiKey = currentImgbbApiKey ? '' : (getLocalStorageItem('imgbb-api-key')?.trim() ?? '');
+      const currentImgbbApiKey =
+        typeof parsed.imgbbApiKey === "string" ? parsed.imgbbApiKey.trim() : "";
+      const legacyImgbbApiKey = currentImgbbApiKey
+        ? ""
+        : (getLocalStorageItem("imgbb-api-key")?.trim() ?? "");
 
       let sidebarConfig = parsed.sidebarConfig;
       if (!sidebarConfig || !validateMenuConfig(sidebarConfig)) {
-        console.log('导航栏配置无效或不存在，使用默认配置');
+        console.log("导航栏配置无效或不存在，使用默认配置");
         sidebarConfig = createDefaultSidebarConfig();
       } else {
         sidebarConfig = migrateMenuConfig(sidebarConfig);
@@ -236,24 +254,25 @@ const getSettings = (): AppSettings => {
 
       if (legacyImgbbApiKey) {
         setLocalStorageItem(SETTINGS_KEY, JSON.stringify(mergedSettings));
-        removeLocalStorageItem('imgbb-api-key');
+        removeLocalStorageItem("imgbb-api-key");
       }
 
       return mergedSettings;
     }
 
-    const legacyImgbbApiKey = getLocalStorageItem('imgbb-api-key')?.trim() ?? '';
+    const legacyImgbbApiKey =
+      getLocalStorageItem("imgbb-api-key")?.trim() ?? "";
     if (legacyImgbbApiKey) {
       const migratedSettings = {
         ...defaultSettings,
         imgbbApiKey: legacyImgbbApiKey,
       };
       setLocalStorageItem(SETTINGS_KEY, JSON.stringify(migratedSettings));
-      removeLocalStorageItem('imgbb-api-key');
+      removeLocalStorageItem("imgbb-api-key");
       return migratedSettings;
     }
   } catch (error) {
-    console.error('从本地存储加载设置失败:', error);
+    console.error("从本地存储加载设置失败:", error);
   }
   return { ...defaultSettings };
 };
@@ -268,7 +287,7 @@ const saveSettings = (settings: Partial<AppSettings>) => {
     const newSettings = { ...currentSettings, ...settings };
     setLocalStorageItem(SETTINGS_KEY, JSON.stringify(newSettings));
   } catch (error) {
-    console.error('保存设置到本地存储失败:', error);
+    console.error("保存设置到本地存储失败:", error);
   }
 };
 
@@ -276,7 +295,9 @@ const saveSettings = (settings: Partial<AppSettings>) => {
  * 读取单个设置项
  * @param key - AppSettings key
  */
-export const getSetting = <K extends AppSettingsKey>(key: K): AppSettings[K] => {
+export const getSetting = <K extends AppSettingsKey>(
+  key: K,
+): AppSettings[K] => {
   const settings = getSettings();
   return normalizeSettingValue(key, settings[key]);
 };
@@ -286,12 +307,15 @@ export const getSetting = <K extends AppSettingsKey>(key: K): AppSettings[K] => 
  * @param key - AppSettings key
  * @param value - setting value
  */
-export const setSetting = <K extends AppSettingsKey>(key: K, value: AppSettings[K]) => {
+export const setSetting = <K extends AppSettingsKey>(
+  key: K,
+  value: AppSettings[K],
+) => {
   const normalized = normalizeSettingValue(key, value);
   saveSettings({ [key]: normalized } as Partial<AppSettings>);
 };
 
-const SESSION_STORAGE_KEYS = new Set(['characterCardData']);
+const SESSION_STORAGE_KEYS = new Set(["characterCardData"]);
 
 const shouldUseSessionStorage = (key: string) => SESSION_STORAGE_KEYS.has(key);
 
@@ -300,7 +324,7 @@ const shouldUseSessionStorage = (key: string) => SESSION_STORAGE_KEYS.has(key);
  * @param data - 要保存的数据
  * @param key - 存储键名，默认为'characterCardData'（该键使用会话存储）
  */
-export const saveToLocalStorage = (data: any, key = 'characterCardData') => {
+export const saveToLocalStorage = (data: any, key = "characterCardData") => {
   try {
     if (shouldUseSessionStorage(key)) {
       writeSessionStorageJSON(key, data);
@@ -308,7 +332,7 @@ export const saveToLocalStorage = (data: any, key = 'characterCardData') => {
     }
     writeLocalStorageJSON(key, data);
   } catch (error) {
-    console.error('保存到本地存储失败:', error);
+    console.error("保存到本地存储失败:", error);
   }
 };
 
@@ -318,18 +342,23 @@ export const saveToLocalStorage = (data: any, key = 'characterCardData') => {
  * @param processFn - 数据处理函数
  * @returns 加载并处理后的数据
  */
-export const loadFromLocalStorage = (key = 'characterCardData', processFn?: (data: any) => any) => {
+export const loadFromLocalStorage = (
+  key = "characterCardData",
+  processFn?: (data: any) => any,
+) => {
   try {
     if (shouldUseSessionStorage(key)) {
       const sessionData = readSessionStorageJSON<any>(key);
-      if (sessionData !== null) return processFn ? processFn(sessionData) : sessionData;
+      if (sessionData !== null)
+        return processFn ? processFn(sessionData) : sessionData;
       return null;
     }
 
     const parsedData = readLocalStorageJSON<any>(key);
-    if (parsedData !== null) return processFn ? processFn(parsedData) : parsedData;
+    if (parsedData !== null)
+      return processFn ? processFn(parsedData) : parsedData;
   } catch (error) {
-    console.error('从本地存储加载失败:', error);
+    console.error("从本地存储加载失败:", error);
   }
   return null;
 };
@@ -338,7 +367,7 @@ export const loadFromLocalStorage = (key = 'characterCardData', processFn?: (dat
  * 清除本地存储的数据
  * @param key - 存储键名，默认为'characterCardData'（该键使用会话存储）
  */
-export const clearLocalStorage = (key = 'characterCardData') => {
+export const clearLocalStorage = (key = "characterCardData") => {
   if (shouldUseSessionStorage(key)) {
     removeSessionStorageItem(key);
     return;
@@ -353,8 +382,12 @@ export const clearLocalStorage = (key = 'characterCardData') => {
  * @param customInterval - 自定义保存间隔（毫秒），如果不提供则使用用户设置的间隔
  * @returns 定时器ID
  */
-export const initAutoSave = (saveFn: () => void, conditionFn: () => boolean, customInterval?: number) => {
-  const intervalMs = customInterval || getSetting('autoSaveInterval') * 1000;
+export const initAutoSave = (
+  saveFn: () => void,
+  conditionFn: () => boolean,
+  customInterval?: number,
+) => {
+  const intervalMs = customInterval || getSetting("autoSaveInterval") * 1000;
   return window.setInterval(() => {
     if (conditionFn()) {
       saveFn();
@@ -388,10 +421,12 @@ export const setSidebarConfig = (config: SidebarConfig) => {
     lastUpdated: Date.now(),
   };
   saveSettings({ sidebarConfig: updatedConfig });
-  console.log('导航栏配置已保存');
+  console.log("导航栏配置已保存");
 
   // 发送自定义事件通知配置已更新
-  const event = new CustomEvent('sidebarConfigChange', { detail: updatedConfig });
+  const event = new CustomEvent("sidebarConfigChange", {
+    detail: updatedConfig,
+  });
   window.dispatchEvent(event);
 };
 
@@ -401,7 +436,9 @@ export const setSidebarConfig = (config: SidebarConfig) => {
  */
 export const getHiddenMenuItems = (): MenuItemConfig[] => {
   const config = getSidebarConfig();
-  return config.items.filter((item) => !item.visible).sort((a, b) => a.order - b.order);
+  return config.items
+    .filter((item) => !item.visible)
+    .sort((a, b) => a.order - b.order);
 };
 
 /**
@@ -434,7 +471,9 @@ export const updateMenuItemsOrder = (items: MenuItemConfig[]) => {
 
   // 更新顺序
   items.forEach((item, index) => {
-    const existingItemIndex = config.items.findIndex((configItem) => configItem.id === item.id);
+    const existingItemIndex = config.items.findIndex(
+      (configItem) => configItem.id === item.id,
+    );
     if (existingItemIndex !== -1) {
       config.items[existingItemIndex].order = index;
     }
@@ -464,5 +503,5 @@ export const updateMenuItemTabBar = (itemId: string, showInTabBar: boolean) => {
 export const resetSidebarConfig = () => {
   const defaultConfig = createDefaultSidebarConfig();
   setSidebarConfig(defaultConfig);
-  console.log('导航栏配置已重置为默认值');
+  console.log("导航栏配置已重置为默认值");
 };

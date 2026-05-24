@@ -176,6 +176,21 @@
               class="setting-password-input"
             />
           </template>
+          <template v-else-if="setting.type === 'select'">
+            <el-select
+              v-model="setting.model.value"
+              @change="setting.handler"
+              :placeholder="setting.placeholder"
+              class="setting-select-input"
+            >
+              <el-option
+                v-for="option in setting.options"
+                :key="option.value"
+                :label="option.label"
+                :value="option.value"
+              />
+            </el-select>
+          </template>
         </div>
         <p
           class="setting-description"
@@ -203,6 +218,7 @@ const disableSyncSnapshotRecovery = ref(false);
 const autoSaveInterval = ref(5);
 const autoSaveDebounce = ref(1.5);
 const imgbbApiKey = ref('');
+const defaultImageProvider = ref('');
 const ignoreUpdateDays = ref(7);
 const ignoreDayOptions = [-1, 1, 3, 7, 14, 30];
 const showWebUpdateMask = ref(!isTauriApp());
@@ -271,6 +287,10 @@ const onBetaFeaturesToggle = (value: boolean) => {
     setSetting('betaFeaturesEnabled', false);
     window.dispatchEvent(new CustomEvent('betaFeaturesToggle', { detail: false }));
   }
+};
+
+const onDefaultImageProviderChange = (value: string) => {
+  setSetting('defaultImageProvider', value);
 };
 
 const onAutoSaveIntervalChange = (value: number | undefined) => {
@@ -409,6 +429,7 @@ const settings = computed(() =>
       autoSaveInterval,
       autoSaveDebounce,
       imgbbApiKey,
+      defaultImageProvider,
     },
     {
       onBetaFeaturesToggle,
@@ -417,6 +438,7 @@ const settings = computed(() =>
       onAutoSaveIntervalChange,
       onAutoSaveDebounceChange,
       onImgbbApiKeyChange,
+      onDefaultImageProviderChange,
     }
   )
 );
@@ -428,6 +450,7 @@ onMounted(() => {
   autoSaveInterval.value = getSetting('autoSaveInterval');
   autoSaveDebounce.value = getSetting('autoSaveDebounce');
   imgbbApiKey.value = getSetting('imgbbApiKey');
+  defaultImageProvider.value = getSetting('defaultImageProvider');
   window.addEventListener('resize', handleUpdateContentResize);
   void syncUpdateContentOverflow();
   void checkForAppUpdate();
@@ -452,6 +475,10 @@ watch(isUpdateContentExpanded, () => {
 
 .setting-password-input {
   width: min(320px, 100%);
+}
+
+.setting-select-input {
+  width: min(260px, 100%);
 }
 
 .update-card {
