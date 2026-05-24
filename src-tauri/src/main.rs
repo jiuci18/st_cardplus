@@ -10,6 +10,7 @@ fn main() {
             handler::http_service::fetch_binary,
             handler::export_service::save_binary_file,
             handler::system_service::open_external_url,
+            handler::system_service::open_local_directory,
             handler::webdav_service::webdav_request
         ])
         .run(tauri::generate_context!())

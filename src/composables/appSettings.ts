@@ -1,4 +1,5 @@
-import type { Ref } from 'vue';
+import type { Ref } from "vue";
+import { HOSTING_PROVIDER_OPTIONS } from "@/utils/imageHosting";
 
 interface BaseSetting {
   id: string;
@@ -9,14 +10,14 @@ interface BaseSetting {
 }
 
 interface SwitchSetting extends BaseSetting {
-  type: 'switch';
+  type: "switch";
   model: Ref<boolean>;
   handler: (value: boolean) => void;
   disabled?: boolean;
 }
 
 interface NumberInputSetting extends BaseSetting {
-  type: 'numberInput';
+  type: "numberInput";
   model: Ref<number>;
   handler: (value: number | undefined) => void;
   min: number;
@@ -26,21 +27,25 @@ interface NumberInputSetting extends BaseSetting {
 }
 
 interface PasswordInputSetting extends BaseSetting {
-  type: 'passwordInput';
+  type: "passwordInput";
   model: Ref<string>;
   handler: (value: string) => void;
   placeholder?: string;
 }
 
 interface SelectSetting extends BaseSetting {
-  type: 'select';
+  type: "select";
   model: Ref<string>;
   handler: (value: string) => void;
   options: { label: string; value: string }[];
   placeholder?: string;
 }
 
-export type SettingOption = SwitchSetting | NumberInputSetting | PasswordInputSetting | SelectSetting;
+export type SettingOption =
+  | SwitchSetting
+  | NumberInputSetting
+  | PasswordInputSetting
+  | SelectSetting;
 
 interface AppSettingsModels {
   betaFeaturesEnabled: Ref<boolean>;
@@ -61,93 +66,99 @@ interface AppSettingsHandlers {
   onDefaultImageProviderChange: (value: string) => void;
 }
 
-export const getAppSettings = (models: AppSettingsModels, handlers: AppSettingsHandlers): SettingOption[] => {
+export const getAppSettings = (
+  models: AppSettingsModels,
+  handlers: AppSettingsHandlers,
+): SettingOption[] => {
   return [
     {
-      id: 'betaFeaturesEnabled',
-      label: '显示测试版功能',
-      icon: 'material-symbols:experiment-outline',
-      iconColor: 'var(--el-color-warning)',
-      description: '开启后将在导航栏显示测试版功能，包括 EJS 模板编辑器和世界书功能 ',
-      type: 'switch',
+      id: "betaFeaturesEnabled",
+      label: "显示测试版功能",
+      icon: "material-symbols:experiment-outline",
+      iconColor: "var(--el-color-warning)",
+      description:
+        "开启后将在导航栏显示测试版功能，包括 EJS 模板编辑器和世界书功能 ",
+      type: "switch",
       model: models.betaFeaturesEnabled,
       handler: handlers.onBetaFeaturesToggle,
     },
     {
-      id: 'umamiEnabled',
-      label: '启用 Umami 远程遥测',
-      icon: 'material-symbols:analytics-outline',
-      iconColor: 'var(--el-color-primary)',
-      description: '开启后会向 Umami 发送匿名访问统计，用于了解页面访问和功能使用趋势',
-      type: 'switch',
+      id: "umamiEnabled",
+      label: "启用 Umami 远程遥测",
+      icon: "material-symbols:analytics-outline",
+      iconColor: "var(--el-color-primary)",
+      description:
+        "开启后会向 Umami 发送匿名访问统计，用于了解页面访问和功能使用趋势",
+      type: "switch",
       model: models.umamiEnabled,
       handler: handlers.onUmamiToggle,
     },
     {
-      id: 'disableSyncSnapshotRecovery',
-      label: '不启用缓存恢复（关闭溢出警告）',
-      icon: 'material-symbols:restore-page-outline',
-      iconColor: 'var(--el-color-danger)',
-      description: '开启后，云同步拉取数据前不再创建本地恢复点，因此不会再出现缓存区超限导致的撤销/溢出提示',
-      type: 'switch',
+      id: "disableSyncSnapshotRecovery",
+      label: "不启用缓存恢复（关闭溢出警告）",
+      icon: "material-symbols:restore-page-outline",
+      iconColor: "var(--el-color-danger)",
+      description:
+        "开启后，云同步拉取数据前不再创建本地恢复点，因此不会再出现缓存区超限导致的撤销/溢出提示",
+      type: "switch",
       model: models.disableSyncSnapshotRecovery,
       handler: handlers.onDisableSyncSnapshotRecoveryToggle,
     },
     {
-      id: 'imgbbApiKey',
-      label: 'ImgBB API Key',
-      icon: 'material-symbols:key-outline',
-      iconColor: 'var(--el-color-primary)',
+      id: "imgbbApiKey",
+      label: "ImgBB API Key",
+      icon: "material-symbols:key-outline",
+      iconColor: "var(--el-color-primary)",
       description:
         '用于上传图片到 ImgBB。你可以点击<a href="https://api.imgbb.com/" target="_blank" rel="noopener noreferrer" data-external-link="true" style="color: var(--el-color-primary);">这里</a>获取 API Key',
-      type: 'passwordInput',
+      type: "passwordInput",
       model: models.imgbbApiKey,
       handler: handlers.onImgbbApiKeyChange,
-      placeholder: '请输入 ImgBB API Key',
+      placeholder: "请输入 ImgBB API Key",
     },
     {
-      id: 'defaultImageProvider',
-      label: '默认图床提供方',
-      icon: 'material-symbols:cloud-upload',
-      iconColor: 'var(--el-color-primary)',
-      description: '选择默认的图片托管服务。设置后，上传图片时将自动使用该图床，无需每次手动选择。留空则每次提示选择。',
-      type: 'select',
+      id: "defaultImageProvider",
+      label: "默认图床提供方",
+      icon: "material-symbols:cloud-upload",
+      iconColor: "var(--el-color-primary)",
+      description:
+        "选择默认的图片托管服务。设置后，上传图片时将自动使用该图床，无需每次手动选择。留空则每次提示选择。",
+      type: "select",
       model: models.defaultImageProvider,
       handler: handlers.onDefaultImageProviderChange,
       options: [
-        { label: '不自动选择（每次提示）', value: '' },
-        { label: 'Catbox', value: 'catbox' },
-        { label: 'ImgBB', value: 'imgbb' },
+        { label: "不自动选择（每次提示）", value: "" },
+        ...HOSTING_PROVIDER_OPTIONS,
       ],
-      placeholder: '请选择默认图床',
+      placeholder: "请选择默认图床",
     },
     {
-      id: 'autoSaveInterval',
-      label: '自动保存间隔',
-      icon: 'material-symbols:save-outline',
-      iconColor: 'var(--el-color-success)',
-      description: '设置编辑器中内容的自动保存间隔，范围：1-60秒 ',
-      type: 'numberInput',
+      id: "autoSaveInterval",
+      label: "自动保存间隔",
+      icon: "material-symbols:save-outline",
+      iconColor: "var(--el-color-success)",
+      description: "设置编辑器中内容的自动保存间隔，范围：1-60秒 ",
+      type: "numberInput",
       model: models.autoSaveInterval,
       handler: handlers.onAutoSaveIntervalChange,
       min: 1,
       max: 60,
       step: 1,
-      unit: '秒',
+      unit: "秒",
     },
     {
-      id: 'autoSaveDebounce',
-      label: '自动保存防抖',
-      icon: 'material-symbols:timer-outline',
-      iconColor: 'var(--el-color-warning)',
-      description: '监听模式下的防抖时间，范围：0.1-10秒 ',
-      type: 'numberInput',
+      id: "autoSaveDebounce",
+      label: "自动保存防抖",
+      icon: "material-symbols:timer-outline",
+      iconColor: "var(--el-color-warning)",
+      description: "监听模式下的防抖时间，范围：0.1-10秒 ",
+      type: "numberInput",
       model: models.autoSaveDebounce,
       handler: handlers.onAutoSaveDebounceChange,
       min: 0.1,
       max: 10,
       step: 0.1,
-      unit: '秒',
+      unit: "秒",
     },
   ];
 };

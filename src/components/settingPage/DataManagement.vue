@@ -1,31 +1,16 @@
 <template>
   <div>
-    <transition
-      name="snapshot-revert"
-      appear
-    >
-      <div
-        v-if="sync.state.snapshotAvailable.value"
-        class="snapshot-revert-container"
-      >
+    <transition name="snapshot-revert" appear>
+      <div v-if="sync.state.snapshotAvailable.value" class="snapshot-revert-container">
         <p class="snapshot-revert-text">
           已从云端获取新数据
           <br />
           您可以在这里
-          <el-button
-            type="primary"
-            link
-            @click="handleRevert"
-          >
+          <el-button type="primary" link @click="handleRevert">
             撤销
           </el-button>
           此操作，本次会话有效 ，或者
-          <el-button
-            type="primary"
-            style="color: red"
-            link
-            @click="handleHideSnapshotNotice"
-          >
+          <el-button type="primary" style="color: red" link @click="handleHideSnapshotNotice">
             隐藏
           </el-button>
           这条消息。
@@ -35,17 +20,22 @@
     <StorageInfoCard />
     <SyncCard />
     <LocalDataCard />
+    <LocalDirCard />
     <ClearDataCard />
   </div>
 </template>
 
 <script setup lang="ts">
-import { syncInjectionKey, useSync } from '@/composables/dataManagement/useSync';
-import { onMounted, provide } from 'vue';
-import ClearDataCard from './datamanage/ClearDataCard.vue';
-import LocalDataCard from './datamanage/LocalDataCard.vue';
-import StorageInfoCard from './datamanage/StorageInfoCard.vue';
-import SyncCard from './datamanage/SyncCard.vue';
+import {
+  syncInjectionKey,
+  useSync,
+} from "@/composables/dataManagement/useSync";
+import { onMounted, provide } from "vue";
+import ClearDataCard from "./datamanage/ClearDataCard.vue";
+import LocalDataCard from "./datamanage/LocalDataCard.vue";
+import LocalDirCard from "./datamanage/LocalDirCard.vue";
+import StorageInfoCard from "./datamanage/StorageInfoCard.vue";
+import SyncCard from "./datamanage/SyncCard.vue";
 
 const sync = useSync();
 provide(syncInjectionKey, sync);

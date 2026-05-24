@@ -84,6 +84,7 @@ declare module 'vue' {
     LandmarkEditor: typeof import('./src/components/worldeditor/editorPacel/LandmarkEditor.vue')['default']
     LandmarkNode: typeof import('./src/components/worldeditor/graph/LandmarkNode.vue')['default']
     LocalDataCard: typeof import('./src/components/settingPage/datamanage/LocalDataCard.vue')['default']
+    LocalDirCard: typeof import('./src/components/settingPage/datamanage/LocalDirCard.vue')['default']
     LogicBlockPanel: typeof import('./src/components/ejseditor/LogicBlockPanel.vue')['default']
     MobileBookmarkDrawer: typeof import('./src/components/ui/common/MobileBookmarkDrawer.vue')['default']
     MobileDrawer: typeof import('./src/components/ui/layout/MobileDrawer.vue')['default']
