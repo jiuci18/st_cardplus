@@ -108,7 +108,7 @@ export const getAppSettings = (models: AppSettingsModels, handlers: AppSettingsH
     {
       id: 'defaultImageProvider',
       label: '默认图床提供方',
-      icon: 'material-symbols:cloud-upload-outline',
+      icon: 'material-symbols:cloud-upload',
       iconColor: 'var(--el-color-primary)',
       description: '选择默认的图片托管服务。设置后，上传图片时将自动使用该图床，无需每次手动选择。留空则每次提示选择。',
       type: 'select',
