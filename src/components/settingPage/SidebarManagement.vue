@@ -129,11 +129,6 @@
                 <div class="item-info">
                   <div class="item-main-line">
                     <span class="item-title">{{ item.title }}</span>
-                    <div class="item-tags">
-                      <span v-if="item.showInTabBar" class="item-type tabbar-active">
-                        已添加
-                      </span>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -143,11 +138,6 @@
               </div>
             </div>
           </TransitionGroup>
-
-          <div v-if="visibleItems.length === 0" class="empty-state">
-            <Icon icon="heroicons:inbox" width="32" height="32" />
-            <p>没有可添加到快捷入口的项目</p>
-          </div>
         </div>
       </div>
     </div>
@@ -707,10 +697,6 @@ onUnmounted(() => {
   left: 0;
   right: 0;
 }
-</style>
-
-<style>
-/* VueDraggable 拖拽状态样式 */
 
 /* 占位符（插入位置指示线） */
 .sidebar-management .sortable-ghost {
