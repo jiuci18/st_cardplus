@@ -5,6 +5,7 @@ import { read as readPngMetadata } from '@/utils/pngCardMetadata';
 import { uploadImageFileToHosting } from '@/composables/useImageHosting';
 import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 import type { HostingProvider } from '@/utils/imageHosting';
+import { getSetting } from '@/utils/localStorageUtils';
 
 export interface CardImportUploadOptions {
   isDesktopApp?: boolean;
@@ -34,7 +35,13 @@ export function useCardImport(
       return;
     }
 
-    const provider = options.selectedProvider?.value ?? null;
+    let provider = options.selectedProvider?.value ?? null;
+    if (!provider) {
+      const defaultProvider = getSetting('defaultImageProvider');
+      if (defaultProvider === 'catbox' || defaultProvider === 'imgbb') {
+        provider = defaultProvider;
+      }
+    }
     if (!provider) {
       ElMessage.warning('请先选择图片上传驱动，本次仅加载到本地预览');
       return;

@@ -19,6 +19,7 @@ interface AppSettings {
   autoSaveInterval: number;
   autoSaveDebounce: number;
   imgbbApiKey: string;
+  defaultImageProvider: string;
   updateIgnoreUntil: string;
   autoExpandSidebar: boolean;
   mobileDominantHand: 'left' | 'right';
@@ -177,6 +178,7 @@ const defaultSettings: AppSettings = {
   autoSaveInterval: 5,
   autoSaveDebounce: 1.5,
   imgbbApiKey: '',
+  defaultImageProvider: '',
   updateIgnoreUntil: '',
   autoExpandSidebar: true,
   mobileDominantHand: 'right',
@@ -201,6 +203,10 @@ const normalizeSettingValue = <K extends AppSettingsKey>(key: K, value: AppSetti
   }
   if (key === 'updateIgnoreUntil') {
     return String(value ?? '').trim() as AppSettings[K];
+  }
+  if (key === 'defaultImageProvider') {
+    const v = String(value ?? '').trim().toLowerCase();
+    return (v === 'catbox' || v === 'imgbb' ? v : '') as AppSettings[K];
   }
   if (key === 'mobileDominantHand') {
     return (value === 'left' ? 'left' : 'right') as AppSettings[K];

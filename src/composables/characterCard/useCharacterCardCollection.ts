@@ -9,6 +9,7 @@ import { nowIso } from '@/utils/datetime';
 import { saveFile } from '@/utils/fileSave';
 import { isTauriApp, type HostingProvider } from '@/utils/imageHosting';
 import { uploadImageFileToHosting } from '@/composables/useImageHosting';
+import { getSetting } from '@/utils/localStorageUtils';
 
 export function useCharacterCardCollection() {
   const characterCardCollection = ref<CharacterCardCollection>({
@@ -302,24 +303,31 @@ export function useCharacterCardCollection() {
             );
 
             if (result === 'confirm') {
-              const providerResult = await ElMessageBox.prompt(
-                '请选择图床：输入 catbox 或 imgbb',
-                '选择图床',
-                {
-                  confirmButtonText: '确定',
-                  cancelButtonText: '取消',
-                  inputPlaceholder: 'catbox 或 imgbb',
-                  inputValidator: (value) => {
-                    const trimmed = value?.trim().toLowerCase();
-                    if (trimmed === 'catbox' || trimmed === 'imgbb') {
-                      return true;
-                    }
-                    return '请输入 catbox 或 imgbb';
-                  },
-                }
-              );
+              const defaultProvider = getSetting('defaultImageProvider');
+              let provider: HostingProvider;
 
-              const provider = (providerResult.value as string).trim().toLowerCase() as HostingProvider;
+              if (defaultProvider === 'catbox' || defaultProvider === 'imgbb') {
+                provider = defaultProvider;
+              } else {
+                const providerResult = await ElMessageBox.prompt(
+                  '请选择图床：输入 catbox 或 imgbb',
+                  '选择图床',
+                  {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    inputPlaceholder: 'catbox 或 imgbb',
+                    inputValidator: (value) => {
+                      const trimmed = value?.trim().toLowerCase();
+                      if (trimmed === 'catbox' || trimmed === 'imgbb') {
+                        return true;
+                      }
+                      return '请输入 catbox 或 imgbb';
+                    },
+                  }
+                );
+
+                provider = (providerResult.value as string).trim().toLowerCase() as HostingProvider;
+              }
               const providerName = provider === 'catbox' ? 'Catbox' : 'ImgBB';
 
               // 显示上传进度提示

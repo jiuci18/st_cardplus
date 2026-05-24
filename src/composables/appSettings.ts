@@ -32,7 +32,15 @@ interface PasswordInputSetting extends BaseSetting {
   placeholder?: string;
 }
 
-export type SettingOption = SwitchSetting | NumberInputSetting | PasswordInputSetting;
+interface SelectSetting extends BaseSetting {
+  type: 'select';
+  model: Ref<string>;
+  handler: (value: string) => void;
+  options: { label: string; value: string }[];
+  placeholder?: string;
+}
+
+export type SettingOption = SwitchSetting | NumberInputSetting | PasswordInputSetting | SelectSetting;
 
 interface AppSettingsModels {
   betaFeaturesEnabled: Ref<boolean>;
@@ -41,6 +49,7 @@ interface AppSettingsModels {
   autoSaveInterval: Ref<number>;
   autoSaveDebounce: Ref<number>;
   imgbbApiKey: Ref<string>;
+  defaultImageProvider: Ref<string>;
 }
 interface AppSettingsHandlers {
   onBetaFeaturesToggle: (value: boolean) => void;
@@ -49,6 +58,7 @@ interface AppSettingsHandlers {
   onAutoSaveIntervalChange: (value: number | undefined) => void;
   onAutoSaveDebounceChange: (value: number | undefined) => void;
   onImgbbApiKeyChange: (value: string) => void;
+  onDefaultImageProviderChange: (value: string) => void;
 }
 
 export const getAppSettings = (models: AppSettingsModels, handlers: AppSettingsHandlers): SettingOption[] => {
@@ -94,6 +104,22 @@ export const getAppSettings = (models: AppSettingsModels, handlers: AppSettingsH
       model: models.imgbbApiKey,
       handler: handlers.onImgbbApiKeyChange,
       placeholder: '请输入 ImgBB API Key',
+    },
+    {
+      id: 'defaultImageProvider',
+      label: '默认图床提供方',
+      icon: 'material-symbols:cloud-upload-outline',
+      iconColor: 'var(--el-color-primary)',
+      description: '选择默认的图片托管服务。设置后，上传图片时将自动使用该图床，无需每次手动选择。留空则每次提示选择。',
+      type: 'select',
+      model: models.defaultImageProvider,
+      handler: handlers.onDefaultImageProviderChange,
+      options: [
+        { label: '不自动选择（每次提示）', value: '' },
+        { label: 'Catbox', value: 'catbox' },
+        { label: 'ImgBB', value: 'imgbb' },
+      ],
+      placeholder: '请选择默认图床',
     },
     {
       id: 'autoSaveInterval',

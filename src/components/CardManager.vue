@@ -341,7 +341,9 @@ const handleImageUrlUpdate = (url: string) => {
 };
 
 const isDesktopApp = isTauriApp();
-const selectedProvider = ref<HostingProvider | null>(null);
+const selectedProvider = ref<HostingProvider | null>(
+  (getSetting('defaultImageProvider') as HostingProvider | '') || null
+);
 
 const avatarUrl = computed(() => {
   if (currentDraft.value.avatar && currentDraft.value.avatar !== 'none') {
