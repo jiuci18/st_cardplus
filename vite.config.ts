@@ -4,6 +4,9 @@ import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import { execSync } from 'child_process';
 import { readFileSync, writeFileSync } from 'fs';
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 type BuildChannel = 'stable' | 'dev';
 const outDir = 'dist';
@@ -72,6 +75,13 @@ export default defineConfig({
     vue(),
     tailwindcss(),
     buildMetadataPlugin(),
+    AutoImport({
+      resolvers: [ElementPlusResolver()],
+    }),
+    Components({
+      resolvers: [ElementPlusResolver()],
+    }),
+    buildMetadataPlugin(),
   ],
   resolve: {
     alias: {
@@ -79,7 +89,6 @@ export default defineConfig({
       'ejs': path.resolve(__dirname, 'node_modules/ejs/lib/cjs/ejs.js'),
       'fs': path.resolve(__dirname, 'src/polyfills/fs.js'),
       'path': path.resolve(__dirname, 'src/polyfills/path.js'),
-      'vue': 'vue/dist/vue.esm-bundler.js',
     },
   },
   define: {

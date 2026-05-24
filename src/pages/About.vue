@@ -4,10 +4,7 @@
     <div class="hero-card">
       <h1 class="hero-title">
         ST CardPlus
-        <span
-          v-if="isDevDomain"
-          class="dev-badge"
-        >
+        <span v-if="isDevDomain" class="dev-badge">
           DEV
         </span>
       </h1>
@@ -19,158 +16,76 @@
       </p>
     </div>
 
-    <!-- 公告横幅 -->
-    <SystemBanner
-      bannerId="docsContributionBanner2026"
-      startDate="2026-01-01"
-      endDate="2027-01-01"
-      message="想要贡献？来贡献文档吧！"
-      link="https://github.com/awaae001/doc"
-      linkText="参与文档贡献"
-      :dismissible="false"
-    />
+    <SystemBanner bannerId="docsContributionBanner2026" startDate="2026-01-01" endDate="2027-01-01"
+      message="想要贡献？来贡献文档吧！" link="https://github.com/awaae001/doc" linkText="参与文档贡献" :dismissible="false" />
 
     <!-- 快速链接 -->
     <div class="links-card">
       <h2 class="section-title">链接</h2>
       <div class="links-row">
-        <ExternalLink
-          href="https://github.com/jiuci18/st_cardplus"
-          class="link-item"
-        >
-          <Icon
-            icon="mdi:github"
-            width="16"
-            height="16"
-          />
+        <ExternalLink href="https://github.com/jiuci18/st_cardplus" class="link-item">
+          <Icon icon="mdi:github" width="16" height="16" />
           <span>
             GitHub
             <small>查看源码与贡献</small>
           </span>
         </ExternalLink>
-        <ExternalLink
-          href="https://doc.awaae001.top/"
-          class="link-item"
-        >
-          <Icon
-            icon="mdi:book-open-page-variant-outline"
-            width="16"
-            height="16"
-          />
+        <ExternalLink href="https://doc.awaae001.top/" class="link-item">
+          <Icon icon="mdi:book-open-page-variant-outline" width="16" height="16" />
           <span>
             文档站
             <small>查看使用文档</small>
           </span>
         </ExternalLink>
-        <ExternalLink
-          href="https://t.me/jiuci_channel"
-          class="link-item"
-        >
-          <Icon
-            icon="mdi:telegram"
-            width="16"
-            height="16"
-          />
+        <ExternalLink href="https://t.me/jiuci_channel" class="link-item">
+          <Icon icon="mdi:telegram" width="16" height="16" />
           <span>
             Telegram
             <small>获取帮助与反馈</small>
           </span>
         </ExternalLink>
-        <template v-if="isMainDomain">
-          <ExternalLink
-            href="https://dev.stcardplus.pages.dev/settings"
-            class="link-item"
-          >
-            <Icon
-              icon="material-symbols:build-circle-outline"
-              width="16"
-              height="16"
-            />
-            <span>
-              测试版
-              <small>抢先体验新功能</small>
-            </span>
-          </ExternalLink>
-        </template>
       </div>
     </div>
 
-    <!-- 更新日志卡片 -->
     <div class="changelog-card">
       <div class="changelog-header">
         <h2 class="section-title">更新日志</h2>
         <div class="branch-selector">
           <span class="branch-label">分支:</span>
-          <el-select
-            v-model="selectedBranch"
-            placeholder="选择分支"
-            size="small"
-            class="branch-select"
-          >
-            <el-option
-              v-for="branch in branches"
-              :key="branch.name"
-              :label="branch.name"
-              :value="branch.name"
-            />
+          <el-select v-model="selectedBranch" placeholder="选择分支" size="small" class="branch-select">
+            <el-option v-for="branch in branches" :key="branch.name" :label="branch.name" :value="branch.name" />
           </el-select>
         </div>
       </div>
 
       <div class="commits-list">
-        <!-- 使用 el-skeleton 骨架屏：单行布局匹配 commit-item 结构 -->
-        <el-skeleton
-          :loading="gitLogs.length === 0 && loading"
-          animated
-          :count="10"
+        <el-skeleton :loading="gitLogs.length === 0 && loading" animated :count="10"
           :throttle="{ initVal: true, leading: 300, trailing: 200 }"
-          style="display: flex; flex-direction: column; gap: 0.375rem"
-        >
+          style="display: flex; flex-direction: column; gap: 0.375rem">
           <template #template>
             <div class="commit-item commit-skeleton">
               <div class="commit-main">
-                <el-skeleton-item
-                  variant="text"
-                  style="width: 60%; height: 0.85rem"
-                />
+                <el-skeleton-item variant="text" style="width: 60%; height: 0.85rem" />
                 <div class="commit-meta">
-                  <el-skeleton-item
-                    variant="text"
-                    style="width: 3.5rem; height: 0.75rem"
-                  />
-                  <el-skeleton-item
-                    variant="text"
-                    style="width: 5rem; height: 0.75rem"
-                  />
+                  <el-skeleton-item variant="text" style="width: 3.5rem; height: 0.75rem" />
+                  <el-skeleton-item variant="text" style="width: 5rem; height: 0.75rem" />
                 </div>
               </div>
             </div>
           </template>
           <template #default>
-            <div
-              v-for="(log, index) in gitLogs"
-              :key="index"
-              class="commit-item"
-              @click="log.expanded = !log.expanded"
-            >
+            <div v-for="(log, index) in gitLogs" :key="index" class="commit-item" @click="log.expanded = !log.expanded">
               <div class="commit-main">
                 <span class="commit-message">{{ log.message }}</span>
                 <div class="commit-meta">
-                  <ExternalLink
-                    :href="log.html_url"
-                    class="commit-hash"
-                    @click.stop
-                  >
+                  <ExternalLink :href="log.html_url" class="commit-hash" @click.stop>
                     {{ log.sha.substring(0, 7) }}
                   </ExternalLink>
                   <span class="commit-date">{{ formatDate(log.date) }}</span>
                 </div>
               </div>
               <transition name="expand">
-                <div
-                  v-if="log.expanded"
-                  class="commit-details"
-                >
+                <div v-if="log.expanded" class="commit-details">
                   <pre>{{ log.fullMessage }}</pre>
                 </div>
               </transition>
@@ -179,19 +94,9 @@
         </el-skeleton>
       </div>
 
-      <button
-        @click="() => loadMore()"
-        :disabled="!hasMore || loading"
-        class="load-more-btn"
-        :class="{ 'is-loading': loading }"
-      >
-        <Icon
-          v-if="loading"
-          icon="eos-icons:loading"
-          width="18"
-          height="18"
-          class="loading-icon"
-        />
+      <button @click="() => loadMore()" :disabled="!hasMore || loading" class="load-more-btn"
+        :class="{ 'is-loading': loading }">
+        <Icon v-if="loading" icon="eos-icons:loading" width="18" height="18" class="loading-icon" />
         <span>{{ loading ? '加载中...' : hasMore ? '加载更多' : '没有更多了' }}</span>
       </button>
     </div>
@@ -242,7 +147,6 @@ const resolvePreferredBranch = (branchNames: string[]) => {
 
 const loadMore = async (isBranchChange = false) => {
   if ((!hasMore.value || loading.value) && !isBranchChange) return;
-
   loading.value = true;
   if (isBranchChange) {
     page.value = 1;
@@ -255,7 +159,6 @@ const loadMore = async (isBranchChange = false) => {
       `https://api.github.com/repos/jiuci18/st_cardplus/commits?sha=${selectedBranch.value}&per_page=10&page=${page.value}`
     );
     const commits: Commit[] = await response.json();
-
     if (commits.length < 10) {
       hasMore.value = false;
     }
@@ -271,15 +174,8 @@ const loadMore = async (isBranchChange = false) => {
         expanded: false,
       };
     });
-
-    // 分支切换时原子替换数据，加载更多时追加
     gitLogs.value = isBranchChange ? newLogs : [...gitLogs.value, ...newLogs];
     page.value++;
-
-    // 成功反馈
-    if (!isBranchChange && newLogs.length > 0) {
-      ElMessage.success(`已加载 ${newLogs.length} 条记录`);
-    }
   } catch (error) {
     console.error('Failed to fetch git logs:', error);
     ElMessage.error('加载失败，请稍后重试');
@@ -321,7 +217,7 @@ watch(selectedBranch, (newBranch) => {
   min-height: 100%;
 }
 
-.about-page > * + * {
+.about-page>*+* {
   margin-top: 1rem;
 }
 
@@ -520,6 +416,7 @@ watch(selectedBranch, (newBranch) => {
 .commit-hash:hover {
   text-decoration: underline;
 }
+
 .commit-date {
   white-space: nowrap;
 }
@@ -569,6 +466,7 @@ watch(selectedBranch, (newBranch) => {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
 .loading-icon {
   animation: spin 1s linear infinite;
 }
