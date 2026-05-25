@@ -55,6 +55,7 @@ interface AppSettingsModels {
   autoSaveDebounce: Ref<number>;
   imgbbApiKey: Ref<string>;
   defaultImageProvider: Ref<string>;
+  pngImportUploadBehavior: Ref<string>;
 }
 interface AppSettingsHandlers {
   onBetaFeaturesToggle: (value: boolean) => void;
@@ -64,6 +65,7 @@ interface AppSettingsHandlers {
   onAutoSaveDebounceChange: (value: number | undefined) => void;
   onImgbbApiKeyChange: (value: string) => void;
   onDefaultImageProviderChange: (value: string) => void;
+  onPngImportUploadBehaviorChange: (value: string) => void;
 }
 
 export const getAppSettings = (
@@ -131,6 +133,23 @@ export const getAppSettings = (
         ...HOSTING_PROVIDER_OPTIONS,
       ],
       placeholder: "请选择默认图床",
+    },
+    {
+      id: "pngImportUploadBehavior",
+      label: "PNG角色卡导入图片处理",
+      icon: "material-symbols:image-outline",
+      iconColor: "var(--el-color-primary)",
+      description:
+        "批量导入PNG角色卡时的默认图片处理行为。始终询问 为当前默认行为；设为 始终上传 或 始终跳过 可跳过每张卡的弹窗询问。",
+      type: "select",
+      model: models.pngImportUploadBehavior,
+      handler: handlers.onPngImportUploadBehaviorChange,
+      options: [
+        { label: "始终询问", value: "ask" },
+        { label: "始终上传到图床", value: "upload" },
+        { label: "始终跳过", value: "skip" },
+      ],
+      placeholder: "请选择默认行为",
     },
     {
       id: "autoSaveInterval",

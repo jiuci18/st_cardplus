@@ -23,6 +23,7 @@ interface AppSettings {
   updateIgnoreUntil: string;
   autoExpandSidebar: boolean;
   mobileDominantHand: "left" | "right";
+  pngImportUploadBehavior: "ask" | "upload" | "skip";
   sidebarConfig: SidebarConfig;
 }
 
@@ -184,6 +185,7 @@ const defaultSettings: AppSettings = {
   updateIgnoreUntil: "",
   autoExpandSidebar: true,
   mobileDominantHand: "right",
+  pngImportUploadBehavior: "ask",
   sidebarConfig: createDefaultSidebarConfig(),
 };
 
@@ -219,6 +221,12 @@ const normalizeSettingValue = <K extends AppSettingsKey>(
   }
   if (key === "mobileDominantHand") {
     return (value === "left" ? "left" : "right") as AppSettings[K];
+  }
+  if (key === "pngImportUploadBehavior") {
+    const v = String(value ?? "").trim().toLowerCase();
+    return (
+      v === "upload" || v === "skip" ? v : "ask"
+    ) as AppSettings[K];
   }
   return value;
 };
