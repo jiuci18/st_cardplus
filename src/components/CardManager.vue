@@ -5,14 +5,14 @@
         @reorder-tabs="reorderTabs" />
 
       <div class="tab-content-area">
-        <div v-if="currentTab?.type === 'home'" class="tab-content-panel">
+        <div v-show="currentTab?.type === 'home'" class="tab-content-panel">
           <CharacterCardHome :collection="characterCardCollection" @open-card="handleOpenCardFromHome"
             @create-new="handleCreateNewCard" @rename-card="handleRenameCard" @delete-card="handleDeleteCard"
             @export-card="handleExportCard" @export-all="handleExportAllCards" @import-file="handleImportFromFile"
             @clear-all="handleClearAllCards" />
         </div>
 
-        <div v-else-if="currentTab?.type === 'character-card'" class="tab-content-panel">
+        <div v-if="currentTab?.type === 'character-card'" class="tab-content-panel">
           <div class="card-manager-panel-editor">
             <div class="content-panel-header">
               <h2 class="content-panel-title">
@@ -44,7 +44,7 @@
                     <Icon icon="ph:file-image-duotone" v-if="!isUploading" />
                     <span class="button-text">{{
                       isUploading ? uploadProgress : "加载PNG"
-                      }}</span>
+                    }}</span>
                   </el-button>
                 </BrowserFilePicker>
                 <el-button type="success" @click="handleSave" size="small">
