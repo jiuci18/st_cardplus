@@ -38,15 +38,12 @@ export function useTabManager() {
 
   // 当前激活的标签页 ID
   const activeTabId = ref<string>('home');
-
-  // 从 sessionStorage 恢复标签页状态
   const restoreTabsFromStorage = () => {
     try {
       const storedTabs = readSessionStorageJSON<Tab[]>('characterCardTabs');
       const storedActiveTab = getSessionStorageItem('characterCardActiveTab');
 
       if (storedTabs) {
-        // 确保主页标签始终存在
         if (!storedTabs.find((t) => t.id === 'home')) {
           storedTabs.unshift({
             id: 'home',
@@ -126,16 +123,12 @@ export function useTabManager() {
     const tab = tabs.value[index];
     // 主页标签不可关闭
     if (!tab.closable) return;
-
-    // 如果关闭的是当前激活的标签页，需要切换到其他标签
     if (activeTabId.value === tabId) {
-      // 优先切换到右侧标签，否则切换到左侧标签
       if (index < tabs.value.length - 1) {
         activeTabId.value = tabs.value[index + 1].id;
       } else if (index > 0) {
         activeTabId.value = tabs.value[index - 1].id;
       } else {
-        // 只剩主页
         activeTabId.value = 'home';
       }
     }
