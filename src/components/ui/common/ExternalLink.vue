@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { openExternalUrl } from '@/utils/externalLink';
+import { openExternalUrl } from '@/utils/system/externalLink';
 
 const props = defineProps<{
   href: string;

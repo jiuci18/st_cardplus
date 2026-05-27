@@ -13,7 +13,7 @@ import { nowIso } from '@/utils/datetime';
 import { pickRandomRegionColor } from '@/utils/worldeditor/regionColors';
 import { normalizeLandmarkHierarchy, removeLandmarkFromHierarchy } from '@/utils/worldeditor/landmarkHierarchy';
 import { removeLandmarkLinksForIds } from '@/composables/worldeditor/graph/worldGraphLinks';
-import { saveFile } from '@/utils/fileSave';
+import { saveFile } from '@/utils/system/fileSave';
 import { ElMessage } from 'element-plus';
 
 const WORLD_EDITOR_DATA_KEY = 'world-editor-data';
@@ -178,26 +178,21 @@ export function useWorldEditor() {
   };
 
   const handleDelete = (item: Project | EnhancedLandmark | EnhancedForce | EnhancedRegion | ProjectIntegration) => {
-    // ProjectIntegration cannot be deleted, it's a virtual node
     if ('type' in item && item.type === 'integration') {
       console.warn('Integration nodes cannot be deleted.');
       return;
     }
 
     if ('projectId' in item) {
-      // Landmark, Force, or Region
       if ('importance' in item) {
-        // Landmark
         removeLandmarkLinksForIds(landmarks.value, new Set([item.id]));
         removeLandmarkFromHierarchy(landmarks.value, item.id);
         const index = landmarks.value.findIndex((l) => l.id === item.id);
         if (index > -1) landmarks.value.splice(index, 1);
       } else if ('power' in item) {
-        // Force
         const index = forces.value.findIndex((f) => f.id === item.id);
         if (index > -1) forces.value.splice(index, 1);
       } else {
-        // Region
         const index = regions.value.findIndex((r) => r.id === item.id);
         if (index > -1) regions.value.splice(index, 1);
         landmarks.value.forEach((landmark) => {
@@ -207,7 +202,6 @@ export function useWorldEditor() {
         });
       }
     } else if ('createdAt' in item) {
-      // Project
       const project = item as Project;
       if (projects.value.length <= 1) {
         console.warn('Cannot delete the last project.');

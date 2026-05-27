@@ -1,19 +1,18 @@
-import { createClient } from 'webdav';
-import type { WebDAVClientOptions } from 'webdav';
+import { createClient } from "webdav";
+import type { WebDAVClientOptions } from "webdav";
+import { isTauriApp } from "@/utils/system/tauri";
 
 export interface WebDAVConnectionOptions extends WebDAVClientOptions {
   url: string;
 }
 
-type TauriWebDAVAction = 'test' | 'upload' | 'download';
+type TauriWebDAVAction = "test" | "upload" | "download";
 
-const isTauriApp = (): boolean => {
-  if (typeof window === 'undefined') return false;
-  return '__TAURI_INTERNALS__' in window;
-};
-
-async function invokeTauri<T>(cmd: string, args: Record<string, unknown>): Promise<T> {
-  const { invoke } = await import('@tauri-apps/api/core');
+async function invokeTauri<T>(
+  cmd: string,
+  args: Record<string, unknown>,
+): Promise<T> {
+  const { invoke } = await import("@tauri-apps/api/core");
   return invoke<T>(cmd, args);
 }
 
@@ -21,13 +20,13 @@ function buildTauriWebDAVArgs(
   options: WebDAVConnectionOptions,
   action: TauriWebDAVAction,
   remotePath?: string,
-  data?: string
+  data?: string,
 ) {
   return {
     action,
     url: options.url,
-    username: options.username || '',
-    password: options.password || '',
+    username: options.username || "",
+    password: options.password || "",
     remotePath,
     remote_path: remotePath,
     data,
@@ -38,9 +37,12 @@ async function tauriWebDAVRequest<T>(
   options: WebDAVConnectionOptions,
   action: TauriWebDAVAction,
   remotePath?: string,
-  data?: string
+  data?: string,
 ) {
-  return invokeTauri<T>('webdav_request', buildTauriWebDAVArgs(options, action, remotePath, data));
+  return invokeTauri<T>(
+    "webdav_request",
+    buildTauriWebDAVArgs(options, action, remotePath, data),
+  );
 }
 
 /**
@@ -56,13 +58,13 @@ function createWebDAVClient(options: WebDAVConnectionOptions) {
 }
 
 function buildWebDAVUrl(baseUrl: string, remotePath: string) {
-  const normalizedBase = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
   return new URL(remotePath, normalizedBase).toString();
 }
 
 function buildAuthHeader(options: WebDAVConnectionOptions) {
   if (!options.username && !options.password) return null;
-  const token = btoa(`${options.username ?? ''}:${options.password ?? ''}`);
+  const token = btoa(`${options.username ?? ""}:${options.password ?? ""}`);
   return `Basic ${token}`;
 }
 
@@ -70,10 +72,10 @@ export async function uploadToWebDAVWithProgress(
   options: WebDAVConnectionOptions,
   remotePath: string,
   data: string,
-  onProgress?: (progress: number) => void
+  onProgress?: (progress: number) => void,
 ) {
   if (isTauriApp()) {
-    await tauriWebDAVRequest<void>(options, 'upload', remotePath, data);
+    await tauriWebDAVRequest<void>(options, "upload", remotePath, data);
     onProgress?.(1);
     return;
   }
@@ -83,9 +85,9 @@ export async function uploadToWebDAVWithProgress(
 
   await new Promise<void>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('PUT', url, true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    if (authHeader) xhr.setRequestHeader('Authorization', authHeader);
+    xhr.open("PUT", url, true);
+    xhr.setRequestHeader("Content-Type", "application/json");
+    if (authHeader) xhr.setRequestHeader("Authorization", authHeader);
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && onProgress) {
@@ -101,7 +103,7 @@ export async function uploadToWebDAVWithProgress(
       }
     };
 
-    xhr.onerror = () => reject(new Error('网络错误'));
+    xhr.onerror = () => reject(new Error("网络错误"));
     xhr.send(data);
   });
 }
@@ -109,10 +111,18 @@ export async function uploadToWebDAVWithProgress(
 export async function downloadFromWebDAVWithProgress(
   options: WebDAVConnectionOptions,
   remotePath: string,
-  onProgress?: (progress: { loaded: number; total?: number; lengthComputable?: boolean }) => void
+  onProgress?: (progress: {
+    loaded: number;
+    total?: number;
+    lengthComputable?: boolean;
+  }) => void,
 ): Promise<string> {
   if (isTauriApp()) {
-    const content = await tauriWebDAVRequest<string>(options, 'download', remotePath);
+    const content = await tauriWebDAVRequest<string>(
+      options,
+      "download",
+      remotePath,
+    );
     const size = new TextEncoder().encode(content).length;
     onProgress?.({ loaded: size, total: size, lengthComputable: true });
     return content;
@@ -123,8 +133,8 @@ export async function downloadFromWebDAVWithProgress(
 
   return await new Promise<string>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    if (authHeader) xhr.setRequestHeader('Authorization', authHeader);
+    xhr.open("GET", url, true);
+    if (authHeader) xhr.setRequestHeader("Authorization", authHeader);
 
     xhr.onprogress = (event) => {
       if (onProgress) {
@@ -144,7 +154,7 @@ export async function downloadFromWebDAVWithProgress(
       }
     };
 
-    xhr.onerror = () => reject(new Error('网络错误'));
+    xhr.onerror = () => reject(new Error("网络错误"));
     xhr.send();
   });
 }
@@ -154,13 +164,15 @@ export async function downloadFromWebDAVWithProgress(
  * @param options - WebDAV 连接选项
  * @returns Promise<void>
  */
-export async function testWebDAVConnection(options: WebDAVConnectionOptions): Promise<void> {
+export async function testWebDAVConnection(
+  options: WebDAVConnectionOptions,
+): Promise<void> {
   if (isTauriApp()) {
-    await tauriWebDAVRequest<void>(options, 'test');
+    await tauriWebDAVRequest<void>(options, "test");
     return;
   }
 
   const client = createWebDAVClient(options);
   // 尝试列出根目录的内容来验证连接
-  await client.getDirectoryContents('/');
+  await client.getDirectoryContents("/");
 }

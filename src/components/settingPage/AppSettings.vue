@@ -205,7 +205,7 @@
 import ExternalLink from '@/components/ui/common/ExternalLink.vue';
 import { getAppSettings } from '@/composables/appSettings';
 import { useAppUpdate } from '@/composables/useAppUpdate';
-import { openExternalUrl } from '@/utils/externalLink';
+import { openExternalUrl } from '@/utils/system/externalLink';
 import { isTauriApp } from '@/utils/imageHosting';
 import { getSetting, setSetting } from '@/utils/localStorageUtils';
 import { Icon } from '@iconify/vue';

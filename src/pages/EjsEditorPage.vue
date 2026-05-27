@@ -1,36 +1,19 @@
 <template>
   <div class="ejs-editor-page">
     <!-- 错误提示 -->
-    <div
-      v-if="store.hasErrors"
-      class="error-banner"
-    >
-      <el-alert
-        v-for="error in store.errors"
-        :key="error.message"
-        :title="error.message"
-        type="error"
-        :closable="false"
-        class="mb-2"
-      />
+    <div v-if="store.hasErrors" class="error-banner">
+      <el-alert v-for="error in store.errors" :key="error.message" :title="error.message" type="error" :closable="false"
+        class="mb-2" />
     </div>
 
     <!-- 主内容区域 -->
     <div class="main-content">
-      <div
-        v-if="isMobileOrTablet"
-        class="mobile-layout"
-      >
+      <div v-if="isMobileOrTablet" class="mobile-layout">
         <div class="mobile-stage-panel">
           <LogicBlockPanel />
         </div>
-        <MobileBookmarkDrawer
-          v-model:visible="mobileDrawerVisible"
-          v-model:active-tab="mobileBookmarkTab"
-          :items="mobileBookmarkItems"
-          drawer-size="88%"
-          :group-style="mobileBookmarkGroupStyle"
-        >
+        <MobileBookmarkDrawer v-model:visible="mobileDrawerVisible" v-model:active-tab="mobileBookmarkTab"
+          :items="mobileBookmarkItems" drawer-size="88%" :group-style="mobileBookmarkGroupStyle">
           <template #pane-preview>
             <PreviewPanel />
           </template>
@@ -43,26 +26,13 @@
             <div class="mobile-panel mobile-config-panel">
               <div class="sidebar-actions mobile-sidebar-actions">
                 <el-button-group>
-                  <el-button
-                    :icon="DocumentAdd"
-                    @click="handleImportConfig"
-                    size="small"
-                  >
+                  <el-button :icon="DocumentAdd" @click="handleImportConfig" size="small">
                     导入配置
                   </el-button>
-                  <el-button
-                    :icon="Download"
-                    @click="handleExportConfig"
-                    size="small"
-                  >
+                  <el-button :icon="Download" @click="handleExportConfig" size="small">
                     导出配置
                   </el-button>
-                  <el-button
-                    :icon="RefreshLeft"
-                    @click="handleClearAll"
-                    size="small"
-                    type="warning"
-                  >
+                  <el-button :icon="RefreshLeft" @click="handleClearAll" size="small" type="warning">
                     清空
                   </el-button>
                 </el-button-group>
@@ -82,60 +52,29 @@
       </div>
 
       <!-- 桌面端布局 -->
-      <splitpanes
-        v-else
-        class="default-theme"
-        :horizontal="false"
-      >
+      <splitpanes v-else class="default-theme" :horizontal="false">
         <!-- 项目和方案管理侧边栏 -->
-        <pane
-          min-size="15"
-          size="20"
-        >
+        <pane min-size="15" size="20">
           <div class="sidebar-panel">
             <div class="sidebar-content">
-              <el-tabs
-                v-model="activeSidebarTab"
-                class="h-full"
-              >
-                <el-tab-pane
-                  label="ejs生成器"
-                  name="projects"
-                  class="h-full"
-                >
+              <el-tabs v-model="activeSidebarTab" class="h-full">
+                <el-tab-pane label="ejs生成器" name="projects" class="h-full">
                   <ProjectManager />
                 </el-tab-pane>
               </el-tabs>
             </div>
             <div class="sidebar-actions">
-              <el-button
-                @click="toggleCenterPanel"
-                :icon="centerPanelVisible ? Hide : View"
-                size="small"
-              >
+              <el-button @click="toggleCenterPanel" :icon="centerPanelVisible ? Hide : View" size="small">
                 {{ centerPanelVisible ? '隐藏编辑器' : '显示编辑器' }}
               </el-button>
               <el-button-group>
-                <el-button
-                  :icon="DocumentAdd"
-                  @click="handleImportConfig"
-                  size="small"
-                >
+                <el-button :icon="DocumentAdd" @click="handleImportConfig" size="small">
                   导入配置
                 </el-button>
-                <el-button
-                  :icon="Download"
-                  @click="handleExportConfig"
-                  size="small"
-                >
+                <el-button :icon="Download" @click="handleExportConfig" size="small">
                   导出配置
                 </el-button>
-                <el-button
-                  :icon="RefreshLeft"
-                  @click="handleClearAll"
-                  size="small"
-                  type="warning"
-                >
+                <el-button :icon="RefreshLeft" @click="handleClearAll" size="small" type="warning">
                   清空
                 </el-button>
               </el-button-group>
@@ -143,53 +82,27 @@
           </div>
         </pane>
         <!-- 左侧面板 -->
-        <pane
-          min-size="20"
-          size="50"
-        >
+        <pane min-size="20" size="50">
           <div class="left-panel">
-            <el-tabs
-              v-model="activeLeftTab"
-              class="h-full"
-            >
-              <el-tab-pane
-                label="变量配置"
-                name="variables"
-                class="h-full"
-              >
+            <el-tabs v-model="activeLeftTab" class="h-full">
+              <el-tab-pane label="变量配置" name="variables" class="h-full">
                 <VariablePanel />
               </el-tab-pane>
-              <el-tab-pane
-                label="阶段管理"
-                name="stages"
-                class="h-full"
-              >
+              <el-tab-pane label="阶段管理" name="stages" class="h-full">
                 <LogicBlockPanel />
               </el-tab-pane>
             </el-tabs>
           </div>
         </pane>
-        <pane
-          v-if="centerPanelVisible"
-          min-size="30"
-        >
+        <pane v-if="centerPanelVisible" min-size="30">
           <div class="center-panel">
             <div class="panel-header">
               <h3>模板编辑器</h3>
               <div class="header-actions">
-                <el-button
-                  :icon="CopyDocument"
-                  @click="copyToClipboard"
-                  size="small"
-                  type="primary"
-                >
+                <el-button :icon="CopyDocument" @click="copyToClipboard" size="small" type="primary">
                   复制代码
                 </el-button>
-                <el-button
-                  :icon="RefreshRight"
-                  @click="store.generateEjsTemplate"
-                  size="small"
-                >
+                <el-button :icon="RefreshRight" @click="store.generateEjsTemplate" size="small">
                   重新生成
                 </el-button>
               </div>
@@ -197,27 +110,13 @@
             <TemplateEditor />
           </div>
         </pane>
-        <pane
-          min-size="20"
-          size="30"
-        >
+        <pane min-size="20" size="30">
           <div class="right-panel">
-            <el-tabs
-              v-model="activeRightTab"
-              class="h-full"
-            >
-              <el-tab-pane
-                label="代码预览"
-                name="preview"
-                class="h-full"
-              >
+            <el-tabs v-model="activeRightTab" class="h-full">
+              <el-tab-pane label="代码预览" name="preview" class="h-full">
                 <PreviewPanel />
               </el-tab-pane>
-              <el-tab-pane
-                label="模拟测试"
-                name="simulation"
-                class="h-full"
-              >
+              <el-tab-pane label="模拟测试" name="simulation" class="h-full">
                 <SimulationPanel />
               </el-tab-pane>
             </el-tabs>
@@ -233,14 +132,14 @@ import { useEjsEditorStore } from '@/composables/ejs/ejsEditor';
 import { useDevice } from '@/composables/useDevice';
 import { copyToClipboard as copyTextToClipboard } from '@/utils/clipboard';
 import { nowIso } from '@/utils/datetime';
-import { saveFile } from '@/utils/fileSave';
+import { saveFile } from '@/utils/system/fileSave';
+import { getSetting } from '@/utils/localStorageUtils';
 import { CopyDocument, DocumentAdd, Download, Hide, RefreshLeft, RefreshRight, View } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Pane, Splitpanes } from 'splitpanes';
 import 'splitpanes/dist/splitpanes.css';
-import { onMounted, ref } from 'vue';
+import { onMounted, ref, watch } from 'vue';
 
-// 组件导入
 import LogicBlockPanel from '@/components/ejseditor/LogicBlockPanel.vue';
 import MobileBookmarkDrawer from '@/components/ui/common/MobileBookmarkDrawer.vue';
 import PreviewPanel from '@/components/ejseditor/PreviewPanel.vue';
@@ -284,7 +183,6 @@ async function handleImportConfig() {
     if (file) {
       const config = JSON.parse(file);
 
-      // 如果有现有项目，询问用户导入方式
       if (store.projects.length > 0) {
         const importType = await ElMessageBox.confirm('选择导入方式：', '导入配置', {
           confirmButtonText: '创建新项目',
@@ -304,7 +202,7 @@ async function handleImportConfig() {
         } else if (importType === 'replace') {
           store.importConfig(config, true);
         } else {
-          return; // 用户取消
+          return;
         }
       } else {
         // 没有现有项目时直接导入
@@ -352,9 +250,7 @@ async function copyToClipboard() {
 
 // 页面加载时的初始化
 onMounted(() => {
-  // 初始化项目管理
   store.initializeStore();
-  // 可以在这里加载本地存储的数据
   const saved = localStorage.getItem('ejs-editor-projects');
   if (saved) {
     try {
@@ -369,15 +265,12 @@ onMounted(() => {
           }
         }
       }
-    } catch {}
+    } catch { }
   }
 });
 
-// 监听状态变化，自动保存到本地存储
-import { watch } from 'vue';
 let saveStateTimer: NodeJS.Timeout | null = null;
 
-// 监听项目状态变化，自动保存到本地存储
 watch(
   [
     () => store.projects.length,
@@ -394,9 +287,9 @@ watch(
           timestamp: nowIso(),
         };
         localStorage.setItem('ejs-editor-projects', JSON.stringify(saveData));
-      } catch {}
+      } catch { }
       saveStateTimer = null;
-    }, 1000); // 1秒防抖，减少保存频率
+    }, getSetting('autoSaveDebounce') * 1000);
   },
   { deep: true }
 );
@@ -468,8 +361,10 @@ watch(
   align-items: center;
   padding: 16px 20px;
   border-bottom: 1px solid var(--el-border-color-light);
-  order: -1; /* 确保 header 在最前面 */
-  flex-shrink: 0; /* 防止压缩 */
+  order: -1;
+  /* 确保 header 在最前面 */
+  flex-shrink: 0;
+  /* 防止压缩 */
 }
 
 .panel-header h3 {

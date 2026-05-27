@@ -40,7 +40,7 @@ import { provideNavigation } from '@/composables/useNavigation';
 import { usePersonalization } from '@/composables/usePersonalization';
 import { syncUmamiTelemetry } from '@/composables/useUmamiTelemetry';
 
-import { installExternalLinkInterceptor } from '@/utils/externalLink';
+import { installExternalLinkInterceptor } from '@/utils/system/externalLink';
 import { getSetting } from '@/utils/localStorageUtils';
 
 const { sidebarConfig, refreshSidebarConfig } = usePersonalization();

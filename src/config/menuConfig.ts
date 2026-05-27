@@ -252,7 +252,6 @@ export const validateMenuConfig = (config: SidebarConfig): boolean => {
     return false;
   }
 
-  // 检查必要的固定项目是否存在
   const requiredFixedItems = ['home', 'toolbox'];
   const hasRequiredItems = requiredFixedItems.every((id) => config.items.some((item) => item.id === id && item.fixed));
 

@@ -8,7 +8,6 @@ function fallbackCopyToClipboard(text: string): boolean {
   const textArea = document.createElement('textarea');
   textArea.value = text;
 
-  // 避免滚动到底部
   textArea.style.top = '0';
   textArea.style.left = '0';
   textArea.style.position = 'fixed';
@@ -47,14 +46,13 @@ export async function copyToClipboard(
       return;
     }
 
-    // 降级到传统方法
     console.warn('navigator.clipboard 不可用，使用降级方案');
     const success = fallbackCopyToClipboard(text);
 
     if (success) {
       ElMessage.success(successMessage);
     } else {
-      throw new Error('降级复制方法也失败了');
+      throw new Error('错误，无法处理的问题');
     }
   } catch (error) {
     console.error('复制到剪贴板时出错:', error);

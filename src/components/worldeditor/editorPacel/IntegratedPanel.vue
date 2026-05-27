@@ -212,7 +212,7 @@ import type {
 import { formatRoadLinkLabel, getRoadConnectionLengthText } from '@/composables/worldeditor/graph/worldGraphLinks';
 import { copyToClipboard } from '@/utils/clipboard';
 import { cleanObject, removeEmptyFields } from '@/utils/objectUtils';
-import { saveFile } from '@/utils/fileSave';
+import { saveFile } from '@/utils/system/fileSave';
 import { getParentLandmarkId } from '@/utils/worldeditor/landmarkHierarchy';
 import { getForceTypeLabel, getLandmarkTypeLabel } from '@/utils/worldeditor/typeMeta';
 import { Icon } from '@iconify/vue';

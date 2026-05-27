@@ -175,7 +175,7 @@ import { useRegexDragDrop } from '@/composables/regex/useRegexDragDrop';
 import { useRegexSimulator } from '@/composables/regex/useRegexSimulator';
 import { useDevice } from '@/composables/useDevice';
 import { nowIso } from '@/utils/datetime';
-import { saveFile } from '@/utils/fileSave';
+import { saveFile } from '@/utils/system/fileSave';
 import { DocumentAdd, Download, Hide, Plus, View } from '@element-plus/icons-vue';
 import { Icon } from '@iconify/vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
@@ -183,7 +183,6 @@ import { Pane, Splitpanes } from 'splitpanes';
 import 'splitpanes/dist/splitpanes.css';
 import { computed, nextTick, ref, watch } from 'vue';
 
-// 组件导入
 import RegexAdvancedSettings from '@/components/regex/RegexAdvancedSettings.vue';
 import RegexEditorCore from '@/components/regex/RegexEditorCore.vue';
 import RegexScriptList from '@/components/regex/RegexScriptList.vue';
@@ -194,7 +193,6 @@ const { isMobileOrTablet } = useDevice();
 const testerPanelVisible = ref(true);
 const mobileActivePanel = ref('scripts');
 
-// 使用新的集合管理
 const {
   regexCollection,
   activeCategoryId,
@@ -213,7 +211,6 @@ const {
 
 // 拖拽功能
 const dragDropHandlers = useRegexDragDrop(regexCollection, moveScriptBetweenCategories, updateCategoryScripts);
-
 const handleCreateCategory = createCategory;
 const handleRenameCategory = renameCategory;
 const handleDeleteCategory = deleteCategory;
@@ -344,7 +341,6 @@ async function handleExportScript() {
 }
 
 async function handleExportSingleScript(scriptId: string) {
-  // 在所有类别中查找该脚本
   let script: SillyTavernRegexScript | undefined;
   for (const category of Object.values(regexCollection.value.categories)) {
     script = category.scripts.find((s) => s.id === scriptId);

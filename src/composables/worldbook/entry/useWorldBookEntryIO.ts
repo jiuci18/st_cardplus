@@ -2,7 +2,7 @@ import { ElMessage } from 'element-plus';
 import { copyToClipboard } from '../../../utils/clipboard';
 import type { WorldBookEntry, WorldBook } from '@/types/worldbook';
 import type { Ref } from 'vue';
-import { saveFile } from '../../../utils/fileSave';
+import { saveFile } from '../../../utils/system/fileSave';
 
 type EntryState = {
   activeBook: Ref<WorldBook | null>;

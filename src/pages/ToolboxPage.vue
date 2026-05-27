@@ -4,7 +4,6 @@ import { getHiddenMenuItems, type MenuItemConfig } from '@/utils/localStorageUti
 import { Icon } from '@iconify/vue';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
-// 工具箱项目类型
 interface ToolboxDisplayItem {
   id: string;
   title: string;
