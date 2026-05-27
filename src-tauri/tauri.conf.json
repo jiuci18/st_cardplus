@@ -16,7 +16,8 @@
         "width": 1620,
         "height": 780,
         "resizable": true,
-        "zoomHotkeysEnabled": true
+        "zoomHotkeysEnabled": true,
+        "dragDropEnabled": false
       }
     ],
     "security": {
