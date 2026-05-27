@@ -9,7 +9,7 @@
           <CharacterCardHome :collection="characterCardCollection" @open-card="handleOpenCardFromHome"
             @create-new="handleCreateNewCard" @rename-card="handleRenameCard" @delete-card="handleDeleteCard"
             @export-card="handleExportCard" @export-all="handleExportAllCards" @import-file="handleImportFromFile"
-            @clear-all="handleClearAllCards" />
+            @clear-all="handleClearAllCards" @delete-selected="handleDeleteSelectedCards" />
         </div>
 
         <div v-if="currentTab?.type === 'character-card'" class="tab-content-panel">
@@ -155,6 +155,7 @@ import {
   ElButton,
   ElDivider,
   ElMessage,
+  ElMessageBox,
   ElOption,
   ElSelect,
   ElTabPane,
@@ -513,6 +514,27 @@ const handleDeleteCard = async (cardId: string) => {
   await handleDeleteCardOriginal(cardId);
   closeCharacterCardTab(cardId);
   closeSession(cardId);
+};
+
+const handleDeleteSelectedCards = async (cardIds: string[]) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${cardIds.length} 张角色卡吗？此操作不可撤销。`,
+      '确认删除',
+      {
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+  } catch {
+    return;
+  }
+  for (const cardId of cardIds) {
+    await handleDeleteCardOriginal(cardId);
+    closeCharacterCardTab(cardId);
+    closeSession(cardId);
+  }
 };
 
 const handleClearAllCards = async () => {

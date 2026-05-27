@@ -7,6 +7,9 @@
         <span class="home-count">{{ cardCount }} 个角色</span>
       </div>
       <div class="home-actions">
+        <el-button @click="handleInvertSelection" :icon="Switch" :disabled="filteredCards.length === 0">
+          反选
+        </el-button>
         <el-button type="success" @click="emit('create-new')" :icon="Plus">
           创建角色卡
         </el-button>
@@ -22,7 +25,10 @@
               <el-dropdown-item command="export-all" :icon="Download">
                 导出全部
               </el-dropdown-item>
-              <el-dropdown-item command="clear-all" :icon="Delete" divided>
+              <el-dropdown-item v-if="hasCheckedCards" command="delete-selected" :icon="Delete" divided>
+                删除所选
+              </el-dropdown-item>
+              <el-dropdown-item v-else command="clear-all" :icon="Delete" divided>
                 清空所有
               </el-dropdown-item>
             </el-dropdown-menu>
@@ -100,7 +106,7 @@
 import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
 import { formatDate, now, toDateSafe } from '@/utils/datetime';
 import type { CharacterCardCollection } from '@/types/character/character-card-collection';
-import { Delete, Download, FolderOpened, MoreFilled, Plus, Search } from '@element-plus/icons-vue';
+import { Delete, Download, FolderOpened, MoreFilled, Plus, Search, Switch } from '@element-plus/icons-vue';
 import { Icon } from '@iconify/vue';
 import {
   ElCheckbox,
@@ -120,7 +126,6 @@ import { computed, ref } from 'vue';
 interface Props {
   collection: CharacterCardCollection;
 }
-
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
@@ -132,11 +137,16 @@ const emit = defineEmits<{
   'export-all': [];
   'import-file': [file: File];
   'clear-all': [];
+  'delete-selected': [cardIds: string[]];
 }>();
 
 const searchQuery = ref('');
 const selectedTags = ref<string[]>([]);
 const checkedCards = ref<Record<string, boolean>>({});
+
+const hasCheckedCards = computed(() => {
+  return Object.values(checkedCards.value).some(Boolean);
+});
 
 // 计算所有卡片
 const allCards = computed(() => {
@@ -201,7 +211,22 @@ const handleMenuCommand = (command: string) => {
     emit('export-all');
   } else if (command === 'clear-all') {
     emit('clear-all');
+  } else if (command === 'delete-selected') {
+    const selectedIds = Object.entries(checkedCards.value)
+      .filter(([, v]) => v)
+      .map(([k]) => k);
+    emit('delete-selected', selectedIds);
+    checkedCards.value = {};
   }
+};
+
+// 反选：反转当前显示卡片的勾选状态
+const handleInvertSelection = () => {
+  const newChecked: Record<string, boolean> = { ...checkedCards.value };
+  for (const card of filteredCards.value) {
+    newChecked[card.id] = !newChecked[card.id];
+  }
+  checkedCards.value = newChecked;
 };
 
 // 格式化时间
@@ -213,7 +238,6 @@ const formatTime = (timeStr: string) => {
 
   const diffMs = now().getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
   if (diffDays <= 0) {
     return '今天';
   } else if (diffDays === 1) {
@@ -346,7 +370,7 @@ const formatTime = (timeStr: string) => {
 .card-grid-checkbox {
   position: absolute;
   top: 10px;
-  right: 10px;
+  left: 10px;
   z-index: 2;
 }
 
