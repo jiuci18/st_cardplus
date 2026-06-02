@@ -201,8 +201,6 @@ const navigateTo = (path: string) => {
 
 .app-sidebar.sidebar-expanded {
   align-items: flex-start;
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
   width: 200px;
 }
 
@@ -213,14 +211,11 @@ const navigateTo = (path: string) => {
   cursor: pointer;
   margin-bottom: 0.75rem;
   width: 100%;
-  justify-content: center;
-  height: 40px;
-}
-
-.sidebar-expanded .sidebar-logo {
   justify-content: flex-start;
-  padding-left: 0.625rem;
-  padding-right: 0.625rem;
+  padding-left: 10px;
+  padding-right: 10px;
+  height: 40px;
+  box-sizing: border-box;
 }
 
 .logo-wrap {
@@ -261,6 +256,7 @@ const navigateTo = (path: string) => {
   max-width: 0;
   overflow: hidden;
   margin-left: 0;
+  flex-shrink: 0;
 }
 
 .sidebar-expanded .logo-text {
@@ -283,28 +279,20 @@ const navigateTo = (path: string) => {
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
+  padding-left: 10px;
+  padding-right: 10px;
   border-radius: 0.5rem;
   transition-property: all;
-  transition-duration: 200ms;
+  transition-duration: 300ms;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   text-decoration-line: none;
-  width: 40px;
+  width: calc(100% - 12px);
   height: 40px;
-  margin: 0 auto;
+  margin: 0 6px;
   color: var(--el-text-color-secondary);
-}
-
-.sidebar-expanded .nav-item {
-  justify-content: flex-start;
-  padding-left: 0.625rem;
-  padding-right: 0.625rem;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-  width: 100%;
-  gap: 0.75rem;
-  height: auto;
-  margin: 0;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .nav-item:hover {
@@ -327,11 +315,14 @@ const navigateTo = (path: string) => {
   opacity: 0;
   max-width: 0;
   overflow: hidden;
+  margin-left: 0;
+  flex-shrink: 0;
 }
 
 .sidebar-expanded .nav-text {
   opacity: 1;
   max-width: 150px;
+  margin-left: 12px;
 }
 
 /* Beta 标记 */
@@ -382,7 +373,6 @@ const navigateTo = (path: string) => {
 .toggle-btn {
   border: none;
   cursor: pointer;
-  width: 100%;
   background: transparent;
 }
 

@@ -19,9 +19,7 @@
     "preview": "vite preview",
     "start": "tauri dev",
     "knip": "knip",
-    "build:desktop": "tauri build",
-    "format": "prettier --write \"src/**/*.{vue,ts,tsx,js,jsx,json,css,scss,md}\" \"scripts/**/*.{mjs,js,ts}\"",
-    "format:check": "prettier --check \"src/**/*.{vue,ts,tsx,js,jsx,json,css,scss,md}\" \"scripts/**/*.{mjs,js,ts}\""
+    "build:desktop": "tauri build"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.5",
@@ -88,14 +86,5 @@
       "src/types/png-modules.d.ts"
     ],
     "ignoreExportsUsedInFile": true
-  },
-  "pnpm": {
-    "ignoredBuiltDependencies": [
-      "esbuild"
-    ],
-    "onlyBuiltDependencies": [
-      "@tailwindcss/oxide",
-      "vue-demi"
-    ]
   }
 }
