@@ -1,6 +1,6 @@
 import { ref } from 'vue';
-import { worldBookService, type WorldBookStats } from '@/database/worldBookService';
-import { characterCardService, type CharacterCardStats } from '@/database/characterCardService';
+import { worldBookService, type WorldBookStats } from '@/database/appdb/worldBookService';
+import { characterCardService, type CharacterCardStats } from '@/database/appdb/characterCardService';
 
 export function useStorageInfo() {
   const indexedDBUsage = ref({

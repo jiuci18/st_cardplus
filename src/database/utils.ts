@@ -32,9 +32,9 @@ interface DatabaseRegistry {
 
 async function getRegisteredDatabases(): Promise<DatabaseRegistry[]> {
   const [{ worldBookService }, { characterCardService }, { presetService }] = await Promise.all([
-    import('./worldBookService'),
-    import('./characterCardService'),
-    import('./presetService'),
+    import('./appdb/worldBookService'),
+    import('./appdb/characterCardService'),
+    import('./appdb/presetService'),
   ]);
 
   return [

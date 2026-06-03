@@ -186,7 +186,7 @@ import WorldBookList from '@/components/worldbook/WorldBookList.vue';
 import WorldBookSelectorDialog from '@/components/cardManager/components/WorldBookSelectorDialog.vue';
 import { useWorldBookDragDrop } from '@/composables/worldbook/useWorldBookDragDrop';
 import { useWorldBookEntry } from '@/composables/worldbook/useWorldBookEntry';
-import { worldBookService } from '@/database/worldBookService';
+import { worldBookService } from '@/database/appdb/worldBookService';
 import type { CharacterBook } from '@/types/character/character-book';
 import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 import type { WorldBook, WorldBookCollection, WorldBookEntry } from '@/types/worldbook';

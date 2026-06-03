@@ -16,7 +16,7 @@ import type {
 import {
   characterCardService,
   type StoredCharacterCard,
-} from "@/database/characterCardService";
+} from "@/database/appdb/characterCardService";
 import { nowIso } from "@/utils/datetime";
 import { saveFile } from "@/utils/system/fileSave";
 import {
