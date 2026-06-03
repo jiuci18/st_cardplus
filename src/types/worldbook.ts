@@ -14,6 +14,7 @@ export interface WorldBookEntry {
   excludeRecursion: boolean;
   preventRecursion: boolean;
   delayUntilRecursion: boolean;
+  ignoreBudget: boolean;
   probability: number;
   useProbability: boolean;
   position: number;
