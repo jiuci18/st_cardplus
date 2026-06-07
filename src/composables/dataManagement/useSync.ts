@@ -25,7 +25,7 @@ import {
 import { useSyncProgress } from './sync/progress';
 import { applyBackupData, buildBackupData, readSnapshot, restoreFromSnapshot, saveSnapshot } from './sync/storage';
 import type { SyncProvider, TransferProgress, WebDAVConfig } from '@/types/dataSync';
-import { openExternalUrl } from '@/utils/externalLink';
+import { openExternalUrl } from '@/utils/system/externalLink';
 
 export function useSync() {
   const webdavConfig = ref<WebDAVConfig>({ url: '', username: '', password: '' });

@@ -10,10 +10,7 @@ export interface BinaryFetchOptions {
   preferDesktopBackend?: boolean;
 }
 
-const isTauriApp = (): boolean => {
-  if (typeof window === "undefined") return false;
-  return "__TAURI_INTERNALS__" in window;
-};
+import { isTauriApp } from "@/utils/system/tauri";
 
 const isAssetUrl = (value: string): boolean => {
   const trimmed = value.trim();

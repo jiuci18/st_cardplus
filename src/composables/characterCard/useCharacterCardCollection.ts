@@ -16,9 +16,9 @@ import type {
 import {
   characterCardService,
   type StoredCharacterCard,
-} from "@/database/characterCardService";
+} from "@/database/appdb/characterCardService";
 import { nowIso } from "@/utils/datetime";
-import { saveFile } from "@/utils/fileSave";
+import { saveFile } from "@/utils/system/fileSave";
 import {
   getHostingProviderLabel,
   HOSTING_PROVIDER_OPTIONS,
@@ -418,19 +418,28 @@ export function useCharacterCardCollection() {
         const isPngFile =
           file.type === "image/png" || file.name.endsWith(".png");
         if (isTauriApp() && isPngFile) {
-          try {
-            const result = await ElMessageBox.confirm(
-              "检测到 PNG 图片，是否清洗并上传到图床？上传成功后会自动写入角色卡的 image URL。",
-              "图片上传",
-              {
-                confirmButtonText: "上传",
-                cancelButtonText: "跳过",
-                type: "info",
-                distinguishCancelAndClose: true,
-              },
-            );
+          const importBehavior = getSetting("pngImportUploadBehavior");
+          let shouldUpload = importBehavior === "upload";
+          if (importBehavior === "ask") {
+            try {
+              const result = await ElMessageBox.confirm(
+                "检测到 PNG 图片，是否清洗并上传到图床？上传成功后会自动写入角色卡的 image URL。",
+                "图片上传",
+                {
+                  confirmButtonText: "上传",
+                  cancelButtonText: "跳过",
+                  type: "info",
+                  distinguishCancelAndClose: true,
+                },
+              );
+              shouldUpload = result === "confirm";
+            } catch (error) {
+              shouldUpload = false;
+            }
+          }
 
-            if (result === "confirm") {
+          if (shouldUpload) {
+            try {
               const defaultProvider = getSetting("defaultImageProvider");
               let provider: HostingProvider;
 
@@ -448,8 +457,6 @@ export function useCharacterCardCollection() {
                 }
               }
               const providerName = getHostingProviderLabel(provider);
-
-              // 显示上传进度提示
               const loadingMessage = ElMessage.info({
                 message: `正在清洗图片并上传到 ${providerName}，请稍候...`,
                 duration: 0,
@@ -457,7 +464,6 @@ export function useCharacterCardCollection() {
               });
 
               try {
-                // 上传图片
                 const uploadedUrl = await uploadImageFileToHosting(
                   file,
                   provider,
@@ -475,11 +481,11 @@ export function useCharacterCardCollection() {
                 loadingMessage.close();
                 throw uploadError;
               }
-            }
-          } catch (error) {
-            if (error !== "cancel" && error !== "close") {
-              console.error("图片上传失败:", error);
-              ElMessage.warning("图片上传失败，将继续导入角色卡");
+            } catch (error) {
+              if (error !== "cancel" && error !== "close") {
+                console.error("图片上传失败:", error);
+                ElMessage.warning("图片上传失败，将继续导入角色卡");
+              }
             }
           }
         }
@@ -581,8 +587,6 @@ export function useCharacterCardCollection() {
         },
       );
       const { value: cardName } = createCardResult as { value: string };
-
-      // 创建默认的角色卡数据（确保 data 和顶层一致）
       const defaultData: CharacterCardV3 = {
         spec: "chara_card_v3",
         spec_version: "3.0",

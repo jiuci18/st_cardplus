@@ -1,7 +1,7 @@
-import { db } from './db';
-import type { StoredCharacterCard } from './db';
+import { db } from '../db';
+import type { StoredCharacterCard } from '../db';
 import type { CharacterCardV3 } from '@/types/character/character-card-v3';
-import { estimateEncodedSize, sanitizeForIndexedDB } from './utils';
+import { estimateEncodedSize, sanitizeForIndexedDB } from '../utils';
 import { getSessionStorageItem, setSessionStorageItem, removeSessionStorageItem } from '@/utils/localStorageUtils';
 import { nowIso } from '@/utils/datetime';
 

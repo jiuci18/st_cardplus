@@ -15,6 +15,7 @@ export const createDefaultEntryData = (uid: number): WorldBookEntry => ({
   excludeRecursion: false,
   preventRecursion: false,
   delayUntilRecursion: false,
+  ignoreBudget: false,
   probability: 100,
   useProbability: true,
   position: 1,

@@ -205,7 +205,7 @@
 import ExternalLink from '@/components/ui/common/ExternalLink.vue';
 import { getAppSettings } from '@/composables/appSettings';
 import { useAppUpdate } from '@/composables/useAppUpdate';
-import { openExternalUrl } from '@/utils/externalLink';
+import { openExternalUrl } from '@/utils/system/externalLink';
 import { isTauriApp } from '@/utils/imageHosting';
 import { getSetting, setSetting } from '@/utils/localStorageUtils';
 import { Icon } from '@iconify/vue';
@@ -219,6 +219,7 @@ const autoSaveInterval = ref(5);
 const autoSaveDebounce = ref(1.5);
 const imgbbApiKey = ref('');
 const defaultImageProvider = ref('');
+const pngImportUploadBehavior = ref('ask');
 const ignoreUpdateDays = ref(7);
 const ignoreDayOptions = [-1, 1, 3, 7, 14, 30];
 const showWebUpdateMask = ref(!isTauriApp());
@@ -291,6 +292,10 @@ const onBetaFeaturesToggle = (value: boolean) => {
 
 const onDefaultImageProviderChange = (value: string) => {
   setSetting('defaultImageProvider', value);
+};
+
+const onPngImportUploadBehaviorChange = (value: string) => {
+  setSetting('pngImportUploadBehavior', value as 'ask' | 'upload' | 'skip');
 };
 
 const onAutoSaveIntervalChange = (value: number | undefined) => {
@@ -430,6 +435,7 @@ const settings = computed(() =>
       autoSaveDebounce,
       imgbbApiKey,
       defaultImageProvider,
+      pngImportUploadBehavior,
     },
     {
       onBetaFeaturesToggle,
@@ -439,6 +445,7 @@ const settings = computed(() =>
       onAutoSaveDebounceChange,
       onImgbbApiKeyChange,
       onDefaultImageProviderChange,
+      onPngImportUploadBehaviorChange,
     }
   )
 );
@@ -451,6 +458,7 @@ onMounted(() => {
   autoSaveDebounce.value = getSetting('autoSaveDebounce');
   imgbbApiKey.value = getSetting('imgbbApiKey');
   defaultImageProvider.value = getSetting('defaultImageProvider');
+  pngImportUploadBehavior.value = getSetting('pngImportUploadBehavior');
   window.addEventListener('resize', handleUpdateContentResize);
   void syncUpdateContentOverflow();
   void checkForAppUpdate();

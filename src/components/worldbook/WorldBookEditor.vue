@@ -104,6 +104,23 @@
               <el-input-number v-model="localModel.depth" :min="0" :max="999" controls-position="right"
                 class="form-full-width" :disabled="localModel.position !== 4" />
             </div>
+            <div class="form-flex-col">
+              <label class="form-label">不可递归</label>
+              <el-switch v-model="localModel.excludeRecursion" />
+            </div>
+            <div class="form-flex-col">
+              <label class="form-label">阻止后续递归</label>
+              <el-switch v-model="localModel.preventRecursion" />
+            </div>
+            <div class="form-flex-col">
+              <label class="form-label">仅在递归时激活</label>
+              <el-switch v-model="localModel.delayUntilRecursion" />
+            </div>
+            <div class="form-flex-col">
+              <label class="form-label">无视回复限额</label>
+              <el-switch v-model="localModel.ignoreBudget" />
+              <p class="form-help-text">开启后，只要其他检查通过，此条目将无视回复限额直接加入提示词</p>
+            </div>
           </div>
         </section>
 
@@ -192,18 +209,6 @@
                 递归与分组
               </h3>
               <div class="form-grid-3-col-top-align">
-                <div class="form-flex-col">
-                  <label class="form-label">排除递归激活</label>
-                  <el-switch v-model="localModel.excludeRecursion" />
-                </div>
-                <div class="form-flex-col">
-                  <label class="form-label">阻止后续递归</label>
-                  <el-switch v-model="localModel.preventRecursion" />
-                </div>
-                <div class="form-flex-col">
-                  <label class="form-label">仅在递归时激活</label>
-                  <el-switch v-model="localModel.delayUntilRecursion" />
-                </div>
                 <div>
                   <label class="form-label">所属收录组 (Group)</label>
                   <el-input v-model="localModel.group" placeholder="组名, 多个用逗号分隔" />
@@ -324,7 +329,6 @@ const localModel = computed({
   },
 });
 
-// Helper functions to handle boolean properties safely
 const updateBooleanField = (field: keyof WorldBookEntry, value: boolean) => {
   const newModel = { ...localModel.value };
   (newModel as any)[field] = value;

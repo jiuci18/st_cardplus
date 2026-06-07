@@ -39,8 +39,7 @@ import { useAppUpdate } from '@/composables/useAppUpdate';
 import { provideNavigation } from '@/composables/useNavigation';
 import { usePersonalization } from '@/composables/usePersonalization';
 import { syncUmamiTelemetry } from '@/composables/useUmamiTelemetry';
-
-import { installExternalLinkInterceptor } from '@/utils/externalLink';
+import { installExternalLinkInterceptor } from '@/utils/system/externalLink';
 import { getSetting } from '@/utils/localStorageUtils';
 
 const { sidebarConfig, refreshSidebarConfig } = usePersonalization();
@@ -49,7 +48,6 @@ const betaFeaturesEnabled = ref(false);
 const umamiEnabled = ref(true);
 const drawerVisible = ref(false);
 let removeExternalLinkInterceptor: (() => void) | null = null;
-
 
 const mainMenuItems = computed(() => {
   return sidebarConfig.value.items
@@ -64,10 +62,6 @@ const { isMobile } = provideNavigation(mainMenuItems);
 
 const handleBetaFeaturesToggle = (event: Event) => {
   betaFeaturesEnabled.value = (event as CustomEvent<boolean>).detail;
-};
-
-const handleSidebarConfigChange = () => {
-  refreshSidebarConfig();
 };
 
 const handleUmamiToggle = (event: Event) => {
@@ -88,7 +82,7 @@ onMounted(() => {
   removeExternalLinkInterceptor = installExternalLinkInterceptor();
   window.addEventListener('betaFeaturesToggle', handleBetaFeaturesToggle);
   window.addEventListener('umamiToggle', handleUmamiToggle);
-  window.addEventListener('sidebarConfigChange', handleSidebarConfigChange as EventListener);
+  window.addEventListener('sidebarConfigChange', refreshSidebarConfig as EventListener);
 });
 
 onUnmounted(() => {
@@ -96,7 +90,7 @@ onUnmounted(() => {
   removeExternalLinkInterceptor = null;
   window.removeEventListener('betaFeaturesToggle', handleBetaFeaturesToggle);
   window.removeEventListener('umamiToggle', handleUmamiToggle);
-  window.removeEventListener('sidebarConfigChange', handleSidebarConfigChange as EventListener);
+  window.removeEventListener('sidebarConfigChange', refreshSidebarConfig as EventListener);
 });
 </script>
 

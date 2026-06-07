@@ -27,13 +27,14 @@ function convertWorldEntryToCharacterEntry(worldEntry: WorldBookEntry): Characte
     content: worldEntry.content,
     insertion_order: worldEntry.order,
     enabled: !worldEntry.disable,
-    extensions: extensions, // 先置为空对象，后续填充
+    extensions: extensions,
   };
 
   // 映射 extensions 字段
   if (worldEntry.excludeRecursion !== undefined) extensions.exclude_recursion = worldEntry.excludeRecursion;
   if (worldEntry.preventRecursion !== undefined) extensions.prevent_recursion = worldEntry.preventRecursion;
   if (worldEntry.delayUntilRecursion !== undefined) extensions.delay_until_recursion = worldEntry.delayUntilRecursion;
+  if (worldEntry.ignoreBudget !== undefined) extensions.ignore_budget = worldEntry.ignoreBudget;
   if (worldEntry.probability !== undefined) extensions.probability = worldEntry.probability;
   if (worldEntry.useProbability !== undefined) extensions.useProbability = worldEntry.useProbability;
   if (worldEntry.depth !== undefined) extensions.depth = worldEntry.depth;
@@ -142,13 +143,14 @@ function convertCharacterEntryToWorldEntry(charEntry: CharacterBookEntry, index:
     excludeRecursion: extensions.exclude_recursion ?? false,
     preventRecursion: extensions.prevent_recursion ?? false,
     delayUntilRecursion: extensions.delay_until_recursion ?? false,
+    ignoreBudget: extensions.ignore_budget ?? false,
     probability: extensions.probability ?? 100,
     useProbability: extensions.useProbability ?? true,
-    depth: extensions.depth, // 保持 undefined 如果不存在
-    selectiveLogic: extensions.selectiveLogic, // 保持 undefined 如果不存在
+    depth: extensions.depth,
+    selectiveLogic: extensions.selectiveLogic,
     group: extensions.group || '',
     groupOverride: extensions.group_override || false,
-    groupPriority: extensions.group_weight, // 保持 undefined 如果不存在
+    groupPriority: extensions.group_weight,
     caseSensitive: extensions.case_sensitive ?? charEntry.case_sensitive ?? null,
     matchWholeWords: extensions.match_whole_words ?? null,
     useGroupScoring: extensions.use_group_scoring ?? null,
@@ -156,11 +158,10 @@ function convertCharacterEntryToWorldEntry(charEntry: CharacterBookEntry, index:
     outletName: extensions.outlet_name || '',
     role: extensions.role ?? null,
     vectorized: extensions.vectorized ?? false,
-    sticky: extensions.sticky, // 保持 undefined 如果不存在
-    cooldown: extensions.cooldown, // 保持 undefined 如果不存在
-    delay: extensions.delay, // 保持 undefined 如果不存在
+    sticky: extensions.sticky,
+    cooldown: extensions.cooldown,
+    delay: extensions.delay,
 
-    // 扫描匹配选项
     scanDepth: extensions.scan_depth ?? null,
     matchPersonaDescription: extensions.match_persona_description ?? false,
     matchCharacterDescription: extensions.match_character_description ?? false,
@@ -199,6 +200,7 @@ function normalizeWorldEntryLike(input: any, index: number): WorldBookEntry {
     excludeRecursion: !!e.excludeRecursion,
     preventRecursion: !!e.preventRecursion,
     delayUntilRecursion: !!e.delayUntilRecursion,
+    ignoreBudget: !!e.ignoreBudget,
     probability: typeof e.probability === 'number' ? e.probability : 100,
     useProbability: e.useProbability !== undefined ? !!e.useProbability : true,
     position,
@@ -248,7 +250,7 @@ export function convertCharacterBookToWorldBook(charBook: CharacterBook, worldBo
     }),
     createdAt: now,
     updatedAt: now,
-    order: 0, // 默认顺序
+    order: 0,
     metadata: charBook.extensions,
   };
 

@@ -4,7 +4,7 @@
  */
 
 import { read, write } from './pngCardMetadata';
-import { saveFile } from './fileSave';
+import { saveFile } from './system/fileSave';
 
 /**
  * 支持的转换配置
@@ -17,18 +17,12 @@ export type ConversionConfig =
   | 'hk' // 香港繁体
   | 'jp'; // 日本新字体
 
-/**
- * 转换方向配置（便于用户选择）
- */
 export interface ConversionOption {
   value: ConversionConfig;
   label: string;
   description: string;
 }
 
-/**
- * 预定义的转换选项
- */
 export const CONVERSION_OPTIONS: ConversionOption[] = [
   {
     value: 'cn',
@@ -62,9 +56,6 @@ export const CONVERSION_OPTIONS: ConversionOption[] = [
   },
 ];
 
-/**
- * 单个文件处理结果
- */
 export interface ConversionResult {
   success: boolean;
   fileName: string;

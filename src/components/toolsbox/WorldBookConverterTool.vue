@@ -5,7 +5,7 @@ import { ElMessage } from 'element-plus';
 import { v4 as uuidv4 } from 'uuid';
 import { ref } from 'vue';
 import { cleanObject } from '../../utils/objectUtils';
-import { saveFile } from '../../utils/fileSave';
+import { saveFile } from '../../utils/system/fileSave';
 import { convertCharacterBookToWorldBook, convertWorldBookToCharacterBook } from '../../utils/worldBookConverter';
 
 const inputJson = ref('');

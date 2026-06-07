@@ -1,5 +1,5 @@
-import { db, type StoredPresetFile } from './db';
-import { sanitizeForIndexedDB } from './utils';
+import { db, type StoredPresetFile } from '../db';
+import { sanitizeForIndexedDB } from '../utils';
 import { v4 as uuidv4 } from 'uuid';
 import { getSessionStorageItem, setSessionStorageItem, removeSessionStorageItem } from '@/utils/localStorageUtils';
 

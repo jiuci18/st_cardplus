@@ -4,15 +4,30 @@
       <div class="setting-header">
         <div class="setting-info">
           <span class="setting-label">本地数据目录</span>
-          <Icon icon="material-symbols:folder-open-outline" width="20" height="20"
-            style="margin-left: 8px; color: var(--el-color-primary)" />
+          <Icon
+            icon="material-symbols:folder-open-outline"
+            width="20"
+            height="20"
+            style="margin-left: 8px; color: var(--el-color-primary)"
+          />
         </div>
         <div>
-          <el-button @click="openLocalDir" :type="isDesktopApp ? 'primary' : 'info'" :disabled="!isDesktopApp" plain>
-            <Icon :icon="isDesktopApp
-                ? 'material-symbols:folder-open'
-                : 'material-symbols:folder-off-outline'
-              " width="20" height="20" style="margin-right: 8px" />
+          <el-button
+            @click="openLocalDir"
+            :type="isDesktopApp ? 'primary' : 'info'"
+            :disabled="!isDesktopApp"
+            plain
+          >
+            <Icon
+              :icon="
+                isDesktopApp
+                  ? 'material-symbols:folder-open'
+                  : 'material-symbols:folder-off-outline'
+              "
+              width="20"
+              height="20"
+              style="margin-right: 8px"
+            />
             {{ isDesktopApp ? "打开本地目录" : "web 不支持本地目录" }}
           </el-button>
         </div>
@@ -28,8 +43,9 @@
 import { Icon } from "@iconify/vue";
 import { ElMessage } from "element-plus";
 
-const isDesktopApp =
-  typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
+import { isTauriApp } from "@/utils/system/tauri";
+
+const isDesktopApp = isTauriApp();
 
 const openLocalDir = async () => {
   if (!isDesktopApp) return;

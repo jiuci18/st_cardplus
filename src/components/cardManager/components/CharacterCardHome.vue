@@ -7,11 +7,10 @@
         <span class="home-count">{{ cardCount }} 个角色</span>
       </div>
       <div class="home-actions">
-        <el-button
-          type="success"
-          @click="emit('create-new')"
-          :icon="Plus"
-        >
+        <el-button @click="handleInvertSelection" :icon="Switch" :disabled="filteredCards.length === 0">
+          反选
+        </el-button>
+        <el-button type="success" @click="emit('create-new')" :icon="Plus">
           创建角色卡
         </el-button>
         <BrowserFilePicker accept=".json,.png" multiple @select="handleFileChange">
@@ -23,17 +22,13 @@
           <el-button :icon="MoreFilled">更多操作</el-button>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item
-                command="export-all"
-                :icon="Download"
-              >
+              <el-dropdown-item command="export-all" :icon="Download">
                 导出全部
               </el-dropdown-item>
-              <el-dropdown-item
-                command="clear-all"
-                :icon="Delete"
-                divided
-              >
+              <el-dropdown-item v-if="hasCheckedCards" command="delete-selected" :icon="Delete" divided>
+                删除所选
+              </el-dropdown-item>
+              <el-dropdown-item v-else command="clear-all" :icon="Delete" divided>
                 清空所有
               </el-dropdown-item>
             </el-dropdown-menu>
@@ -44,126 +39,59 @@
 
     <!-- 搜索和筛选区 -->
     <div class="home-filters">
-      <el-input
-        v-model="searchQuery"
-        placeholder="搜索角色卡名称或描述..."
-        :prefix-icon="Search"
-        clearable
-        class="search-input"
-      />
-      <el-select
-        v-model="selectedTags"
-        multiple
-        collapse-tags
-        collapse-tags-tooltip
-        placeholder="按标签筛选"
-        clearable
-        class="tag-filter"
-      >
-        <el-option
-          v-for="tag in allTags"
-          :key="tag"
-          :label="tag"
-          :value="tag"
-        />
+      <el-input v-model="searchQuery" placeholder="搜索角色卡名称或描述..." :prefix-icon="Search" clearable
+        class="search-input" />
+      <el-select v-model="selectedTags" multiple collapse-tags collapse-tags-tooltip placeholder="按标签筛选" clearable
+        class="tag-filter">
+        <el-option v-for="tag in allTags" :key="tag" :label="tag" :value="tag" />
       </el-select>
     </div>
 
     <!-- 角色卡网格 -->
     <el-scrollbar class="home-content">
-      <div
-        v-if="filteredCards.length === 0"
-        class="home-empty"
-      >
-        <Icon
-          icon="ph:cards-duotone"
-          class="empty-icon"
-        />
+      <div v-if="filteredCards.length === 0" class="home-empty">
+        <Icon icon="ph:cards-duotone" class="empty-icon" />
         <p class="empty-text">{{ emptyText }}</p>
         <p class="empty-hint">{{ emptyHint }}</p>
       </div>
-      <div
-        v-else
-        class="card-grid"
-      >
-        <div
-          v-for="card in filteredCards"
-          :key="card.id"
-          class="card-grid-item"
-          @click="handleCardClick(card.id, card.name)"
-        >
+      <div v-else class="card-grid">
+        <div v-for="card in filteredCards" :key="card.id" class="card-grid-item"
+          @click="handleCardClick(card.id, card.name)">
+          <el-checkbox v-model="checkedCards[card.id]" class="card-grid-checkbox" @click.stop />
           <div class="card-grid-avatar">
-            <img
-              v-if="card.avatar && card.avatar !== 'none'"
-              :src="card.avatar"
-              :alt="card.name"
-              class="card-grid-avatar-img"
-            />
-            <Icon
-              v-else
-              icon="ph:user-circle-duotone"
-              class="card-grid-avatar-icon"
-            />
+            <img v-if="card.avatar && card.avatar !== 'none'" :src="card.avatar" :alt="card.name"
+              class="card-grid-avatar-img" />
+            <Icon v-else icon="ph:user-circle-duotone" class="card-grid-avatar-icon" />
           </div>
           <div class="card-grid-content">
             <h3 class="card-grid-name">{{ card.name || '未命名角色' }}</h3>
             <p class="card-grid-description">{{ card.description || '暂无描述' }}</p>
             <div class="card-grid-meta">
               <span class="card-grid-time">{{ formatTime(card.updatedAt) }}</span>
-              <div
-                v-if="card.tags && card.tags.length > 0"
-                class="card-grid-tags"
-              >
-                <el-tag
-                  v-for="tag in card.tags.slice(0, 3)"
-                  :key="tag"
-                  type="info"
-                  size="small"
-                  effect="plain"
-                  class="card-grid-tag"
-                >
+              <div v-if="card.tags && card.tags.length > 0" class="card-grid-tags">
+                <el-tag v-for="tag in card.tags.slice(0, 3)" :key="tag" type="info" size="small" effect="plain"
+                  class="card-grid-tag">
                   {{ tag }}
                 </el-tag>
-                <span
-                  v-if="card.tags.length > 3"
-                  class="card-grid-tag-more"
-                >
+                <span v-if="card.tags.length > 3" class="card-grid-tag-more">
                   +{{ card.tags.length - 3 }}
                 </span>
               </div>
             </div>
           </div>
           <div class="card-grid-actions">
-            <el-tooltip
-              content="重命名"
-              placement="top"
-            >
-              <button
-                @click.stop="emit('rename-card', card.id)"
-                class="card-action-btn"
-              >
+            <el-tooltip content="重命名" placement="top">
+              <button @click.stop="emit('rename-card', card.id)" class="card-action-btn">
                 <Icon icon="ph:pencil-simple-duotone" />
               </button>
             </el-tooltip>
-            <el-tooltip
-              content="导出"
-              placement="top"
-            >
-              <button
-                @click.stop="emit('export-card', card.id)"
-                class="card-action-btn"
-              >
+            <el-tooltip content="导出" placement="top">
+              <button @click.stop="emit('export-card', card.id)" class="card-action-btn">
                 <Icon icon="ph:export-duotone" />
               </button>
             </el-tooltip>
-            <el-tooltip
-              content="删除"
-              placement="top"
-            >
-              <button
-                @click.stop="emit('delete-card', card.id)"
-                class="card-action-btn is-danger"
-              >
+            <el-tooltip content="删除" placement="top">
+              <button @click.stop="emit('delete-card', card.id)" class="card-action-btn is-danger">
                 <Icon icon="ph:trash-duotone" />
               </button>
             </el-tooltip>
@@ -178,9 +106,10 @@
 import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
 import { formatDate, now, toDateSafe } from '@/utils/datetime';
 import type { CharacterCardCollection } from '@/types/character/character-card-collection';
-import { Delete, Download, FolderOpened, MoreFilled, Plus, Search } from '@element-plus/icons-vue';
+import { Delete, Download, FolderOpened, MoreFilled, Plus, Search, Switch } from '@element-plus/icons-vue';
 import { Icon } from '@iconify/vue';
 import {
+  ElCheckbox,
   ElButton,
   ElDropdown,
   ElDropdownItem,
@@ -197,7 +126,6 @@ import { computed, ref } from 'vue';
 interface Props {
   collection: CharacterCardCollection;
 }
-
 const props = defineProps<Props>();
 
 const emit = defineEmits<{
@@ -209,20 +137,24 @@ const emit = defineEmits<{
   'export-all': [];
   'import-file': [file: File];
   'clear-all': [];
+  'delete-selected': [cardIds: string[]];
 }>();
 
 const searchQuery = ref('');
 const selectedTags = ref<string[]>([]);
+const checkedCards = ref<Record<string, boolean>>({});
+
+const hasCheckedCards = computed(() => {
+  return Object.values(checkedCards.value).some(Boolean);
+});
 
 // 计算所有卡片
 const allCards = computed(() => {
   return Object.values(props.collection.cards).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 });
 
-// 卡片数量
 const cardCount = computed(() => allCards.value.length);
 
-// 所有可用标签
 const allTags = computed(() => {
   const tags = new Set<string>();
   allCards.value.forEach((card) => {
@@ -235,7 +167,6 @@ const allTags = computed(() => {
 const filteredCards = computed(() => {
   let cards = allCards.value;
 
-  // 搜索过滤
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     cards = cards.filter(
@@ -243,7 +174,6 @@ const filteredCards = computed(() => {
     );
   }
 
-  // 标签过滤
   if (selectedTags.value.length > 0) {
     cards = cards.filter((card) => selectedTags.value.every((tag) => card.tags?.includes(tag)));
   }
@@ -251,7 +181,6 @@ const filteredCards = computed(() => {
   return cards;
 });
 
-// 空状态文本
 const emptyText = computed(() => {
   if (searchQuery.value || selectedTags.value.length > 0) {
     return '未找到匹配的角色卡';
@@ -271,20 +200,33 @@ const handleCardClick = (cardId: string, cardName: string) => {
   emit('open-card', cardId, cardName);
 };
 
-// 文件选择变化
 const handleFileChange = (files: File[]) => {
   if (files.length > 0) {
     files.forEach((file) => emit('import-file', file));
   }
 };
 
-// 下拉菜单命令
 const handleMenuCommand = (command: string) => {
   if (command === 'export-all') {
     emit('export-all');
   } else if (command === 'clear-all') {
     emit('clear-all');
+  } else if (command === 'delete-selected') {
+    const selectedIds = Object.entries(checkedCards.value)
+      .filter(([, v]) => v)
+      .map(([k]) => k);
+    emit('delete-selected', selectedIds);
+    checkedCards.value = {};
   }
+};
+
+// 反选：反转当前显示卡片的勾选状态
+const handleInvertSelection = () => {
+  const newChecked: Record<string, boolean> = { ...checkedCards.value };
+  for (const card of filteredCards.value) {
+    newChecked[card.id] = !newChecked[card.id];
+  }
+  checkedCards.value = newChecked;
 };
 
 // 格式化时间
@@ -296,7 +238,6 @@ const formatTime = (timeStr: string) => {
 
   const diffMs = now().getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
   if (diffDays <= 0) {
     return '今天';
   } else if (diffDays === 1) {
@@ -424,6 +365,13 @@ const formatTime = (timeStr: string) => {
   background-color: var(--el-bg-color);
   cursor: pointer;
   transition: all 0.2s ease;
+}
+
+.card-grid-checkbox {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
 }
 
 .card-grid-item:hover {

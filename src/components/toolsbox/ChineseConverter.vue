@@ -3,7 +3,7 @@ import { Icon } from '@iconify/vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { computed, ref } from 'vue';
 import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
-import { saveFile } from '@/utils/fileSave';
+import { saveFile } from '@/utils/system/fileSave';
 import {
   CONVERSION_OPTIONS,
   type ConversionConfig,
@@ -40,8 +40,6 @@ const errorCount = computed(() => fileList.value.filter((item) => item.status ==
 // 文件上传处理
 function handleFileChange(files: File[]) {
   if (files.length === 0) return;
-
-  // 验证文件类型
   const pngFiles = Array.from(files).filter((file) => {
     if (file.type !== 'image/png') {
       ElMessage.warning(`${file.name} 不是 PNG 文件，已跳过`);
@@ -433,11 +431,11 @@ function getStatusText(status: FileItem['status']): string {
 }
 
 .action-section {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-    flex-direction: row;
-    align-items: center;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-direction: row;
+  align-items: center;
 }
 
 .file-list-section {

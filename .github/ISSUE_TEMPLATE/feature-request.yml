@@ -4,6 +4,14 @@ title: "[Feature] "
 labels:
   - enhancement
 body:
+  - type: checkboxes
+    id: no_bug
+    attributes:
+      label: 确认
+      options:
+        - label: 我确认我提出的要求里面不包含任何 BUG 有关的内容，如果有，我会分开提交
+          required: true
+
   - type: dropdown
     id: request_part
     attributes:
@@ -23,11 +31,27 @@ body:
         - 工具箱 - 世界书转换器
         - 工具箱 - 简繁转换器
         - 工具箱 - 旧版世界编辑器
+        - 工具箱 - 小说生成器
         - 设置 - 应用设置
         - 设置 - 个性化 / 侧边栏
         - 设置 - 数据管理 / 同步
         - 桌面端能力（文件读写 / 导入导出 / 系统集成）
         - 全局体验优化
+        - 其他
+    validations:
+      required: true
+
+  - type: dropdown
+    id: device_type
+    attributes:
+      label: 什么设备
+      description: 请选择出现问题的设备或运行环境
+      options:
+        - Windows
+        - macOS
+        - Linux
+        - Android
+        - iPhone / iPad
         - 其他
     validations:
       required: true

@@ -139,7 +139,7 @@
 import { ref, computed, watch } from 'vue';
 import { ElDialog, ElScrollbar, ElButton, ElTag, ElEmpty, ElCollapse, ElCollapseItem } from 'element-plus';
 import { Icon } from '@iconify/vue';
-import { worldBookService } from '@/database/worldBookService';
+import { worldBookService } from '@/database/appdb/worldBookService';
 import type { WorldBook } from '@/types/worldbook';
 import { useRouter } from 'vue-router';
 

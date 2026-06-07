@@ -1,7 +1,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { defaultOpenAIPreset } from '@/types/openai-preset';
-import { presetService } from '@/database/presetService';
+import { presetService } from '@/database/appdb/presetService';
 import type { StoredPresetFile } from '@/database/db';
 import { nowIso } from '@/utils/datetime';
 import { SUBSTITUTE_FIND_REGEX, type SillyTavernRegexScript } from '@/composables/regex/types';

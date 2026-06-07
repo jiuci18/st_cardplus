@@ -1,20 +1,9 @@
 <template>
-  <span
-    v-if="$slots.default"
-    class="browser-file-picker"
-    @click="handleTriggerClick"
-  >
+  <span v-if="$slots.default" class="browser-file-picker" @click="handleTriggerClick">
     <slot :open="open" />
   </span>
-  <input
-    ref="inputRef"
-    class="browser-file-picker-input"
-    type="file"
-    :accept="accept"
-    :multiple="multiple"
-    :disabled="disabled"
-    @change="handleChange"
-  />
+  <input ref="inputRef" class="browser-file-picker-input" type="file" :accept="accept" :multiple="multiple"
+    :disabled="disabled" @change="handleChange" />
 </template>
 
 <script setup lang="ts">

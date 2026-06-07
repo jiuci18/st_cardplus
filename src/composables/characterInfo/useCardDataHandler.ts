@@ -5,7 +5,7 @@ import { clearLocalStorage } from '../../utils/localStorageUtils';
 import { createDefaultCharacterCard } from './useCharacterCard';
 import type { CharacterCard, Attire, Appearance, Trait, Relationship, Skill, Note, CharacterData } from '@/types/character/character';
 import { cleanObject, removeEmptyFields } from '../../utils/objectUtils';
-import { saveFile } from '../../utils/fileSave';
+import { saveFile } from '../../utils/system/fileSave';
 
 const arrayToText = (arr: string[] | undefined): string => {
   if (!arr || !Array.isArray(arr)) return '';

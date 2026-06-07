@@ -1,8 +1,8 @@
-import { db, type StoredWorldBook, type StoredWorldBookEntry } from './db';
+import { db, type StoredWorldBook, type StoredWorldBookEntry } from '../db';
 import type { WorldBookCollection, WorldBook, WorldBookEntry } from '@/types/worldbook';
 import type { CharacterBook } from '@/types/character/character-book';
-import { convertCharacterBookToWorldBook } from '../utils/worldBookConverter';
-import { estimateEncodedSize, sanitizeForIndexedDB } from './utils';
+import { convertCharacterBookToWorldBook } from '../../utils/worldBookConverter';
+import { estimateEncodedSize, sanitizeForIndexedDB } from '../utils';
 import { v4 as uuidv4 } from 'uuid';
 import { getSessionStorageItem, setSessionStorageItem, removeSessionStorageItem } from '@/utils/localStorageUtils';
 import { nowIso } from '@/utils/datetime';
