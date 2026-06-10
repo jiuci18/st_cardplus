@@ -115,6 +115,16 @@ export default defineConfig({
             dropDebugger: true,
           },
         },
+        manualChunks(id) {
+          if (
+            id.includes('/node_modules/vue/') ||
+            id.includes('/node_modules/@vue/') ||
+            id.includes('/node_modules/@vueuse/') ||
+            id.includes('/node_modules/element-plus/')
+          ) {
+            return 'vue-vendor';
+          }
+        },
       },
     },
     chunkSizeWarningLimit: 4096,
