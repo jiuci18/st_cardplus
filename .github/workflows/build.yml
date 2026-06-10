@@ -93,6 +93,20 @@ jobs:
         APP_CHANNEL_OVERRIDE: ${{ (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' && contains(join(github.event.pull_request.labels.*.name, ','), 'release')) || (startsWith(github.ref, 'refs/tags/') && github.ref_name != '' && !contains(github.ref_name, '/')) && 'stable' || '' }}
       run: pnpm build
 
+    - name: Install Chromium
+      run: pnpm exec playwright install --with-deps chromium
+
+    - name: Test production build in Chromium
+      run: pnpm test:browser
+
+    - name: Upload browser test report
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: browser-test-report
+        path: playwright-report/
+        retention-days: 7
+
     - name: Upload web build artifacts
       uses: actions/upload-artifact@v4
       with:

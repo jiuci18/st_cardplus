@@ -37,3 +37,17 @@ jobs:
 
     - name: Build web
       run: pnpm build
+
+    - name: Install Chromium
+      run: pnpm exec playwright install --with-deps chromium
+
+    - name: Test production build in Chromium
+      run: pnpm test:browser
+
+    - name: Upload browser test report
+      if: ${{ !cancelled() }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: browser-test-report
+        path: playwright-report/
+        retention-days: 7
