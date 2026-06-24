@@ -1,5 +1,7 @@
 <template>
-  <div class="welcome-container">
+  <NewWelcomePage v-if="useNewWelcomePage" />
+
+  <div v-else class="welcome-container">
     <img src="/image/logo.png" alt="ST CardPlus" class="logo" />
     <h1 class="title">欢迎使用 ST CardPlus</h1>
     <p class="subtitle">你今天要创造些什么？</p>
@@ -33,14 +35,18 @@
 
 <script setup lang="ts">
 import { QuestionFilled } from '@element-plus/icons-vue';
-import { onActivated, onMounted, ref } from 'vue';
+import { onActivated, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
+import NewWelcomePage from '@/pages/NewWelcomePage.vue';
 import { useAppUpdate } from '@/composables/useAppUpdate';
+import { fetchJsonResource } from '@/utils/fetchResource';
+import { getSetting } from '@/utils/localStorageUtils';
 
 const defaultDidYouKnowTips = ['提示加载失败，请点击“下一个”重试。'];
 const didYouKnowUrl = '/did-you-know.json';
 const didYouKnowTips = ref<string[]>([...defaultDidYouKnowTips]);
 const randomTip = ref('');
+const useNewWelcomePage = ref(false);
 const router = useRouter();
 const { updateAvailable, updateBannerText, updateNoteText } = useAppUpdate();
 
@@ -61,9 +67,7 @@ const normalizeTips = (input: unknown): string[] => {
 const loadRemoteTips = async () => {
   if (!didYouKnowUrl) return;
   try {
-    const response = await fetch(didYouKnowUrl, { cache: 'no-store' });
-    if (!response.ok) return;
-    const data = await response.json();
+    const { data } = await fetchJsonResource(didYouKnowUrl, { cache: 'no-store' });
     const remoteTips = normalizeTips(data);
     if (remoteTips.length > 0) {
       didYouKnowTips.value = remoteTips;
@@ -91,10 +95,20 @@ const pickRandomTip = () => {
   randomTip.value = didYouKnowTips.value[index];
 };
 
+const handleUseNewWelcomePageToggle = (event: Event) => {
+  useNewWelcomePage.value = (event as CustomEvent<boolean>).detail;
+};
+
 onMounted(async () => {
+  useNewWelcomePage.value = getSetting('useNewWelcomePage');
+  window.addEventListener('useNewWelcomePageToggle', handleUseNewWelcomePageToggle);
   pickRandomTip();
   await loadRemoteTips();
   pickRandomTip();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('useNewWelcomePageToggle', handleUseNewWelcomePageToggle);
 });
 
 onActivated(() => {

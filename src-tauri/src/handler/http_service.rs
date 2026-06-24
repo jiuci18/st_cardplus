@@ -76,24 +76,17 @@ fn file_name_from_url(url: &reqwest::Url) -> String {
         .unwrap_or_else(|| "download".to_string())
 }
 
-/// Binary HTTP fetch result returned to the webview as base64 data.
+/// HTTP fetch result returned to the webview as base64 data plus response metadata.
 #[derive(Serialize)]
-pub struct BinaryFetchResult {
+pub struct HttpFetchResult {
     base64_data: String,
     file_name: String,
     mime_type: String,
+    status: u16,
+    url: String,
 }
 
-/// Fetches an HTTP(S) resource from the desktop process.
-///
-/// When `expect_image` is true, a non-image Content-Type header is rejected
-/// before the bytes are returned. The caller remains responsible for decoding
-/// and validating image bytes whose server omitted Content-Type.
-#[tauri::command]
-pub async fn fetch_binary(
-    url: String,
-    expect_image: Option<bool>,
-) -> Result<BinaryFetchResult, String> {
+async fn fetch_http_result(url: String) -> Result<HttpFetchResult, String> {
     let parsed_url =
         reqwest::Url::parse(url.trim()).map_err(|error| format!("URL 无效: {error}"))?;
     match parsed_url.scheme() {
@@ -122,14 +115,6 @@ pub async fn fetch_binary(
         .filter(|value| !value.is_empty())
         .map(str::to_string);
 
-    if expect_image.unwrap_or(false) {
-        if let Some(mime) = header_mime.as_deref() {
-            if !mime.to_ascii_lowercase().starts_with("image/") {
-                return Err(format!("链接返回的内容不是图片: {mime}"));
-            }
-        }
-    }
-
     let file_name = file_name_from_url(&parsed_url);
     let mime_type = header_mime.unwrap_or_else(|| infer_mime_from_name(&file_name).to_string());
     let bytes = response
@@ -141,9 +126,17 @@ pub async fn fetch_binary(
         return Err("下载失败：响应数据为空".to_string());
     }
 
-    Ok(BinaryFetchResult {
+    Ok(HttpFetchResult {
         base64_data: base64::engine::general_purpose::STANDARD.encode(bytes),
         file_name,
         mime_type,
+        status: status.as_u16(),
+        url: parsed_url.to_string(),
     })
+}
+
+/// Fetches an HTTP(S) resource from the desktop process and returns response metadata.
+#[tauri::command]
+pub async fn fetch_http(url: String) -> Result<HttpFetchResult, String> {
+    fetch_http_result(url).await
 }

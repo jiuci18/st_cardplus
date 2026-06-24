@@ -213,6 +213,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const betaFeaturesEnabled = ref(false);
+const useNewWelcomePage = ref(false);
 const umamiEnabled = ref(true);
 const disableSyncSnapshotRecovery = ref(false);
 const autoSaveInterval = ref(5);
@@ -292,6 +293,11 @@ const onBetaFeaturesToggle = (value: boolean) => {
 
 const onDefaultImageProviderChange = (value: string) => {
   setSetting('defaultImageProvider', value);
+};
+
+const onUseNewWelcomePageToggle = (value: boolean) => {
+  setSetting('useNewWelcomePage', value);
+  window.dispatchEvent(new CustomEvent('useNewWelcomePageToggle', { detail: value }));
 };
 
 const onPngImportUploadBehaviorChange = (value: string) => {
@@ -429,6 +435,7 @@ const settings = computed(() =>
   getAppSettings(
     {
       betaFeaturesEnabled,
+      useNewWelcomePage,
       umamiEnabled,
       disableSyncSnapshotRecovery,
       autoSaveInterval,
@@ -439,6 +446,7 @@ const settings = computed(() =>
     },
     {
       onBetaFeaturesToggle,
+      onUseNewWelcomePageToggle,
       onUmamiToggle,
       onDisableSyncSnapshotRecoveryToggle,
       onAutoSaveIntervalChange,
@@ -452,6 +460,7 @@ const settings = computed(() =>
 
 onMounted(() => {
   betaFeaturesEnabled.value = getSetting('betaFeaturesEnabled');
+  useNewWelcomePage.value = getSetting('useNewWelcomePage');
   umamiEnabled.value = getSetting('umamiEnabled');
   disableSyncSnapshotRecovery.value = getSetting('disableSyncSnapshotRecovery');
   autoSaveInterval.value = getSetting('autoSaveInterval');

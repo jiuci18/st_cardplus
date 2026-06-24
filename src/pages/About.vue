@@ -107,6 +107,7 @@
 import ExternalLink from '@/components/ui/common/ExternalLink.vue';
 import SystemBanner from '@/components/SystemBanner.vue';
 import { formatDate } from '@/utils/datetime';
+import { fetchJsonResource } from '@/utils/fetchResource';
 import { Icon } from '@iconify/vue';
 import { ElMessage, ElOption, ElSelect, ElSkeleton, ElSkeletonItem } from 'element-plus';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -155,10 +156,9 @@ const loadMore = async (isBranchChange = false) => {
 
   try {
     if (!selectedBranch.value) return;
-    const response = await fetch(
+    const { data: commits } = await fetchJsonResource<Commit[]>(
       `https://api.github.com/repos/jiuci18/st_cardplus/commits?sha=${selectedBranch.value}&per_page=10&page=${page.value}`
     );
-    const commits: Commit[] = await response.json();
     if (commits.length < 10) {
       hasMore.value = false;
     }
@@ -186,12 +186,12 @@ const loadMore = async (isBranchChange = false) => {
 
 const fetchBranches = async () => {
   try {
-    const response = await fetch('https://api.github.com/repos/jiuci18/st_cardplus/branches');
-    if (response.ok) {
-      branches.value = await response.json();
-      const branchNames = branches.value.map((branch: { name: string }) => branch.name);
-      selectedBranch.value = resolvePreferredBranch(branchNames);
-    }
+    const { data } = await fetchJsonResource<Array<{ name: string }>>(
+      'https://api.github.com/repos/jiuci18/st_cardplus/branches',
+    );
+    branches.value = data;
+    const branchNames = branches.value.map((branch: { name: string }) => branch.name);
+    selectedBranch.value = resolvePreferredBranch(branchNames);
   } catch (error) {
     console.error('Error fetching branches:', error);
   }

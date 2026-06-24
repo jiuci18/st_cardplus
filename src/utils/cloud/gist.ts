@@ -5,6 +5,7 @@
 
 import { Octokit } from '@octokit/rest';
 import type { GistConfig, BackupData, GistResponse, GistInfo } from '@/types/gist';
+import { fetchJsonResource } from '@/utils/fetchResource';
 import { readLocalStorageJSON, writeLocalStorageJSON } from '@/utils/localStorageUtils';
 
 const BACKUP_FILENAME = 'st-cardplus-backup.json';
@@ -155,6 +156,7 @@ async function downloadFromGist(token: string, gistId: string): Promise<GistResp
     console.log('[Gist API] 文件是否被截断:', file.truncated);
 
     let content: string;
+    let backupData: BackupData | null = null;
 
     // 如果文件被截断或没有 content 字段,使用 raw_url 下载完整内容
     if (file.truncated || !file.content) {
@@ -167,11 +169,9 @@ async function downloadFromGist(token: string, gistId: string): Promise<GistResp
         };
       }
 
-      const response = await fetch(file.raw_url);
-      if (!response.ok) {
-        throw new Error(`下载文件失败: ${response.statusText}`);
-      }
-      content = await response.text();
+      const result = await fetchJsonResource<BackupData>(file.raw_url);
+      backupData = result.data;
+      content = JSON.stringify(backupData);
       console.log('[Gist API] 通过 raw_url 下载完成,文件大小:', content.length);
     } else {
       content = file.content;
@@ -180,27 +180,35 @@ async function downloadFromGist(token: string, gistId: string): Promise<GistResp
 
     console.log('[Gist API] 文件内容前100字符:', content.substring(0, 100));
 
-    // 解析备份数据
-    let backupData: BackupData;
-    try {
-      backupData = JSON.parse(content);
-      console.log('[Gist API] JSON 解析成功');
-      console.log('[Gist API] 数据结构:', {
-        timestamp: backupData.timestamp,
-        version: backupData.version,
-        hasLocalStorage: !!backupData.localStorage,
-        hasDatabases: !!backupData.databases,
-        localStorageType: typeof backupData.localStorage,
-        databasesType: typeof backupData.databases,
-      });
-    } catch (error) {
-      console.error('[Gist API] JSON 解析失败:', error);
-      console.error('[Gist API] 内容末尾500字符:', content.substring(content.length - 500));
+    if (!backupData) {
+      try {
+        backupData = JSON.parse(content);
+      } catch (error) {
+        console.error('[Gist API] JSON 解析失败:', error);
+        console.error('[Gist API] 内容末尾500字符:', content.substring(content.length - 500));
+        return {
+          success: false,
+          message: '备份数据格式错误,无法解析 JSON',
+        };
+      }
+    }
+
+    if (!backupData) {
       return {
         success: false,
-        message: '备份数据格式错误,无法解析 JSON',
+        message: '备份数据为空',
       };
     }
+
+    console.log('[Gist API] JSON 解析成功');
+    console.log('[Gist API] 数据结构:', {
+      timestamp: backupData.timestamp,
+      version: backupData.version,
+      hasLocalStorage: !!backupData.localStorage,
+      hasDatabases: !!backupData.databases,
+      localStorageType: typeof backupData.localStorage,
+      databasesType: typeof backupData.databases,
+    });
 
     return {
       success: true,
