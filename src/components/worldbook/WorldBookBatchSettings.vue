@@ -22,7 +22,7 @@
         <Pane size="64" min-size="42">
           <el-scrollbar class="worldbook-batch-scrollbar">
             <div class="worldbook-batch-left">
-              <section class="form-section worldbook-batch-overwrite-section">
+              <section class="form-section">
                 <h3 class="form-section-title">
                   <Icon icon="ph:check-square-duotone" class="form-section-icon" />
                   选择要覆盖的组件
@@ -33,29 +33,17 @@
                       <Icon :icon="section.icon" />
                       {{ section.title }}
                     </div>
-                    <el-checkbox
-                      v-for="field in section.fields"
-                      :key="field.key"
-                      v-model="enabledFields[field.key]"
-                      class="worldbook-batch-overwrite-checkbox"
-                    >
+                    <el-checkbox v-for="field in section.fields" :key="field.key" v-model="enabledFields[field.key]"
+                      class="worldbook-batch-overwrite-checkbox">
                       {{ field.label }}
                     </el-checkbox>
                   </div>
                 </div>
               </section>
 
-              <WorldBookEditor
-                :entry="draftEntry"
-                v-model="draftEntry"
-                :all-keywords="allKeywords"
-                :current-entry-index="0"
-                :total-entries="1"
-                :is-next-entry-in-different-book="false"
-                :is-previous-entry-in-different-book="false"
-                hide-content
-                hide-navigation
-              />
+              <WorldBookEditor :entry="draftEntry" v-model="draftEntry" :all-keywords="allKeywords"
+                :current-entry-index="0" :total-entries="1" :is-next-entry-in-different-book="false"
+                :is-previous-entry-in-different-book="false" hide-content hide-navigation />
             </div>
           </el-scrollbar>
         </Pane>
@@ -73,16 +61,9 @@
               </div>
             </div>
             <el-scrollbar class="worldbook-batch-tree-scrollbar">
-              <el-tree
-                ref="entryTreeRef"
-                :data="entryTreeData"
-                :props="treeProps"
-                node-key="id"
-                show-checkbox
-                default-expand-all
-                :empty-text="book.entries.length === 0 ? '当前世界书没有条目' : '无条目'"
-                @check="syncCheckedEntries"
-              >
+              <el-tree ref="entryTreeRef" :data="entryTreeData" :props="treeProps" node-key="id" show-checkbox
+                default-expand-all :empty-text="book.entries.length === 0 ? '当前世界书没有条目' : '无条目'"
+                @check="syncCheckedEntries">
                 <template #default="{ node, data }">
                   <div class="worldbook-batch-tree-node" :class="{ 'is-disabled': data.raw?.disable }">
                     <Icon :icon="data.icon" class="sidebar-tree-node-icon" />
@@ -306,7 +287,7 @@ watch(
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 18px;
+  padding: 16px;
   border-bottom: 1px solid var(--el-border-color-light);
   flex-shrink: 0;
 }
@@ -340,10 +321,6 @@ watch(
 
 .worldbook-batch-left {
   min-height: 100%;
-}
-
-.worldbook-batch-overwrite-section {
-  margin: 16px 16px 0;
 }
 
 .worldbook-batch-overwrite-groups {
