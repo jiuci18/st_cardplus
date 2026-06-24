@@ -127,6 +127,7 @@ declare module 'vue' {
     WidthConverter: typeof import('./src/components/toolsbox/WidthConverter.vue')['default']
     WorldBook: typeof import('./src/components/WorldBook.vue')['default']
     WorldBookActions: typeof import('./src/components/worldbook/WorldBookActions.vue')['default']
+    WorldBookBatchSettings: typeof import('./src/components/worldbook/WorldBookBatchSettings.vue')['default']
     WorldBookConverterTool: typeof import('./src/components/toolsbox/WorldBookConverterTool.vue')['default']
     WorldBookEditor: typeof import('./src/components/worldbook/WorldBookEditor.vue')['default']
     WorldBookList: typeof import('./src/components/worldbook/WorldBookList.vue')['default']

@@ -11,12 +11,12 @@
             <Icon icon="ph:info-duotone" class="form-section-icon" />
             基本信息
             <div class="entry-navigation-buttons">
-              <el-button @click="emit('goToPrevious')"
+              <el-button v-if="!props.hideNavigation" @click="emit('goToPrevious')"
                 :disabled="props.currentEntryIndex <= 0 && !props.isPreviousEntryInDifferentBook" size="small">
                 <Icon icon="ph:arrow-left-bold" />
                 {{ props.isPreviousEntryInDifferentBook ? '上一本书' : '上一个条目' }}
               </el-button>
-              <el-button @click="emit('goToNext')"
+              <el-button v-if="!props.hideNavigation" @click="emit('goToNext')"
                 :disabled="props.currentEntryIndex >= props.totalEntries - 1 && !props.isNextEntryInDifferentBook"
                 size="small">
                 {{ props.isNextEntryInDifferentBook ? '下一本书' : '下一个条目' }}
@@ -42,7 +42,7 @@
                 <p class="form-help-text">提示: 正则表达式需以 / 开头和结尾, 例如 /regex/i</p>
               </div>
             </div>
-            <div>
+            <div v-if="!props.hideContent">
               <label class="form-label">条目内容 (Content)</label>
               <el-input v-model="localModel.content" type="textarea" :rows="8"
                 placeholder="当条目激活时，这段文本会被插入到AI的提示中..." />
@@ -303,6 +303,8 @@ const props = defineProps<{
   isNextEntryInDifferentBook: boolean;
   isPreviousEntryInDifferentBook: boolean;
   saveStatus?: 'idle' | 'saving' | 'saved' | 'error';
+  hideContent?: boolean;
+  hideNavigation?: boolean;
 }>();
 
 const emit = defineEmits<{

@@ -116,9 +116,9 @@ const router = createRouter({
 
 router.afterEach((to) => {
   if (to.meta.title) {
-    document.title = `酒馆角色卡工具箱 · ${to.meta.title}`;
+    document.title = `st_cardplus · ${to.meta.title}`;
   } else {
-    document.title = '酒馆角色卡工具箱';
+    document.title = 'st_cardplus';
   }
 });
 export default router;
