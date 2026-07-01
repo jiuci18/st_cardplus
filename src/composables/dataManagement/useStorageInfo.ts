@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 import { worldBookService, type WorldBookStats } from '@/database/appdb/worldBookService';
 import { characterCardService, type CharacterCardStats } from '@/database/appdb/characterCardService';
+import { getLocalStorageSnapshot } from '@/utils/localStorageUtils';
 
 export function useStorageInfo() {
   const indexedDBUsage = ref({
@@ -77,13 +78,10 @@ export function useStorageInfo() {
     let totalBytes = 0;
     const byteSize = (value: string) => new Blob([value]).size;
 
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (!key) continue;
-      const value = localStorage.getItem(key);
+    Object.entries(getLocalStorageSnapshot()).forEach(([key, value]) => {
       totalBytes += byteSize(key);
       if (value) totalBytes += byteSize(value);
-    }
+    });
 
     // localStorage 的总配额，默认显示为 5MB
     const quota = 5 * 1024 * 1024;

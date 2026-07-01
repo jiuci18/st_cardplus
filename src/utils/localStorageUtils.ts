@@ -31,60 +31,65 @@ interface AppSettings {
 type LocalStorageSnapshot = Record<string, string | null>;
 export type AppSettingsKey = keyof AppSettings;
 
-const getLocalStorageItem = (key: string): string | null => {
-  try {
-    return localStorage.getItem(key);
-  } catch (error) {
-    console.error("读取本地存储失败:", error);
-    return null;
-  }
-};
-
-const setLocalStorageItem = (key: string, value: string): void => {
-  try {
-    localStorage.setItem(key, value);
-  } catch (error) {
-    console.error("写入本地存储失败:", error);
-  }
-};
-
-const removeLocalStorageItem = (key: string): void => {
-  try {
-    localStorage.removeItem(key);
-  } catch (error) {
-    console.error("移除本地存储失败:", error);
-  }
-};
-
-const clearAllLocalStorage = (): void => {
-  try {
-    localStorage.clear();
-  } catch (error) {
-    console.error("清空本地存储失败:", error);
-  }
-};
-
-const getLocalStorageKeys = (): string[] => {
-  const keys: string[] = [];
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key) keys.push(key);
+const createStorageStore = (name: "localStorage" | "sessionStorage") => ({
+  get(key: string): string | null {
+    try {
+      return window[name].getItem(key);
+    } catch (error) {
+      console.error(`Failed to read ${name}:`, error);
+      return null;
     }
-  } catch (error) {
-    console.error("读取本地存储键失败:", error);
-  }
-  return keys;
-};
+  },
+  set(key: string, value: string): void {
+    try {
+      window[name].setItem(key, value);
+    } catch (error) {
+      console.error(`Failed to write ${name}:`, error);
+    }
+  },
+  remove(key: string): void {
+    try {
+      window[name].removeItem(key);
+    } catch (error) {
+      console.error(`Failed to remove from ${name}:`, error);
+    }
+  },
+  clear(): void {
+    try {
+      window[name].clear();
+    } catch (error) {
+      console.error(`Failed to clear ${name}:`, error);
+    }
+  },
+  entries(): LocalStorageSnapshot {
+    const entries: LocalStorageSnapshot = {};
+    try {
+      const storage = window[name];
+      for (let index = 0; index < storage.length; index++) {
+        const key = storage.key(index);
+        if (key) entries[key] = storage.getItem(key);
+      }
+    } catch (error) {
+      console.error(`Failed to enumerate ${name}:`, error);
+    }
+    return entries;
+  },
+});
+
+/** Central access point for persistent browser storage. */
+export const localStorageStore = createStorageStore("localStorage");
+
+/** Central access point for browser session storage. */
+export const sessionStorageStore = createStorageStore("sessionStorage");
 
 export const getLocalStorageSnapshot = (options?: {
   excludeKeys?: string[];
 }): LocalStorageSnapshot => {
   const snapshot: LocalStorageSnapshot = {};
   const excludeSet = new Set(options?.excludeKeys ?? []);
-  getLocalStorageKeys().forEach((key) => {
+  Object.entries(localStorageStore.entries()).forEach(([key, value]) => {
     if (!excludeSet.has(key)) {
-      snapshot[key] = getLocalStorageItem(key);
+      snapshot[key] = value;
     }
   });
   return snapshot;
@@ -96,48 +101,35 @@ export const restoreLocalStorageSnapshot = (
 ): void => {
   const preserved: LocalStorageSnapshot = {};
   (options?.preserveKeys ?? []).forEach((key) => {
-    const value = getLocalStorageItem(key);
+    const value = localStorageStore.get(key);
     if (value !== null) preserved[key] = value;
   });
 
-  clearAllLocalStorage();
+  localStorageStore.clear();
 
   Object.entries(snapshot).forEach(([key, value]) => {
-    if (value !== null) setLocalStorageItem(key, value);
+    if (value !== null) localStorageStore.set(key, value);
   });
 
   Object.entries(preserved).forEach(([key, value]) => {
-    if (value !== null) setLocalStorageItem(key, value);
+    if (value !== null) localStorageStore.set(key, value);
   });
 };
 
 export const getSessionStorageItem = (key: string): string | null => {
-  try {
-    return sessionStorage.getItem(key);
-  } catch (error) {
-    console.error("读取会话存储失败:", error);
-    return null;
-  }
+  return sessionStorageStore.get(key);
 };
 
 export const setSessionStorageItem = (key: string, value: string): void => {
-  try {
-    sessionStorage.setItem(key, value);
-  } catch (error) {
-    console.error("写入会话存储失败:", error);
-  }
+  sessionStorageStore.set(key, value);
 };
 
 export const removeSessionStorageItem = (key: string): void => {
-  try {
-    sessionStorage.removeItem(key);
-  } catch (error) {
-    console.error("移除会话存储失败:", error);
-  }
+  sessionStorageStore.remove(key);
 };
 
 export const readLocalStorageJSON = <T>(key: string): T | null => {
-  const value = getLocalStorageItem(key);
+  const value = localStorageStore.get(key);
   if (!value) return null;
   try {
     return JSON.parse(value) as T;
@@ -149,7 +141,7 @@ export const readLocalStorageJSON = <T>(key: string): T | null => {
 
 export const writeLocalStorageJSON = (key: string, value: unknown): void => {
   try {
-    setLocalStorageItem(key, JSON.stringify(value));
+    localStorageStore.set(key, JSON.stringify(value));
   } catch (error) {
     console.error(`写入本地存储 JSON 失败: ${key}`, error);
   }
@@ -225,10 +217,10 @@ const normalizeSettingValue = <K extends AppSettingsKey>(
     return (value === "left" ? "left" : "right") as AppSettings[K];
   }
   if (key === "pngImportUploadBehavior") {
-    const v = String(value ?? "").trim().toLowerCase();
-    return (
-      v === "upload" || v === "skip" ? v : "ask"
-    ) as AppSettings[K];
+    const v = String(value ?? "")
+      .trim()
+      .toLowerCase();
+    return (v === "upload" || v === "skip" ? v : "ask") as AppSettings[K];
   }
   return value;
 };
@@ -239,14 +231,14 @@ const normalizeSettingValue = <K extends AppSettingsKey>(
  */
 const getSettings = (): AppSettings => {
   try {
-    const savedSettings = getLocalStorageItem(SETTINGS_KEY);
+    const savedSettings = localStorageStore.get(SETTINGS_KEY);
     if (savedSettings) {
       const parsed = JSON.parse(savedSettings);
       const currentImgbbApiKey =
         typeof parsed.imgbbApiKey === "string" ? parsed.imgbbApiKey.trim() : "";
       const legacyImgbbApiKey = currentImgbbApiKey
         ? ""
-        : (getLocalStorageItem("imgbb-api-key")?.trim() ?? "");
+        : (localStorageStore.get("imgbb-api-key")?.trim() ?? "");
 
       let sidebarConfig = parsed.sidebarConfig;
       if (!sidebarConfig || !validateMenuConfig(sidebarConfig)) {
@@ -263,22 +255,22 @@ const getSettings = (): AppSettings => {
       };
 
       if (legacyImgbbApiKey) {
-        setLocalStorageItem(SETTINGS_KEY, JSON.stringify(mergedSettings));
-        removeLocalStorageItem("imgbb-api-key");
+        localStorageStore.set(SETTINGS_KEY, JSON.stringify(mergedSettings));
+        localStorageStore.remove("imgbb-api-key");
       }
 
       return mergedSettings;
     }
 
     const legacyImgbbApiKey =
-      getLocalStorageItem("imgbb-api-key")?.trim() ?? "";
+      localStorageStore.get("imgbb-api-key")?.trim() ?? "";
     if (legacyImgbbApiKey) {
       const migratedSettings = {
         ...defaultSettings,
         imgbbApiKey: legacyImgbbApiKey,
       };
-      setLocalStorageItem(SETTINGS_KEY, JSON.stringify(migratedSettings));
-      removeLocalStorageItem("imgbb-api-key");
+      localStorageStore.set(SETTINGS_KEY, JSON.stringify(migratedSettings));
+      localStorageStore.remove("imgbb-api-key");
       return migratedSettings;
     }
   } catch (error) {
@@ -295,7 +287,7 @@ const saveSettings = (settings: Partial<AppSettings>) => {
   try {
     const currentSettings = getSettings();
     const newSettings = { ...currentSettings, ...settings };
-    setLocalStorageItem(SETTINGS_KEY, JSON.stringify(newSettings));
+    localStorageStore.set(SETTINGS_KEY, JSON.stringify(newSettings));
   } catch (error) {
     console.error("保存设置到本地存储失败:", error);
   }
@@ -382,7 +374,7 @@ export const clearLocalStorage = (key = "characterCardData") => {
     removeSessionStorageItem(key);
     return;
   }
-  removeLocalStorageItem(key);
+  localStorageStore.remove(key);
 };
 
 /**

@@ -51,7 +51,7 @@ export const characterCardService = {
   },
 
   /**
-   * 将当前活动的 cardId 保存到 localStorage
+   * Stores the active card ID for the current browser session.
    */
   setActiveCardId(cardId: string | null): void {
     if (cardId) {

@@ -1,18 +1,14 @@
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { resetAppDatabase, exportAllDatabases, importAllDatabases } from '@/database/utils';
 import { nowIso } from '@/utils/datetime';
+import {
+  getLocalStorageSnapshot,
+  localStorageStore,
+  restoreLocalStorageSnapshot,
+} from '@/utils/localStorageUtils';
 import { saveFile } from '@/utils/system/fileSave';
 
 export function useLocalData(updateStorageInfo: () => Promise<void>) {
-  const collectLocalStorageData = () => {
-    const data: { [key: string]: any } = {};
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key) data[key] = localStorage.getItem(key);
-    }
-    return data;
-  };
-
   const readFileAsText = (file: File) =>
     new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -23,7 +19,7 @@ export function useLocalData(updateStorageInfo: () => Promise<void>) {
 
   const exportData = async () => {
     try {
-      const data = collectLocalStorageData();
+      const data: Record<string, any> = getLocalStorageSnapshot();
 
       try {
         const dbData = await exportAllDatabases();
@@ -76,13 +72,7 @@ export function useLocalData(updateStorageInfo: () => Promise<void>) {
 
         try {
           await importAllDatabases(data);
-
-          localStorage.clear();
-          for (const key in data) {
-            if (Object.prototype.hasOwnProperty.call(data, key)) {
-              localStorage.setItem(key, data[key]);
-            }
-          }
+          restoreLocalStorageSnapshot(data);
 
           ElMessage.success('数据已成功导入，应用将重新加载以应用更改');
           await updateStorageInfo();
@@ -114,7 +104,7 @@ export function useLocalData(updateStorageInfo: () => Promise<void>) {
       .then(async () => {
         try {
           await resetAppDatabase();
-          localStorage.clear();
+          localStorageStore.clear();
 
           ElMessage.success('所有本地数据已清除并重建数据库，应用将重新加载');
           await updateStorageInfo();

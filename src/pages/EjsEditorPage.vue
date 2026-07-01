@@ -133,7 +133,7 @@ import { useDevice } from '@/composables/useDevice';
 import { copyToClipboard as copyTextToClipboard } from '@/utils/clipboard';
 import { nowIso } from '@/utils/datetime';
 import { saveFile } from '@/utils/system/fileSave';
-import { getSetting } from '@/utils/localStorageUtils';
+import { getSetting, readLocalStorageJSON, writeLocalStorageJSON } from '@/utils/localStorageUtils';
 import { CopyDocument, DocumentAdd, Download, Hide, RefreshLeft, RefreshRight, View } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Pane, Splitpanes } from 'splitpanes';
@@ -251,21 +251,19 @@ async function copyToClipboard() {
 // 页面加载时的初始化
 onMounted(() => {
   store.initializeStore();
-  const saved = localStorage.getItem('ejs-editor-projects');
-  if (saved) {
-    try {
-      const savedData = JSON.parse(saved);
-      if (savedData.projects && Array.isArray(savedData.projects)) {
-        store.projects = savedData.projects;
-        if (savedData.currentProjectId) {
-          store.currentProjectId = savedData.currentProjectId;
-          const project = store.projects.find((p) => p.id === savedData.currentProjectId);
-          if (project) {
-            store.loadProjectState(project);
-          }
-        }
+  const saved = readLocalStorageJSON<{
+    projects: typeof store.projects;
+    currentProjectId?: string;
+  }>('ejs-editor-projects');
+  if (saved?.projects && Array.isArray(saved.projects)) {
+    store.projects = saved.projects;
+    if (saved.currentProjectId) {
+      store.currentProjectId = saved.currentProjectId;
+      const project = store.projects.find((p) => p.id === saved.currentProjectId);
+      if (project) {
+        store.loadProjectState(project);
       }
-    } catch { }
+    }
   }
 });
 
@@ -280,14 +278,11 @@ watch(
   () => {
     if (saveStateTimer) clearTimeout(saveStateTimer);
     saveStateTimer = setTimeout(() => {
-      try {
-        const saveData = {
-          projects: store.projects,
-          currentProjectId: store.currentProjectId,
-          timestamp: nowIso(),
-        };
-        localStorage.setItem('ejs-editor-projects', JSON.stringify(saveData));
-      } catch { }
+      writeLocalStorageJSON('ejs-editor-projects', {
+        projects: store.projects,
+        currentProjectId: store.currentProjectId,
+        timestamp: nowIso(),
+      });
       saveStateTimer = null;
     }, getSetting('autoSaveDebounce') * 1000);
   },

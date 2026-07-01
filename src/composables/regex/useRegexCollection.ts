@@ -2,7 +2,12 @@ import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import type { RegexCategory, RegexScriptCollection, SillyTavernRegexScript } from './types';
 import { v4 as uuidv4 } from 'uuid';
-import { getSessionStorageItem, setSessionStorageItem } from '@/utils/localStorageUtils';
+import {
+  getSessionStorageItem,
+  readLocalStorageJSON,
+  setSessionStorageItem,
+  writeLocalStorageJSON,
+} from '@/utils/localStorageUtils';
 import { nowIso } from '@/utils/datetime';
 
 const STORAGE_KEY = 'regex-script-collection';
@@ -22,10 +27,10 @@ export function useRegexCollection() {
     return regexCollection.value.categories[categoryId] || null;
   });
 
-  // 保存到 sessionStorage
+  // 保存到 localStorage
   const saveToStorage = () => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(regexCollection.value.categories));
+      writeLocalStorageJSON(STORAGE_KEY, regexCollection.value.categories);
       if (regexCollection.value.activeCategoryId) {
         setSessionStorageItem(ACTIVE_CATEGORY_KEY, regexCollection.value.activeCategoryId);
       }
@@ -37,12 +42,11 @@ export function useRegexCollection() {
   // 从 localStorage 加载
   const loadFromStorage = () => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = readLocalStorageJSON<Record<string, RegexCategory>>(STORAGE_KEY);
       const savedActiveId = getSessionStorageItem(ACTIVE_CATEGORY_KEY);
 
       if (saved) {
-        const categories = JSON.parse(saved);
-        regexCollection.value.categories = categories;
+        regexCollection.value.categories = saved;
         regexCollection.value.activeCategoryId = savedActiveId;
         return true;
       }

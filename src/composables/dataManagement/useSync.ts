@@ -11,7 +11,13 @@ import {
   uploadToGist,
 } from '@/utils/cloud/gist';
 import { SYNC_EXCLUDED_KEYS, SYNC_SNAPSHOT_SESSION_KEY } from '@/config/dataSyncConfig';
-import { getSessionStorageItem, getSetting, removeSessionStorageItem, writeLocalStorageJSON } from '@/utils/localStorageUtils';
+import {
+  getSessionStorageItem,
+  getSetting,
+  readLocalStorageJSON,
+  removeSessionStorageItem,
+  writeLocalStorageJSON,
+} from '@/utils/localStorageUtils';
 import { formatDateTime, formatRelative, now, nowIso } from '@/utils/datetime';
 import type { GistConfig } from '@/types/gist';
 import { DEFAULT_SYNC_PROVIDER, SYNC_PROVIDER_OPTIONS, WEB_DAV_BACKUP_FILE_NAME } from './sync/constants';
@@ -54,7 +60,7 @@ export function useSync() {
   watch(
     webdavConfig,
     (nextValue) => {
-      localStorage.setItem('webdavConfig', JSON.stringify(nextValue));
+      writeLocalStorageJSON('webdavConfig', nextValue);
     },
     { deep: true }
   );
@@ -78,10 +84,7 @@ export function useSync() {
   };
 
   const initialize = () => {
-    const storedWebDAVConfig = localStorage.getItem('webdavConfig');
-    if (storedWebDAVConfig) {
-      webdavConfig.value = JSON.parse(storedWebDAVConfig);
-    }
+    webdavConfig.value = readLocalStorageJSON<WebDAVConfig>('webdavConfig') ?? webdavConfig.value;
 
     gistConfig.value = loadGistConfig() ?? gistConfig.value;
     snapshotAvailable.value = !!getSessionStorageItem(SYNC_SNAPSHOT_SESSION_KEY);

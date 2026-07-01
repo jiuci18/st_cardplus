@@ -1,3 +1,4 @@
+import { localStorageStore } from "../localStorageUtils";
 import { isTauriApp } from "./tauri";
 
 export interface SaveFileOptions {
@@ -55,7 +56,7 @@ export async function saveFile(
 
   const { invoke } = await import("@tauri-apps/api/core");
   const storageKey = options.rememberDirKey || "save.defaultDir";
-  const defaultDir = localStorage.getItem(storageKey) || "";
+  const defaultDir = localStorageStore.get(storageKey) || "";
   const base64Data = bytesToBase64(options.data);
 
   try {
@@ -76,7 +77,7 @@ export async function saveFile(
 
     const savedDir = String(result?.saved_dir || "").trim();
     if (savedDir) {
-      localStorage.setItem(storageKey, savedDir);
+      localStorageStore.set(storageKey, savedDir);
     }
 
     return {
