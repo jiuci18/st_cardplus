@@ -15,6 +15,7 @@ declare module 'vue' {
     AppearanceAndAttireTab: typeof import('./src/components/charcard/tabs/AppearanceAndAttireTab.vue')['default']
     AppSettings: typeof import('./src/components/settingPage/AppSettings.vue')['default']
     AppSidebar: typeof import('./src/components/ui/layout/AppSidebar.vue')['default']
+    BarkeepConnectionDrawer: typeof import('./src/components/home/BarkeepConnectionDrawer.vue')['default']
     BasicInfoPanel: typeof import('./src/components/cardManager/main/BasicInfoPanel.vue')['default']
     BridgeNode: typeof import('./src/components/worldeditor/graph/BridgeNode.vue')['default']
     BrowserFilePicker: typeof import('./src/components/ui/common/BrowserFilePicker.vue')['default']
