@@ -17,6 +17,7 @@
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.node.json",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "node --test tests/unit/*.test.ts",
     "test:browser": "playwright test",
     "start": "tauri dev",
     "knip": "knip",

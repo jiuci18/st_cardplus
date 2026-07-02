@@ -18,6 +18,10 @@ import { pickRandomRegionColor } from '@/utils/worldeditor/regionColors';
 import { normalizeLandmarkHierarchy, removeLandmarkFromHierarchy } from '@/utils/worldeditor/landmarkHierarchy';
 import { removeLandmarkLinksForIds } from '@/composables/worldeditor/graph/worldGraphLinks';
 import { saveFile } from '@/utils/system/fileSave';
+import {
+  LegacyWorldEditorDataError,
+  parseLegacyWorldEditorSnapshot,
+} from '@/utils/worldeditor/legacyWorldEditorData';
 import { ElMessage } from 'element-plus';
 
 const WORLD_EDITOR_DATA_KEY = 'world-editor-data';
@@ -30,30 +34,6 @@ interface WorldProjectPackage {
   forces: EnhancedForce[];
   regions: EnhancedRegion[];
 }
-
-class LegacyWorldEditorDataError extends Error {}
-
-const parseLegacySnapshot = (raw: string): WorldEditorSnapshot => {
-  let value: unknown;
-  try {
-    value = JSON.parse(raw);
-  } catch {
-    throw new LegacyWorldEditorDataError('旧版世界编辑器数据无法解析，原数据已保留');
-  }
-
-  if (
-    !value ||
-    typeof value !== 'object' ||
-    !Array.isArray((value as WorldEditorSnapshot).projects) ||
-    !Array.isArray((value as WorldEditorSnapshot).landmarks) ||
-    !Array.isArray((value as WorldEditorSnapshot).forces) ||
-    !Array.isArray((value as WorldEditorSnapshot).regions)
-  ) {
-    throw new LegacyWorldEditorDataError('旧版世界编辑器数据格式不正确，原数据已保留');
-  }
-
-  return value as WorldEditorSnapshot;
-};
 
 export function useWorldEditor() {
   // State Management
@@ -473,7 +453,7 @@ export function useWorldEditor() {
       let snapshot: WorldEditorSnapshot;
 
       if (!hasIndexedData && legacyRaw !== null) {
-        snapshot = parseLegacySnapshot(legacyRaw);
+        snapshot = parseLegacyWorldEditorSnapshot(legacyRaw);
         normalizeLandmarkHierarchy(snapshot.landmarks);
         await worldEditorService.saveSnapshot(snapshot);
         localStorageStore.remove(WORLD_EDITOR_DATA_KEY);
