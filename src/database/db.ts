@@ -2,6 +2,12 @@ import Dexie, { type Table } from 'dexie';
 import type { WorldBook, WorldBookEntry } from '@/types/worldbook';
 import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 import type { OpenAIChatCompletionPreset } from '../types/openai-preset';
+import type {
+  Project,
+  EnhancedLandmark,
+  EnhancedForce,
+  EnhancedRegion,
+} from '@/types/worldeditor/world-editor';
 
 // 定义存储在 IndexedDB 中的 WorldBookEntry 结构，增加了 bookId 作为外键
 export interface StoredWorldBookEntry extends WorldBookEntry {
@@ -29,6 +35,26 @@ export interface StoredPresetFile {
   createdAt: string; // 创建时间 ISO 8601
   updatedAt: string; // 更新时间 ISO 8601
   data: Omit<OpenAIChatCompletionPreset, 'prompts'> & { prompts: Record<string, any>[] };
+}
+
+/** Ordered project record stored by the world editor. */
+export interface StoredWorldProject extends Project {
+  order: number;
+}
+
+/** Ordered landmark record stored by the world editor. */
+export interface StoredWorldLandmark extends EnhancedLandmark {
+  order: number;
+}
+
+/** Ordered force record stored by the world editor. */
+export interface StoredWorldForce extends EnhancedForce {
+  order: number;
+}
+
+/** Ordered region record stored by the world editor. */
+export interface StoredWorldRegion extends EnhancedRegion {
+  order: number;
 }
 
 /**
@@ -65,6 +91,18 @@ class AppDatabase extends Dexie {
    */
   presets!: Table<StoredPresetFile, string>;
 
+  /** World editor project records. */
+  worldProjects!: Table<StoredWorldProject, string>;
+
+  /** World editor landmark records. */
+  worldLandmarks!: Table<StoredWorldLandmark, string>;
+
+  /** World editor force records. */
+  worldForces!: Table<StoredWorldForce, string>;
+
+  /** World editor region records. */
+  worldRegions!: Table<StoredWorldRegion, string>;
+
   constructor() {
     super('appDatabase');
     this.version(1).stores({
@@ -81,6 +119,16 @@ class AppDatabase extends Dexie {
       entries: '++id, bookId, uid',
       characterCards: '&id, name, order, updatedAt',
       presets: '&id, name, order, updatedAt',
+    });
+    this.version(4).stores({
+      books: '&id, name, order, updatedAt',
+      entries: '++id, bookId, uid',
+      characterCards: '&id, name, order, updatedAt',
+      presets: '&id, name, order, updatedAt',
+      worldProjects: '&id, order, updatedAt',
+      worldLandmarks: '&id, projectId, regionId, order, updatedAt',
+      worldForces: '&id, projectId, order, updatedAt',
+      worldRegions: '&id, projectId, order, updatedAt',
     });
   }
 }

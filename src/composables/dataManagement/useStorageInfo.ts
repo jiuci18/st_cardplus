@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 import { worldBookService, type WorldBookStats } from '@/database/appdb/worldBookService';
 import { characterCardService, type CharacterCardStats } from '@/database/appdb/characterCardService';
+import { worldEditorService, type WorldEditorStats } from '@/database/appdb/worldEditorService';
 import { getLocalStorageSnapshot } from '@/utils/localStorageUtils';
 
 export function useStorageInfo() {
@@ -16,6 +17,7 @@ export function useStorageInfo() {
 
   const worldBookStats = ref<WorldBookStats | null>(null);
   const characterCardStats = ref<CharacterCardStats | null>(null);
+  const worldEditorStats = ref<WorldEditorStats | null>(null);
 
   // 格式化字节大小
   const formatBytes = (bytes: number, decimals = 2) => {
@@ -34,16 +36,18 @@ export function useStorageInfo() {
         ? navigator.storage.estimate()
         : Promise.resolve<StorageEstimate | null>(null);
 
-    const [worldStats, cardStats, estimate] = await Promise.all([
+    const [worldStats, cardStats, editorStats, estimate] = await Promise.all([
       worldBookService.getStats(),
       characterCardService.getStats(),
+      worldEditorService.getStats(),
       storageEstimatePromise,
     ]);
 
     worldBookStats.value = worldStats;
     characterCardStats.value = cardStats;
+    worldEditorStats.value = editorStats;
 
-    const totalApproxBytes = worldStats.approxBytes + cardStats.approxBytes;
+    const totalApproxBytes = worldStats.approxBytes + cardStats.approxBytes + editorStats.approxBytes;
     const quota = estimate?.quota ?? null;
     const reportedUsage = estimate?.usage ?? null;
 
@@ -52,7 +56,6 @@ export function useStorageInfo() {
 
     if (quota && quota > 0) {
       const oneGB = 1024 * 1024 * 1024;
-      // 如果配额大于 1GB，按 1GB 计算百分比和显示
       const effectiveQuota = quota > oneGB ? oneGB : quota;
       percentage = totalApproxBytes > 0 ? (totalApproxBytes / effectiveQuota) * 100 : 0;
 
@@ -111,6 +114,7 @@ export function useStorageInfo() {
     localStorageUsage,
     worldBookStats,
     characterCardStats,
+    worldEditorStats,
     formatBytes,
     getProgressStatus,
     updateStorageInfo,

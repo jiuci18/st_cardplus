@@ -31,10 +31,11 @@ interface DatabaseRegistry {
 }
 
 async function getRegisteredDatabases(): Promise<DatabaseRegistry[]> {
-  const [{ worldBookService }, { characterCardService }, { presetService }] = await Promise.all([
+  const [{ worldBookService }, { characterCardService }, { presetService }, { worldEditorService }] = await Promise.all([
     import('./appdb/worldBookService'),
     import('./appdb/characterCardService'),
     import('./appdb/presetService'),
+    import('./appdb/worldEditorService'),
   ]);
 
   return [
@@ -52,6 +53,11 @@ async function getRegisteredDatabases(): Promise<DatabaseRegistry[]> {
       key: 'ST_CARDPLUS_PRESET_V1',
       service: presetService,
       label: '预设',
+    },
+    {
+      key: 'ST_CARDPLUS_WORLD_EDITOR_V1',
+      service: worldEditorService,
+      label: '世界编辑器',
     },
   ];
 }
@@ -86,6 +92,8 @@ export async function exportAllDatabases(): Promise<Record<string, string>> {
  */
 export async function importAllDatabases(data: Record<string, any>): Promise<void> {
   const registeredDatabases = await getRegisteredDatabases();
+  const hasWorldEditorDatabase = Object.prototype.hasOwnProperty.call(data, 'ST_CARDPLUS_WORLD_EDITOR_V1');
+  const hasLegacyWorldEditorData = Object.prototype.hasOwnProperty.call(data, 'world-editor-data');
 
   for (const { key, service, label } of registeredDatabases) {
     if (data[key]) {
@@ -98,6 +106,11 @@ export async function importAllDatabases(data: Record<string, any>): Promise<voi
         throw new Error(`导入${label}数据失败`);
       }
     }
+  }
+
+  if (!hasWorldEditorDatabase && hasLegacyWorldEditorData) {
+    const { worldEditorService } = await import('./appdb/worldEditorService');
+    await worldEditorService.clearDatabase();
   }
 }
 

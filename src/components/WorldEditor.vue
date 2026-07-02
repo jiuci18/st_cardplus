@@ -1,123 +1,66 @@
 <template>
   <div class="world-editor-container">
+    <div v-if="isLoading || loadError" class="world-editor-storage-state">
+      <Icon v-if="isLoading" icon="eos-icons:loading" width="32" height="32" />
+      <template v-else>
+        <Icon icon="material-symbols:error-outline" width="32" height="32" />
+        <span>{{ loadError }}</span>
+        <el-button type="primary" @click="retryStorageLoad">
+          重试
+        </el-button>
+        <el-button
+          v-if="canRecoverLegacyData"
+          type="danger"
+          :loading="isRecoveringLegacyData"
+          @click="downloadLegacyDataAndReset"
+        >
+          下载数据并重建工作区
+        </el-button>
+      </template>
+    </div>
     <div class="world-editor-mobile-layout">
       <div class="main-panel-container world-editor-mobile-panel">
-        <WorldGraph
-          v-if="graphProjectId"
-          :projects="projects"
-          :landmarks="landmarks"
-          :forces="forces"
-          :regions="regions"
-          :active-project-id="graphProjectId || activeProjectId"
-          @edit-item="handleEditFromGraph"
-        />
-        <WorldEditorMainPanel
-          v-else
-          :selected-item="selectedItem"
-          :all-tags="allTags"
-          :all-regions="allRegions"
-          :landmarks="landmarks"
-          :forces="forces"
-          :regions="regions"
-          :create-region="createRegion"
-          :projects="projects"
-          :export-project="exportProject"
-          :import-project-overwrite="importProjectOverwrite"
-          @update:selected-item="handleSelectionFromChild"
-          @create-project="handleCreateProjectFromPanel"
-        />
+        <WorldGraph v-if="graphProjectId" :projects="projects" :landmarks="landmarks" :forces="forces"
+          :regions="regions" :active-project-id="graphProjectId || activeProjectId" @edit-item="handleEditFromGraph" />
+        <WorldEditorMainPanel v-else :selected-item="selectedItem" :all-tags="allTags" :all-regions="allRegions"
+          :landmarks="landmarks" :forces="forces" :regions="regions" :create-region="createRegion" :projects="projects"
+          :export-project="exportProject" :import-project-overwrite="importProjectOverwrite"
+          @update:selected-item="handleSelectionFromChild" @create-project="handleCreateProjectFromPanel" />
       </div>
 
-      <MobileBookmarkDrawer
-        v-model:visible="mobileDrawerVisible"
-        v-model:active-tab="mobilePanelTab"
-        :items="mobileBookmarkItems"
-        drawer-size="88%"
-      >
+      <MobileBookmarkDrawer v-model:visible="mobileDrawerVisible" v-model:active-tab="mobilePanelTab"
+        :items="mobileBookmarkItems" drawer-size="88%">
         <template #pane-list>
-          <WorldEditorToolbar
-            :projects="projects"
-            :landmarks="landmarks"
-            :forces="forces"
-            :regions="regions"
-            :selected-item="selectedItem"
-            @select="handleSelection"
-            @open-graph="handleOpenGraph"
-            @add="handleAdd"
-            @delete="handleDelete"
-            @edit="handleEdit"
-            @copy="handleCopy"
-            :drag-drop-handlers="dragDropHandlers"
-          />
+          <WorldEditorToolbar :projects="projects" :landmarks="landmarks" :forces="forces" :regions="regions"
+            :selected-item="selectedItem" @select="handleSelection" @open-graph="handleOpenGraph" @add="handleAdd"
+            @delete="handleDelete" @edit="handleEdit" @copy="handleCopy" :drag-drop-handlers="dragDropHandlers" />
         </template>
       </MobileBookmarkDrawer>
     </div>
 
     <div class="world-editor-desktop-layout">
-      <Splitpanes
-        class="default-theme"
-        style="height: 100%"
-      >
-        <Pane
-          size="15"
-          min-size="12"
-          max-size="30"
-        >
+      <Splitpanes class="default-theme" style="height: 100%">
+        <Pane size="15" min-size="12" max-size="30">
           <div class="toolbar-container">
-            <WorldEditorToolbar
-              :projects="projects"
-              :landmarks="landmarks"
-              :forces="forces"
-              :regions="regions"
-              :selected-item="selectedItem"
-              @select="handleSelection"
-              @open-graph="handleOpenGraph"
-              @add="handleAdd"
-              @delete="handleDelete"
-              @edit="handleEdit"
-              @copy="handleCopy"
-              :drag-drop-handlers="dragDropHandlers"
-            />
+            <WorldEditorToolbar :projects="projects" :landmarks="landmarks" :forces="forces" :regions="regions"
+              :selected-item="selectedItem" @select="handleSelection" @open-graph="handleOpenGraph" @add="handleAdd"
+              @delete="handleDelete" @edit="handleEdit" @copy="handleCopy" :drag-drop-handlers="dragDropHandlers" />
           </div>
         </Pane>
-        <Pane
-          size="85"
-          min-size="70"
-        >
+        <Pane size="85" min-size="70">
           <div class="main-panel-container">
-            <WorldGraph
-              v-if="graphProjectId"
-              :projects="projects"
-              :landmarks="landmarks"
-              :forces="forces"
-              :regions="regions"
-              :active-project-id="graphProjectId || activeProjectId"
-              @edit-item="handleEditFromGraph"
-            />
-            <WorldEditorMainPanel
-              v-else
-              :selected-item="selectedItem"
-              :all-tags="allTags"
-              :all-regions="allRegions"
-              :landmarks="landmarks"
-              :forces="forces"
-              :regions="regions"
-              :create-region="createRegion"
-              :projects="projects"
-              :export-project="exportProject"
-              :import-project-overwrite="importProjectOverwrite"
-              @update:selected-item="handleSelectionFromChild"
-              @create-project="handleCreateProjectFromPanel"
-            />
+            <WorldGraph v-if="graphProjectId" :projects="projects" :landmarks="landmarks" :forces="forces"
+              :regions="regions" :active-project-id="graphProjectId || activeProjectId"
+              @edit-item="handleEditFromGraph" />
+            <WorldEditorMainPanel v-else :selected-item="selectedItem" :all-tags="allTags" :all-regions="allRegions"
+              :landmarks="landmarks" :forces="forces" :regions="regions" :create-region="createRegion"
+              :projects="projects" :export-project="exportProject" :import-project-overwrite="importProjectOverwrite"
+              @update:selected-item="handleSelectionFromChild" @create-project="handleCreateProjectFromPanel" />
           </div>
         </Pane>
       </Splitpanes>
     </div>
-    <ProjectModal
-      v-model:visible="isModalVisible"
-      :project-data="editingProject"
-      @submit="handleModalSubmit"
-    />
+    <ProjectModal v-model:visible="isModalVisible" :project-data="editingProject" @submit="handleModalSubmit" />
   </div>
 </template>
 
@@ -139,6 +82,7 @@ import WorldEditorMainPanel from './worldeditor/WorldEditorMainPanel.vue';
 import WorldGraph from './worldeditor/WorldGraph.vue';
 import ProjectModal from './worldeditor/ProjectModal.vue';
 import MobileBookmarkDrawer from '@/components/ui/common/MobileBookmarkDrawer.vue';
+import { Icon } from '@iconify/vue';
 import { useWorldEditor } from '@/composables/worldeditor/useWorldEditor';
 import { useWorldEditorUI } from '@/composables/worldeditor/useWorldEditorUI';
 import { useDragAndDrop } from '@/composables/worldeditor/useDragAndDrop';
@@ -160,6 +104,10 @@ const {
   forces,
   regions,
   selectedItem,
+  isLoading,
+  loadError,
+  canRecoverLegacyData,
+  isRecoveringLegacyData,
   activeProjectId,
   allTags,
   allRegions,
@@ -171,6 +119,8 @@ const {
   handleProjectSubmit,
   exportProject,
   importProjectOverwrite,
+  retryStorageLoad,
+  downloadLegacyDataAndReset,
 } = useWorldEditor();
 
 const handleSelection = (item: Project | EnhancedLandmark | EnhancedForce | EnhancedRegion | ProjectIntegration) => {
@@ -275,12 +225,26 @@ const handleDelete = async (item: Project | EnhancedLandmark | EnhancedForce | E
 
 <style scoped>
 .world-editor-container {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
   padding: 4px;
   background-color: var(--el-bg-color-page);
   box-sizing: border-box;
+}
+
+.world-editor-storage-state {
+  position: absolute;
+  inset: 4px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: var(--el-text-color-secondary);
+  background: var(--el-bg-color);
 }
 
 .toolbar-container {
