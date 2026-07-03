@@ -13,6 +13,33 @@ interface LoginResponse {
   expiresIn?: unknown;
 }
 
+function readLoginResponse(body: unknown): {
+  authenticationEnabled: boolean;
+  token: string | null;
+  expiresAt: number | null;
+} {
+  const result = (body ?? {}) as LoginResponse;
+  const authenticationEnabled = result.enabled === true;
+  const token = typeof result.token === "string" ? result.token : null;
+  if (authenticationEnabled && !token) {
+    throw new BarkeepClientError(
+      "Barkeep 已启用认证但未返回访问令牌",
+      null,
+      "invalid-response",
+    );
+  }
+  const expiresIn =
+    typeof result.expiresIn === "number" && result.expiresIn > 0
+      ? result.expiresIn
+      : null;
+
+  return {
+    authenticationEnabled,
+    token,
+    expiresAt: expiresIn ? Date.now() + expiresIn * 1000 : null,
+  };
+}
+
 const STATUS_MESSAGES: Record<number, string> = {
   400: "请求参数不正确",
   401: "认证失败，请检查凭据",
@@ -188,6 +215,16 @@ async function requestJson(
         "csrf",
       );
     }
+    if (
+      response.status === 401 &&
+      detail?.toLowerCase().includes("bearer token")
+    ) {
+      throw new BarkeepClientError(
+        "该 Barkeep 连接已启用增强式安全，请填写 Barkeep API 密码后重新登录",
+        response.status,
+        "http",
+      );
+    }
     const summary = STATUS_MESSAGES[response.status] ?? `HTTP ${response.status}`;
     throw new BarkeepClientError(
       detail ? `${summary}：${detail}` : summary,
@@ -215,6 +252,15 @@ function assertCredentials(config: BarkeepConnectionConfig): void {
       throw new BarkeepClientError("请输入完整的 HTTP Basic 凭据");
     }
   }
+}
+
+function getSillyTavernApiPassword(config: BarkeepConnectionConfig): string {
+  if (config.mode !== "sillytavern") {
+    return "";
+  }
+  return config.multiUser
+    ? (config.apiPassword ?? "").trim()
+    : config.password;
 }
 
 function readStatus(body: unknown): BarkeepStatus {
@@ -312,7 +358,23 @@ export async function loginToBarkeep(
         }),
       });
     }
-    return { mode: "sillytavern" };
+
+    const apiPassword = getSillyTavernApiPassword(config);
+    if (!apiPassword) {
+      return { mode: "sillytavern", token: null, expiresAt: null };
+    }
+
+    const body = await requestJson(`${baseUrl}/api/plugins/barkeep/v1/login`, {
+      method: "POST",
+      credentials: "include",
+      headers: requestHeaders(config, {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+      }),
+      body: JSON.stringify({ password: apiPassword }),
+    });
+    const { token, expiresAt } = readLoginResponse(body);
+    return { mode: "sillytavern", token, expiresAt };
   }
 
   const body = await requestJson(`${baseUrl}/v1/login`, {
@@ -324,25 +386,12 @@ export async function loginToBarkeep(
         : { password: config.password },
     ),
   });
-  const result = (body ?? {}) as LoginResponse;
-  const authenticationEnabled = result.enabled === true;
-  const token = typeof result.token === "string" ? result.token : null;
-  if (authenticationEnabled && !token) {
-    throw new BarkeepClientError(
-      "Barkeep 已启用认证但未返回访问令牌",
-      null,
-      "invalid-response",
-    );
-  }
-  const expiresIn =
-    typeof result.expiresIn === "number" && result.expiresIn > 0
-      ? result.expiresIn
-      : null;
+  const { authenticationEnabled, token, expiresAt } = readLoginResponse(body);
 
   return {
     mode: "standalone",
     token,
-    expiresAt: expiresIn ? Date.now() + expiresIn * 1000 : null,
+    expiresAt,
     authenticationEnabled,
   };
 }
@@ -357,7 +406,7 @@ export async function pingBarkeep(
     throw new BarkeepClientError("连接配置已变化，请重新登录");
   }
   if (
-    session.mode === "standalone" &&
+    session.expiresAt !== undefined &&
     session.expiresAt !== null &&
     session.expiresAt <= Date.now()
   ) {
@@ -371,7 +420,7 @@ export async function pingBarkeep(
       ? `/api/plugins/barkeep/v1/${user}/status/list`
       : `/v1/${user}/status/list`;
   const headers = requestHeaders(config);
-  if (session.mode === "standalone" && session.token) {
+  if (session.token) {
     headers.set("Authorization", `Bearer ${session.token}`);
   }
 

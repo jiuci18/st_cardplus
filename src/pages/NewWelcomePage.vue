@@ -116,6 +116,7 @@
           <h1 class="title">欢迎使用 ST CardPlus</h1>
           <p class="subtitle">你今天要创造些什么？</p>
           <p class="hint">请先在右上方连接到你的 Barkeep 账户，同步你的角色卡和世界书等资产。</p>
+          <p class="hint hint-secondary">如果你的内嵌模式启用了增强式安全（API_PASSWORD_FORCE），请在连接面板额外填写 Barkeep API 密码。</p>
           
           <div class="welcome-actions">
             <el-button type="primary" size="large" @click="barkeepDrawerVisible = true">
@@ -377,6 +378,12 @@ onMounted(async () => {
   max-width: 500px;
   line-height: 1.6;
   margin: 0 0 32px 0;
+}
+
+.hint-secondary {
+  margin-top: -16px;
+  font-size: 0.92rem;
+  color: var(--el-text-color-secondary);
 }
 
 .welcome-actions {

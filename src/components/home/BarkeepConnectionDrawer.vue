@@ -64,6 +64,26 @@
         show-password
       />
 
+      <template v-if="mode === 'sillytavern'">
+        <el-divider content-position="left">增强式安全（可选）</el-divider>
+        <el-input
+          v-if="multiUser"
+          v-model="apiPassword"
+          aria-label="Barkeep API 密码"
+          placeholder="Barkeep API 密码（API_PASSWORD_FORCE）"
+          type="password"
+          show-password
+        />
+        <el-input
+          v-else
+          v-model="password"
+          aria-label="Barkeep API 密码"
+          placeholder="Barkeep API 密码（API_PASSWORD_FORCE）"
+          type="password"
+          show-password
+        />
+      </template>
+
       <template v-if="mode === 'sillytavern' && basicAuthEnabled">
         <el-divider content-position="left">HTTP Basic</el-divider>
         <el-input
@@ -83,7 +103,7 @@
       <p class="connection-hint">
         {{
           mode === "sillytavern"
-            ? "通过 SillyTavern 会话、CSRF 与可选 Basic Auth 访问插件。"
+            ? "通过 SillyTavern 会话、CSRF 与可选 Basic Auth 访问插件。若服务开启 API_PASSWORD_FORCE，还需要填写 Barkeep API 密码换取 Bearer Token。"
             : "直接访问 Barkeep 独立 HTTP 服务并使用 Bearer Token。"
         }}
       </p>
@@ -195,6 +215,7 @@ const {
   basicPassword,
   handle,
   password,
+  apiPassword,
   savePassword,
   status,
   errorMessage,

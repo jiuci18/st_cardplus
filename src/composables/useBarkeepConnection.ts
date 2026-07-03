@@ -28,6 +28,7 @@ interface PersistedBarkeepConfig {
   basicPassword?: string;
   handle: string;
   password?: string;
+  apiPassword?: string;
   savePassword: boolean;
 }
 
@@ -57,6 +58,7 @@ const basicUsername = ref("");
 const basicPassword = ref("");
 const handle = ref("");
 const password = ref("");
+const apiPassword = ref("");
 const savePassword = ref(false);
 const session = ref<BarkeepSession | null>(null);
 const status = ref<BarkeepStatus | null>(null);
@@ -70,6 +72,7 @@ const config = computed<BarkeepConnectionConfig>(() => {
     multiUser: multiUser.value,
     handle: handle.value,
     password: password.value,
+    apiPassword: apiPassword.value,
   };
   if (mode.value === "standalone") {
     return {
@@ -127,6 +130,7 @@ const persistConfig = () => {
       ? {
           basicPassword: basicPassword.value,
           password: password.value,
+          apiPassword: apiPassword.value,
         }
       : {}),
   };
@@ -218,6 +222,8 @@ const initialize = () => {
         typeof saved.basicPassword === "string" ? saved.basicPassword : "";
       password.value =
         typeof saved.password === "string" ? saved.password : "";
+      apiPassword.value =
+        typeof saved.apiPassword === "string" ? saved.apiPassword : "";
     }
   }
 
@@ -229,18 +235,11 @@ const initialize = () => {
     savedSession?.fingerprint === fingerprint.value &&
     savedSession.session
   ) {
-    if (savedSession.session.mode === "standalone") {
-      if (
-        savedSession.session.expiresAt === null ||
-        savedSession.session.expiresAt > Date.now()
-      ) {
-        session.value = savedSession.session;
-      } else {
-        localStorageStore.remove(BARKEEP_SESSION_STORAGE_KEY);
-      }
-    } else {
-      // sillytavern session doesn't have expiresAt, we just restore it
+    const expiresAt = savedSession.session.expiresAt;
+    if (expiresAt === undefined || expiresAt === null || expiresAt > Date.now()) {
       session.value = savedSession.session;
+    } else {
+      localStorageStore.remove(BARKEEP_SESSION_STORAGE_KEY);
     }
   } else {
     localStorageStore.remove(BARKEEP_SESSION_STORAGE_KEY);
@@ -258,6 +257,7 @@ watch(
     basicPassword,
     handle,
     password,
+    apiPassword,
   ],
   () => {
     if (!initialized.value) return;
@@ -288,6 +288,7 @@ export function useBarkeepConnection() {
       basicPassword,
       handle,
       password,
+      apiPassword,
       savePassword,
       status,
       errorMessage,

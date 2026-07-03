@@ -11,6 +11,7 @@ interface BarkeepConnectionBase {
   multiUser: boolean;
   handle: string;
   password: string;
+  apiPassword?: string;
 }
 
 /** A validated Barkeep connection configuration. */
@@ -26,7 +27,11 @@ export type BarkeepConnectionConfig =
 
 /** Authentication state required for subsequent Barkeep requests. */
 export type BarkeepSession =
-  | { mode: "sillytavern" }
+  | {
+      mode: "sillytavern";
+      token?: string | null;
+      expiresAt?: number | null;
+    }
   | {
       mode: "standalone";
       token: string | null;
