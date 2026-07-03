@@ -1,20 +1,4 @@
 <template>
-  <el-alert
-    type="info"
-    show-icon
-    :closable="false"
-    style="margin-bottom: 12px"
-  >
-    <template #title>想要贡献？来贡献文档吧！</template>
-    <template #default>
-      文档贡献地址：
-      <ExternalLink
-        href="https://github.com/awaae001/doc"
-      >
-        https://github.com/awaae001/doc
-      </ExternalLink>
-    </template>
-  </el-alert>
   <div class="app-settings">
     <div
       class="setting-card update-card"
@@ -202,7 +186,6 @@
 </template>
 
 <script setup lang="ts">
-import ExternalLink from '@/components/ui/common/ExternalLink.vue';
 import { getAppSettings } from '@/composables/appSettings';
 import { useAppUpdate } from '@/composables/useAppUpdate';
 import { openExternalUrl } from '@/utils/system/externalLink';

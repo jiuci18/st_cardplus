@@ -141,6 +141,15 @@
 
       <div class="connection-actions">
         <el-button
+          v-if="status"
+          type="danger"
+          plain
+          @click="logout"
+        >
+          <Icon icon="material-symbols:logout-rounded" />
+          断开
+        </el-button>
+        <el-button
           :loading="busyAction === 'login'"
           :disabled="isBusy"
           @click="login"
@@ -194,7 +203,7 @@ const {
   canPing,
   authenticationWarning,
 } = connection.state;
-const { initialize, login, ping } = connection.actions;
+const { initialize, login, ping, logout } = connection.actions;
 
 onMounted(initialize);
 </script>

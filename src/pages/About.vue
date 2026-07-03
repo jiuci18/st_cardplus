@@ -16,9 +16,6 @@
       </p>
     </div>
 
-    <SystemBanner bannerId="docsContributionBanner2026" startDate="2026-01-01" endDate="2027-01-01"
-      message="想要贡献？来贡献文档吧！" link="https://github.com/awaae001/doc" linkText="参与文档贡献" :dismissible="false" />
-
     <!-- 快速链接 -->
     <div class="links-card">
       <h2 class="section-title">链接</h2>
@@ -28,13 +25,6 @@
           <span>
             GitHub
             <small>查看源码与贡献</small>
-          </span>
-        </ExternalLink>
-        <ExternalLink href="https://doc.awaae001.top/" class="link-item">
-          <Icon icon="mdi:book-open-page-variant-outline" width="16" height="16" />
-          <span>
-            文档站
-            <small>查看使用文档</small>
           </span>
         </ExternalLink>
         <ExternalLink href="https://t.me/jiuci_channel" class="link-item">
@@ -105,7 +95,6 @@
 
 <script setup lang="ts">
 import ExternalLink from '@/components/ui/common/ExternalLink.vue';
-import SystemBanner from '@/components/SystemBanner.vue';
 import { formatDate } from '@/utils/datetime';
 import { fetchJsonResource } from '@/utils/fetchResource';
 import { Icon } from '@iconify/vue';
