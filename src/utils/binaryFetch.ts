@@ -1,7 +1,4 @@
-import {
-  fetchBlobResource,
-  fetchBytesResource,
-} from "@/utils/fetchResource";
+import { fetchBytesResource } from "@/utils/fetchResource";
 
 export interface BinaryFetchResult {
   bytes: Uint8Array;
@@ -74,7 +71,9 @@ export const fetchImageBlob = async (
   url: string,
   options: Omit<BinaryFetchOptions, "expectImage"> = {},
 ): Promise<Blob> => {
-  const result = await fetchBlobResource(url, options);
-  assertExpectedImage(result.mimeType, result.url);
-  return result.data;
+  const result = await fetchBinaryResource(url, {
+    ...options,
+    expectImage: true,
+  });
+  return binaryFetchResultToBlob(result);
 };

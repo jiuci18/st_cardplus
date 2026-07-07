@@ -8,6 +8,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             handler::image_service::upload_image_to_hosting,
             handler::http_service::fetch_http,
+            handler::http_service::request_http,
             handler::export_service::save_binary_file,
             handler::system_service::open_external_url,
             handler::system_service::open_local_directory,

@@ -1,5 +1,6 @@
 //! Browser client for Barkeep authentication and status probing.
 
+import { requestText } from "@/utils/httpTransport";
 import type {
   BarkeepConnectionConfig,
   BarkeepResourceCounts,
@@ -112,8 +113,7 @@ function requestHeaders(
   return headers;
 }
 
-async function readResponseBody(response: Response): Promise<unknown> {
-  const text = await response.text();
+function parseResponseBody(text: string): unknown {
   if (!text) return null;
   try {
     return JSON.parse(text) as unknown;
@@ -139,6 +139,75 @@ function errorDetail(body: unknown): string | null {
     return body.error;
   }
   return null;
+}
+
+function requestBody(init: RequestInit): string | undefined {
+  if (init.body === undefined || init.body === null) return undefined;
+  if (typeof init.body === "string") return init.body;
+  throw new BarkeepClientError(
+    "Barkeep 请求仅支持字符串请求体",
+    null,
+    "validation",
+  );
+}
+
+function assertOkResponse(status: number, ok: boolean, body: unknown): void {
+  if (ok) return;
+
+  const detail = errorDetail(body);
+  if (
+    status === 403 &&
+    detail?.toLowerCase().includes("invalid csrf token")
+  ) {
+    throw new BarkeepClientError(
+      "CSRF 会话无效：请刷新页面，并确保 CardPlus 与 SillyTavern 使用相同主机名（不要混用 localhost 和 127.0.0.1）",
+      status,
+      "csrf",
+    );
+  }
+  if (
+    status === 401 &&
+    detail?.toLowerCase().includes("bearer token")
+  ) {
+    throw new BarkeepClientError(
+      "该 Barkeep 连接已启用增强式安全，请填写 Barkeep API 密码后重新登录",
+      status,
+      "http",
+    );
+  }
+  const summary = STATUS_MESSAGES[status] ?? `HTTP ${status}`;
+  throw new BarkeepClientError(
+    detail ? `${summary}：${detail}` : summary,
+    status,
+    "http",
+  );
+}
+
+async function requestJsonViaTransport(
+  url: string,
+  init: RequestInit,
+): Promise<unknown> {
+  try {
+    const response = await requestText(url, {
+      allowHttpError: true,
+      body: requestBody(init),
+      cache: init.cache,
+      credentials: init.credentials,
+      headers: init.headers,
+      method: init.method,
+    });
+    const body = parseResponseBody(response.data);
+    assertOkResponse(response.status, response.ok, body);
+    return body;
+  } catch (error) {
+    if (error instanceof BarkeepClientError) throw error;
+    const detail = error instanceof Error ? error.message : "未知网络错误";
+    throw new BarkeepClientError(
+      `网络连接失败：无法访问 Barkeep 服务（${detail}）`,
+      null,
+      "network",
+    );
+  }
 }
 
 function assertCookieHostCompatibility(config: BarkeepConnectionConfig): void {
@@ -170,69 +239,7 @@ async function requestJson(
   url: string,
   init: RequestInit,
 ): Promise<unknown> {
-  let response: Response;
-  try {
-    response = await fetch(url, init);
-  } catch (error) {
-    const detail = error instanceof Error ? error.message : "未知网络错误";
-    let serverReachable = false;
-    try {
-      const origin = new URL(url).origin;
-      await fetch(origin, {
-        method: "GET",
-        mode: "no-cors",
-        cache: "no-store",
-      });
-      serverReachable = true;
-    } catch {
-      serverReachable = false;
-    }
-
-    if (serverReachable) {
-      throw new BarkeepClientError(
-        "CORS 配置错误：服务器可以访问，但未允许当前页面的 Origin、请求方法、请求头或 Cookie 凭据",
-        null,
-        "cors",
-      );
-    }
-    throw new BarkeepClientError(
-      `网络连接失败：无法访问 Barkeep 服务（${detail}）`,
-      null,
-      "network",
-    );
-  }
-
-  const body = await readResponseBody(response);
-  if (!response.ok) {
-    const detail = errorDetail(body);
-    if (
-      response.status === 403 &&
-      detail?.toLowerCase().includes("invalid csrf token")
-    ) {
-      throw new BarkeepClientError(
-        "CSRF 会话无效：请刷新页面，并确保 CardPlus 与 SillyTavern 使用相同主机名（不要混用 localhost 和 127.0.0.1）",
-        response.status,
-        "csrf",
-      );
-    }
-    if (
-      response.status === 401 &&
-      detail?.toLowerCase().includes("bearer token")
-    ) {
-      throw new BarkeepClientError(
-        "该 Barkeep 连接已启用增强式安全，请填写 Barkeep API 密码后重新登录",
-        response.status,
-        "http",
-      );
-    }
-    const summary = STATUS_MESSAGES[response.status] ?? `HTTP ${response.status}`;
-    throw new BarkeepClientError(
-      detail ? `${summary}：${detail}` : summary,
-      response.status,
-      "http",
-    );
-  }
-  return body;
+  return requestJsonViaTransport(url, init);
 }
 
 function effectiveUser(config: BarkeepConnectionConfig): string {

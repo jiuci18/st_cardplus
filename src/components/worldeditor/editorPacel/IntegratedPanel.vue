@@ -38,7 +38,9 @@
               <el-card>
                 <template #header>
                   <div class="card-header">
-                    <span>选择地标 ({{ selectedLandmarks.length }}/{{ projectLandmarks.length }})</span>
+                    <span>选择地标 ({{ selectedLandmarks.length }}/{{
+                      projectLandmarks.length
+                    }})</span>
                     <div class="header-actions-small">
                       <el-button size="small" @click="setSelection('landmarks', true)">
                         全选
@@ -50,9 +52,9 @@
                   </div>
                 </template>
                 <div class="selection-list">
-                  <div v-for="landmark in projectLandmarks" :key="landmark.id" class="selection-item"
-                    :class="{ selected: selectedLandmarks.includes(landmark.id) }"
-                    @click="toggleSelection('landmarks', landmark.id)">
+                  <div v-for="landmark in projectLandmarks" :key="landmark.id" class="selection-item" :class="{
+                    selected: selectedLandmarks.includes(landmark.id),
+                  }" @click="toggleSelection('landmarks', landmark.id)">
                     <el-checkbox :model-value="selectedLandmarks.includes(landmark.id)"
                       @change="toggleSelection('landmarks', landmark.id)" />
                     <div class="item-content">
@@ -61,16 +63,34 @@
                       <div class="item-info">
                         <div class="item-name">{{ landmark.name }}</div>
                         <div class="item-meta">
-                          {{ getLandmarkTypeLabel(landmark.type) }} | 重要性: {{ landmark.importance }}星
+                          {{ getLandmarkTypeLabel(landmark.type) }} | 重要性:
+                          {{ landmark.importance }}星
                         </div>
                         <div v-if="landmark.description" class="item-description">
-                          {{ landmark.description.slice(0, 50) }}{{ landmark.description.length > 50 ? '...' : '' }}
+                          {{ landmark.description.slice(0, 50)
+                          }}{{ landmark.description.length > 50 ? "..." : "" }}
                         </div>
-                        <div v-if="landmarkRelations.get(landmark.id)?.parentName || landmarkRelations.get(landmark.id)?.childNames.length"
-                          class="item-relations">
-                          <span v-if="landmarkRelations.get(landmark.id)?.parentName">属于: {{ landmarkRelations.get(landmark.id)?.parentName }}</span>
-                          <span v-if="landmarkRelations.get(landmark.id)?.childNames.length">
-                            包括: {{ landmarkRelations.get(landmark.id)?.childNames.join('、') }}
+                        <div v-if="
+                          landmarkRelations.get(landmark.id)?.parentName ||
+                          landmarkRelations.get(landmark.id)?.childNames
+                            .length
+                        " class="item-relations">
+                          <span v-if="
+                            landmarkRelations.get(landmark.id)?.parentName
+                          ">属于:
+                            {{
+                              landmarkRelations.get(landmark.id)?.parentName
+                            }}</span>
+                          <span v-if="
+                            landmarkRelations.get(landmark.id)?.childNames
+                              .length
+                          ">
+                            包括:
+                            {{
+                              landmarkRelations
+                                .get(landmark.id)
+                                ?.childNames.join("、")
+                            }}
                           </span>
                         </div>
                       </div>
@@ -88,7 +108,9 @@
               <el-card>
                 <template #header>
                   <div class="card-header">
-                    <span>选择势力 ({{ selectedForces.length }}/{{ projectForces.length }})</span>
+                    <span>选择势力 ({{ selectedForces.length }}/{{
+                      projectForces.length
+                    }})</span>
                     <div class="header-actions-small">
                       <el-button size="small" @click="setSelection('forces', true)">
                         全选
@@ -101,16 +123,21 @@
                 </template>
                 <div class="selection-list">
                   <div v-for="force in projectForces" :key="force.id" class="selection-item"
-                    :class="{ selected: selectedForces.includes(force.id) }" @click="toggleSelection('forces', force.id)">
+                    :class="{ selected: selectedForces.includes(force.id) }"
+                    @click="toggleSelection('forces', force.id)">
                     <el-checkbox :model-value="selectedForces.includes(force.id)"
                       @change="toggleSelection('forces', force.id)" />
                     <div class="item-content">
                       <Icon icon="ph:flag-duotone" class="item-icon force-icon" />
                       <div class="item-info">
                         <div class="item-name">{{ force.name }}</div>
-                        <div class="item-meta">{{ getForceTypeLabel(force.type) }} | 实力: {{ force.power }}星</div>
+                        <div class="item-meta">
+                          {{ getForceTypeLabel(force.type) }} | 实力:
+                          {{ force.power }}星
+                        </div>
                         <div v-if="force.description" class="item-description">
-                          {{ force.description.slice(0, 50) }}{{ force.description.length > 50 ? '...' : '' }}
+                          {{ force.description.slice(0, 50)
+                          }}{{ force.description.length > 50 ? "..." : "" }}
                         </div>
                       </div>
                     </div>
@@ -127,7 +154,9 @@
               <el-card>
                 <template #header>
                   <div class="card-header">
-                    <span>选择区域 ({{ selectedRegions.length }}/{{ projectRegions.length }})</span>
+                    <span>选择区域 ({{ selectedRegions.length }}/{{
+                      projectRegions.length
+                    }})</span>
                     <div class="header-actions-small">
                       <el-button size="small" @click="setSelection('regions', true)">
                         全选
@@ -139,7 +168,7 @@
                   </div>
                 </template>
                 <div class="selection-list">
-                    <div v-for="region in projectRegions" :key="region.id" class="selection-item"
+                  <div v-for="region in projectRegions" :key="region.id" class="selection-item"
                     :class="{ selected: selectedRegions.includes(region.id) }"
                     @click="toggleSelection('regions', region.id)">
                     <el-checkbox :model-value="selectedRegions.includes(region.id)"
@@ -150,7 +179,8 @@
                       <div class="item-info">
                         <div class="item-name">{{ region.name }}</div>
                         <div v-if="region.description" class="item-description">
-                          {{ region.description.slice(0, 50) }}{{ region.description.length > 50 ? '...' : '' }}
+                          {{ region.description.slice(0, 50)
+                          }}{{ region.description.length > 50 ? "..." : "" }}
                         </div>
                       </div>
                     </div>
@@ -208,16 +238,32 @@ import type {
   EnhancedLandmark,
   EnhancedRegion,
   Project,
-} from '@/types/worldeditor/world-editor';
-import { formatRoadLinkLabel, getRoadConnectionLengthText } from '@/composables/worldeditor/graph/worldGraphLinks';
-import { copyToClipboard } from '@/utils/clipboard';
-import { cleanObject, removeEmptyFields } from '@/utils/objectUtils';
-import { saveFile } from '@/utils/system/fileSave';
-import { getParentLandmarkId } from '@/utils/worldeditor/landmarkHierarchy';
-import { getForceTypeLabel, getLandmarkTypeLabel } from '@/utils/worldeditor/typeMeta';
-import { Icon } from '@iconify/vue';
-import { ElButton, ElCard, ElCheckbox, ElCol, ElInput, ElMessage, ElRow, ElScrollbar, ElSwitch } from 'element-plus';
-import { computed, ref } from 'vue';
+} from "@/types/worldeditor/world-editor";
+import {
+  formatRoadLinkLabel,
+  getRoadConnectionLengthText,
+} from "@/composables/worldeditor/graph/worldGraphLinks";
+import { copyToClipboard } from "@/utils/clipboard";
+import { cleanObject, removeEmptyFields } from "@/utils/objectUtils";
+import { saveFile } from "@/utils/system/fileSave";
+import { getParentLandmarkId } from "@/utils/worldeditor/landmarkHierarchy";
+import {
+  getForceTypeLabel,
+  getLandmarkTypeLabel,
+} from "@/utils/worldeditor/typeMeta";
+import { Icon } from "@iconify/vue";
+import {
+  ElButton,
+  ElCard,
+  ElCheckbox,
+  ElCol,
+  ElInput,
+  ElMessage,
+  ElRow,
+  ElScrollbar,
+  ElSwitch,
+} from "element-plus";
+import { computed, ref } from "vue";
 
 interface Props {
   currentProject: Project | null;
@@ -233,13 +279,15 @@ const selectedLandmarks = ref<string[]>([]);
 const selectedForces = ref<string[]>([]);
 const selectedRegions = ref<string[]>([]);
 const filterEmptyFields = ref(true);
-const lengthUnit = ref('KM');
+const lengthUnit = ref("KM");
 const includeRegionLandmarks = ref(true);
 
 // 计算当前项目的地标和势力
 const projectLandmarks = computed(() => {
   if (!props.currentProject) return [];
-  return props.landmarks.filter((l) => l.projectId === props.currentProject!.id);
+  return props.landmarks.filter(
+    (l) => l.projectId === props.currentProject!.id,
+  );
 });
 
 const projectForces = computed(() => {
@@ -252,10 +300,10 @@ const projectRegions = computed(() => {
   return props.regions.filter((r) => r.projectId === props.currentProject!.id);
 });
 
-type SelectionType = 'landmarks' | 'forces' | 'regions';
+type SelectionType = "landmarks" | "forces" | "regions";
 
 const DEFAULT_ICON_COLORS = {
-  region: 'var(--el-color-warning)',
+  region: "var(--el-color-warning)",
 } as const;
 
 const normalizeColor = (value?: string) => {
@@ -264,26 +312,37 @@ const normalizeColor = (value?: string) => {
 };
 
 const regionColorMap = computed(
-  () => new Map(projectRegions.value.map((region) => [region.id, region.color]))
+  () =>
+    new Map(projectRegions.value.map((region) => [region.id, region.color])),
 );
 
 const landmarkIconColorMap = computed(() => {
   return new Map(
     projectLandmarks.value.map((landmark) => [
       landmark.id,
-      normalizeColor(landmark.regionId ? regionColorMap.value.get(landmark.regionId) : undefined),
-    ])
+      normalizeColor(
+        landmark.regionId
+          ? regionColorMap.value.get(landmark.regionId)
+          : undefined,
+      ),
+    ]),
   );
 });
 
 const regionIconColorMap = computed(() => {
   return new Map(
-    projectRegions.value.map((region) => [region.id, normalizeColor(region.color) || DEFAULT_ICON_COLORS.region])
+    projectRegions.value.map((region) => [
+      region.id,
+      normalizeColor(region.color) || DEFAULT_ICON_COLORS.region,
+    ]),
   );
 });
 
 const landmarkIdToName = computed(
-  () => new Map(projectLandmarks.value.map((landmark) => [landmark.id, landmark.name]))
+  () =>
+    new Map(
+      projectLandmarks.value.map((landmark) => [landmark.id, landmark.name]),
+    ),
 );
 
 const landmarkRelations = computed(() => {
@@ -297,18 +356,25 @@ const landmarkRelations = computed(() => {
       return [
         landmark.id,
         {
-          parentName: parentId ? landmarkIdToName.value.get(parentId) || '' : '',
+          parentName: parentId
+            ? landmarkIdToName.value.get(parentId) || ""
+            : "",
           childNames,
         },
       ];
-    })
+    }),
   );
 });
 
-const allProjectItems = computed(() => [...projectLandmarks.value, ...projectForces.value, ...projectRegions.value]);
+const allProjectItems = computed(() => [
+  ...projectLandmarks.value,
+  ...projectForces.value,
+  ...projectRegions.value,
+]);
 const safeProjectName = computed(() => {
-  const projectName = (props.currentProject?.name || '未命名项目').trim() || '未命名项目';
-  return projectName.replace(/[\\/:*?"<>|]/g, '-');
+  const projectName =
+    (props.currentProject?.name || "未命名项目").trim() || "未命名项目";
+  return projectName.replace(/[\\/:*?"<>|]/g, "-");
 });
 const selectionState = {
   landmarks: selectedLandmarks,
@@ -326,25 +392,37 @@ const selectedItems = computed(() => {
   const selectedLandmarkIds = new Set(selectedLandmarks.value);
   if (includeRegionLandmarks.value) {
     projectLandmarks.value.forEach((landmark) => {
-      if (landmark.regionId && selectedRegions.value.includes(landmark.regionId)) {
+      if (
+        landmark.regionId &&
+        selectedRegions.value.includes(landmark.regionId)
+      ) {
         selectedLandmarkIds.add(landmark.id);
       }
     });
   }
 
-  const landmarks = projectLandmarks.value.filter((l) => selectedLandmarkIds.has(l.id));
-  const forces = projectForces.value.filter((f) => selectedForces.value.includes(f.id));
-  const regions = projectRegions.value.filter((r) => selectedRegions.value.includes(r.id));
+  const landmarks = projectLandmarks.value.filter((l) =>
+    selectedLandmarkIds.has(l.id),
+  );
+  const forces = projectForces.value.filter((f) =>
+    selectedForces.value.includes(f.id),
+  );
+  const regions = projectRegions.value.filter((r) =>
+    selectedRegions.value.includes(r.id),
+  );
   return [...landmarks, ...forces, ...regions];
 });
 
 const selectedKeywordText = computed(() => {
   const keywords = selectedItems.value
-    .filter((item): item is EnhancedLandmark | EnhancedRegion => 'importance' in item || (!('importance' in item) && !('power' in item)))
+    .filter(
+      (item): item is EnhancedLandmark | EnhancedRegion =>
+        "importance" in item || (!("importance" in item) && !("power" in item)),
+    )
     .map((item) => item.name.trim())
     .filter(Boolean);
 
-  return Array.from(new Set(keywords)).join(', ');
+  return Array.from(new Set(keywords)).join(", ");
 });
 
 const toggleSelection = (type: SelectionType, id: string) => {
@@ -359,11 +437,17 @@ const setSelection = (type: SelectionType, checked: boolean) => {
 };
 
 // 生成增强的、可读性强的JSON数据
-const generateJSON = (items: (EnhancedLandmark | EnhancedForce | EnhancedRegion)[]): string => {
-  if (items.length === 0) return '{}';
+const generateJSON = (
+  items: (EnhancedLandmark | EnhancedForce | EnhancedRegion)[],
+): string => {
+  if (items.length === 0) return "{}";
 
-  const landmarkIdToNameMap = new Map(props.landmarks.map((l) => [l.id, l.name]));
-  const landmarkLookupMap = new Map(props.landmarks.map((landmark) => [landmark.id, landmark]));
+  const landmarkIdToNameMap = new Map(
+    props.landmarks.map((l) => [l.id, l.name]),
+  );
+  const landmarkLookupMap = new Map(
+    props.landmarks.map((landmark) => [landmark.id, landmark]),
+  );
   const forceIdToNameMap = new Map(props.forces.map((f) => [f.id, f.name]));
   const regionIdToNameMap = new Map(props.regions.map((r) => [r.id, r.name]));
 
@@ -373,23 +457,27 @@ const generateJSON = (items: (EnhancedLandmark | EnhancedForce | EnhancedRegion)
     const list = Array.isArray(value) ? value : [value];
     return list.map((id) => idToName(id, map || new Map()));
   };
-  const toRoadLinkLabelList = (landmark: EnhancedLandmark) =>
-    (landmark.roadConnections || []).map((conn) => {
-      const targetName = idToName(conn.targetId, landmarkIdToNameMap);
-      const targetLandmark = landmarkLookupMap.get(conn.targetId);
-      const lengthText = getRoadConnectionLengthText(landmark, targetLandmark, lengthUnit.value, props.landmarks);
-      return formatRoadLinkLabel(targetName, lengthText, '与此地标的距离');
-    });
-
   const landmarks = items
-    .filter((item): item is EnhancedLandmark => 'importance' in item)
+    .filter((item): item is EnhancedLandmark => "importance" in item)
     .map((landmark) => {
       const relativePosition = landmark.relativePosition
         ? {
-          north: toNameList(landmark.relativePosition.north, landmarkIdToNameMap),
-          south: toNameList(landmark.relativePosition.south, landmarkIdToNameMap),
-          east: toNameList(landmark.relativePosition.east, landmarkIdToNameMap),
-          west: toNameList(landmark.relativePosition.west, landmarkIdToNameMap),
+          north: toNameList(
+            landmark.relativePosition.north,
+            landmarkIdToNameMap,
+          ),
+          south: toNameList(
+            landmark.relativePosition.south,
+            landmarkIdToNameMap,
+          ),
+          east: toNameList(
+            landmark.relativePosition.east,
+            landmarkIdToNameMap,
+          ),
+          west: toNameList(
+            landmark.relativePosition.west,
+            landmarkIdToNameMap,
+          ),
         }
         : undefined;
       const parentName = landmark.parentLandmarkIds?.[0]
@@ -404,13 +492,27 @@ const generateJSON = (items: (EnhancedLandmark | EnhancedForce | EnhancedRegion)
         type: getLandmarkTypeLabel(landmark.type),
         importance: landmark.importance,
         tags: landmark.tags,
-        region: landmark.regionId ? idToName(landmark.regionId, regionIdToNameMap) : undefined,
+        region: landmark.regionId
+          ? idToName(landmark.regionId, regionIdToNameMap)
+          : undefined,
         relativePosition,
         belongs_to: parentName || undefined,
         includes: childNames.length > 0 ? childNames : undefined,
         // 将关联ID转换为名称
-        controllingForces: landmark.controllingForces?.map((id) => idToName(id, forceIdToNameMap)),
-        relatedLandmarks: toRoadLinkLabelList(landmark),
+        controllingForces: landmark.controllingForces?.map((id) =>
+          idToName(id, forceIdToNameMap),
+        ),
+        relatedLandmarks: (landmark.roadConnections || []).map((conn) => {
+          const targetName = idToName(conn.targetId, landmarkIdToNameMap);
+          const targetLandmark = landmarkLookupMap.get(conn.targetId);
+          const lengthText = getRoadConnectionLengthText(
+            landmark,
+            targetLandmark,
+            lengthUnit.value,
+            props.landmarks,
+          );
+          return formatRoadLinkLabel(targetName, lengthText, "与此地标的距离");
+        }),
         climate: landmark.climate,
         terrain: landmark.terrain,
         population: landmark.population,
@@ -421,7 +523,7 @@ const generateJSON = (items: (EnhancedLandmark | EnhancedForce | EnhancedRegion)
     });
 
   const forces = items
-    .filter((item): item is EnhancedForce => 'power' in item)
+    .filter((item): item is EnhancedForce => "power" in item)
     .map((force) => {
       const cleanedForce = {
         name: force.name,
@@ -431,10 +533,14 @@ const generateJSON = (items: (EnhancedLandmark | EnhancedForce | EnhancedRegion)
         leaders: force.leaders?.map((l) => `${l.title}: ${l.name}`.trim()),
         totalMembers: force.totalMembers,
         // 将关联ID转换为名称
-        headquarters: force.headquarters ? idToName(force.headquarters, landmarkIdToNameMap) : undefined,
+        headquarters: force.headquarters
+          ? idToName(force.headquarters, landmarkIdToNameMap)
+          : undefined,
         branchLocations: force.branchLocations?.map((branch) => {
           const locationName = idToName(branch.locationId, landmarkIdToNameMap);
-          const managerInfo = branch.manager ? ` (主理人: ${branch.manager})` : '';
+          const managerInfo = branch.manager
+            ? ` (主理人: ${branch.manager})`
+            : "";
           return `${branch.type}: ${locationName}${managerInfo}`;
         }),
         allies: force.allies?.map((id) => idToName(id, forceIdToNameMap)),
@@ -448,7 +554,10 @@ const generateJSON = (items: (EnhancedLandmark | EnhancedForce | EnhancedRegion)
     });
 
   const regions = items
-    .filter((item): item is EnhancedRegion => !('importance' in item) && !('power' in item))
+    .filter(
+      (item): item is EnhancedRegion =>
+        !("importance" in item) && !("power" in item),
+    )
     .map((region) => {
       const cleanedRegion = {
         name: region.name,
@@ -460,8 +569,8 @@ const generateJSON = (items: (EnhancedLandmark | EnhancedForce | EnhancedRegion)
 
   const exportData = {
     project: {
-      name: props.currentProject?.name || '未命名项目',
-      description: props.currentProject?.description || '',
+      name: props.currentProject?.name || "未命名项目",
+      description: props.currentProject?.description || "",
     },
     landmarks,
     regions,
@@ -474,24 +583,34 @@ const generateJSON = (items: (EnhancedLandmark | EnhancedForce | EnhancedRegion)
     },
   };
 
-  const outputData = filterEmptyFields.value ? removeEmptyFields(exportData) : exportData;
+  const outputData = filterEmptyFields.value
+    ? removeEmptyFields(exportData)
+    : exportData;
   return JSON.stringify(outputData ?? {}, null, 2);
 };
 
-const saveJson = async (jsonData: string, fileName: string, successMessage: string) => {
+const saveJson = async (
+  jsonData: string,
+  fileName: string,
+  successMessage: string,
+) => {
   try {
     await saveFile({
       data: new TextEncoder().encode(jsonData),
       fileName,
-      mimeType: 'application/json;charset=utf-8',
+      mimeType: "application/json;charset=utf-8",
     });
     ElMessage.success(successMessage);
   } catch (error) {
-    ElMessage.error('导出 JSON 文件失败');
+    ElMessage.error("导出 JSON 文件失败");
   }
 };
 
-const copyText = async (text: string, successMessage: string, emptyMessage: string) => {
+const copyText = async (
+  text: string,
+  successMessage: string,
+  emptyMessage: string,
+) => {
   if (!text) {
     if (emptyMessage) {
       ElMessage.warning(emptyMessage);
@@ -499,46 +618,54 @@ const copyText = async (text: string, successMessage: string, emptyMessage: stri
     return;
   }
 
-  await copyToClipboard(text, successMessage, '复制到剪贴板失败');
+  await copyToClipboard(text, successMessage, "复制到剪贴板失败");
 };
 
 // 导出方法
 const exportSelectedJSON = async () => {
   if (selectedItems.value.length === 0) {
-    ElMessage.warning('请先选择要导出的内容');
+    ElMessage.warning("请先选择要导出的内容");
     return;
   }
 
   await saveJson(
     generateJSON(selectedItems.value),
     `${safeProjectName.value}-selected.json`,
-    `已导出 ${selectedItems.value.length} 项内容为 JSON 文件`
+    `已导出 ${selectedItems.value.length} 项内容为 JSON 文件`,
   );
 };
 
 const copySelectedJSON = async () => {
   if (selectedItems.value.length === 0) {
-    ElMessage.warning('请先选择要导出的内容');
+    ElMessage.warning("请先选择要导出的内容");
     return;
   }
 
-  await copyText(generateJSON(selectedItems.value), `已复制 ${selectedItems.value.length} 项内容的JSON到剪贴板`, '');
+  await copyText(
+    generateJSON(selectedItems.value),
+    `已复制 ${selectedItems.value.length} 项内容的JSON到剪贴板`,
+    "",
+  );
 };
 
 const copySelectedKeywords = async () => {
-  await copyText(selectedKeywordText.value, '已复制关键词到剪贴板', '当前没有可复制的关键词');
+  await copyText(
+    selectedKeywordText.value,
+    "已复制关键词到剪贴板",
+    "当前没有可复制的关键词",
+  );
 };
 
 const exportAllJSON = async () => {
   if (allProjectItems.value.length === 0) {
-    ElMessage.warning('当前项目没有可导出的内容');
+    ElMessage.warning("当前项目没有可导出的内容");
     return;
   }
 
   await saveJson(
     generateJSON(allProjectItems.value),
     `${safeProjectName.value}-all.json`,
-    `已导出全部 ${allProjectItems.value.length} 项内容为 JSON 文件`
+    `已导出全部 ${allProjectItems.value.length} 项内容为 JSON 文件`,
   );
 };
 </script>
@@ -767,7 +894,8 @@ const exportAllJSON = async () => {
   box-sizing: border-box;
   margin: 0;
   white-space: pre-wrap;
-  font-family: 'SF Mono', Monaco, Menlo, 'Roboto Mono', 'Ubuntu Mono', monospace;
+  font-family:
+    "SF Mono", Monaco, Menlo, "Roboto Mono", "Ubuntu Mono", monospace;
   font-size: 13px;
   line-height: 1.6;
   color: var(--el-text-color-regular);

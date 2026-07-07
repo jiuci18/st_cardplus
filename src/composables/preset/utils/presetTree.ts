@@ -1,11 +1,13 @@
-import type { StoredPresetFile } from '@/database/db';
-import { getPromptOrderIdentifiers } from '@/composables/preset/utils/presetPromptOrder';
+import type { StoredPresetFile } from "@/database/db";
+import { getPromptOrderIdentifiers } from "@/composables/preset/utils/presetPromptOrder";
 
 export const getHeaderNodeKey = (presetId: string) => `${presetId}:header`;
-const getUninsertedNodeKey = (presetId: string) => `${presetId}:uninserted`;
-export const getPromptNodeKey = (presetId: string, identifier: string) => `${presetId}:prompt:${identifier}`;
-export const getRegexFolderNodeKey = (presetId: string) => `${presetId}:regex-folder`;
-export const getRegexNodeKey = (presetId: string, scriptId: string) => `${presetId}:regex:${scriptId}`;
+export const getPromptNodeKey = (presetId: string, identifier: string) =>
+  `${presetId}:prompt:${identifier}`;
+export const getRegexFolderNodeKey = (presetId: string) =>
+  `${presetId}:regex-folder`;
+export const getRegexNodeKey = (presetId: string, scriptId: string) =>
+  `${presetId}:regex:${scriptId}`;
 
 export interface PresetPromptSidebarEntry {
   identifier: string;
@@ -20,28 +22,41 @@ interface PresetPromptSidebarSource {
   };
 }
 
-export const resolvePromptIdentifier = (prompt: Record<string, any>, index: number) => {
-  if (typeof prompt?.identifier === 'string' && prompt.identifier.trim()) {
+export const resolvePromptIdentifier = (
+  prompt: Record<string, any>,
+  index: number,
+) => {
+  if (typeof prompt?.identifier === "string" && prompt.identifier.trim()) {
     return prompt.identifier;
   }
   return `prompt-${index}`;
 };
 
-const buildPromptNode = (preset: StoredPresetFile, entry: PresetPromptSidebarEntry) => {
+const buildPromptNode = (
+  preset: StoredPresetFile,
+  entry: PresetPromptSidebarEntry,
+) => {
   return {
     id: entry.identifier,
     nodeKey: getPromptNodeKey(preset.id, entry.identifier),
-    label: entry.prompt.name || entry.prompt.identifier || `条目 ${entry.promptIndex + 1}`,
-    icon: 'ph:note-duotone',
+    label:
+      entry.prompt.name ||
+      entry.prompt.identifier ||
+      `条目 ${entry.promptIndex + 1}`,
+    icon: "ph:note-duotone",
     isPrompt: true,
     presetId: preset.id,
     promptIndex: entry.promptIndex,
     raw: entry.prompt,
-    enabled: typeof entry.prompt.enabled === 'boolean' ? entry.prompt.enabled : true,
+    enabled:
+      typeof entry.prompt.enabled === "boolean" ? entry.prompt.enabled : true,
   };
 };
 
-const splitPromptsByOrder = (prompts: Record<string, any>[], orderIdentifiers: string[]) => {
+const splitPromptsByOrder = (
+  prompts: Record<string, any>[],
+  orderIdentifiers: string[],
+) => {
   const entries = prompts.map((prompt, promptIndex) => ({
     identifier: resolvePromptIdentifier(prompt, promptIndex),
     prompt,
@@ -65,27 +80,35 @@ const splitPromptsByOrder = (prompts: Record<string, any>[], orderIdentifiers: s
   return { ordered, remaining };
 };
 
-export const getPresetPromptSidebarEntries = (preset: PresetPromptSidebarSource): PresetPromptSidebarEntry[] => {
-  const prompts = ((preset.data.prompts as Record<string, any>[]) || []).slice();
+export const getPresetPromptSidebarEntries = (
+  preset: PresetPromptSidebarSource,
+): PresetPromptSidebarEntry[] => {
+  const prompts = (
+    (preset.data.prompts as Record<string, any>[]) || []
+  ).slice();
   const orderIdentifiers = getPromptOrderIdentifiers(preset.data.prompt_order);
   const { ordered, remaining } = splitPromptsByOrder(prompts, orderIdentifiers);
   return [...ordered, ...remaining];
 };
 
 const buildPromptNodes = (preset: StoredPresetFile) => {
-  const prompts = ((preset.data.prompts as Record<string, any>[]) || []).slice();
+  const prompts = (
+    (preset.data.prompts as Record<string, any>[]) || []
+  ).slice();
   const orderIdentifiers = getPromptOrderIdentifiers(preset.data.prompt_order);
   const { ordered, remaining } = splitPromptsByOrder(prompts, orderIdentifiers);
   const orderedNodes = ordered.map((entry) => buildPromptNode(preset, entry));
-  const remainingNodes = remaining.map((entry) => buildPromptNode(preset, entry));
+  const remainingNodes = remaining.map((entry) =>
+    buildPromptNode(preset, entry),
+  );
   if (remainingNodes.length === 0) return orderedNodes;
   return [
     ...orderedNodes,
     {
-      id: 'uninserted',
-      nodeKey: getUninsertedNodeKey(preset.id),
-      label: '未插入条目',
-      icon: 'ph:folder-dashed-duotone',
+      id: "uninserted",
+      nodeKey: `${preset.id}:uninserted`,
+      label: "未插入条目",
+      icon: "ph:folder-dashed-duotone",
       isGroup: true,
       children: remainingNodes,
     },
@@ -93,14 +116,15 @@ const buildPromptNodes = (preset: StoredPresetFile) => {
 };
 
 const buildRegexNodes = (preset: StoredPresetFile) => {
-  const scripts = (preset.data.extensions as Record<string, any>).regex_scripts as Record<string, any>[];
+  const scripts = (preset.data.extensions as Record<string, any>)
+    .regex_scripts as Record<string, any>[];
   return scripts.map((script, index) => {
     const scriptId = script.id as string;
     return {
       id: scriptId,
       nodeKey: getRegexNodeKey(preset.id, scriptId),
       label: script.scriptName || `正则脚本 ${index + 1}`,
-      icon: 'ph:code-duotone',
+      icon: "ph:code-duotone",
       isRegexScript: true,
       presetId: preset.id,
       regexIndex: index,
@@ -118,22 +142,22 @@ export const buildPresetTreeData = (presets: StoredPresetFile[]) => {
       id: preset.id,
       nodeKey: preset.id,
       label: preset.name,
-      icon: 'ph:folder-duotone',
+      icon: "ph:folder-duotone",
       isPreset: true,
       children: [
         {
-          id: 'header',
+          id: "header",
           nodeKey: getHeaderNodeKey(preset.id),
-          label: '头部设置',
-          icon: 'ph:sliders-duotone',
+          label: "头部设置",
+          icon: "ph:sliders-duotone",
           isHeader: true,
           presetId: preset.id,
         },
         {
-          id: 'regex-folder',
+          id: "regex-folder",
           nodeKey: getRegexFolderNodeKey(preset.id),
-          label: '正则',
-          icon: 'ph:folder-simple-dashed-duotone',
+          label: "正则",
+          icon: "ph:folder-simple-dashed-duotone",
           isRegexFolder: true,
           presetId: preset.id,
           children: buildRegexNodes(preset),
