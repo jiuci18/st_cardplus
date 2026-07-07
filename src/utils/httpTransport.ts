@@ -1,4 +1,4 @@
-import { isTauriApp } from "@/utils/system/tauri";
+import { isTauriApp } from "./system/tauri.ts";
 
 export interface HttpTransportOptions {
   allowHttpError?: boolean;

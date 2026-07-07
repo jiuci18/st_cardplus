@@ -1,6 +1,6 @@
 //! Browser client for Barkeep authentication and status probing.
 
-import { requestText } from "@/utils/httpTransport";
+import { requestText } from "../httpTransport.ts";
 import type {
   BarkeepConnectionConfig,
   BarkeepResourceCounts,
