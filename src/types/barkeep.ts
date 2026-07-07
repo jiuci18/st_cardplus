@@ -1,6 +1,23 @@
 /** Barkeep HTTP transport selected by the user. */
 export type BarkeepConnectionMode = "sillytavern" | "standalone";
 
+/** SillyTavern resource type exposed by Barkeep's stable resource API. */
+export type BarkeepResourceType = "characters" | "worlds" | "presets";
+
+/**
+ * Stable Barkeep mapping attached to an internal CardPlus resource.
+ *
+ * `uuid` is Barkeep's `file_mapping.uuid`; `path` is the SillyTavern
+ * user-data relative path such as `characters/foo.png`,
+ * `worlds/lore.json`, or `OpenAI Settings/preset.json`.
+ */
+export interface BarkeepResourceLink {
+  uuid: string;
+  path: string;
+  user: string;
+  type: BarkeepResourceType;
+}
+
 /** Optional HTTP Basic credentials used by SillyTavern router mode. */
 export type BarkeepBasicAuth =
   | { enabled: false }

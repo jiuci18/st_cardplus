@@ -66,6 +66,9 @@
 
       <template v-if="mode === 'sillytavern'">
         <el-divider content-position="left">增强式安全（可选）</el-divider>
+        <p class="connection-hint" style="margin-bottom: 8px;">
+          如果你的内嵌模式启用了增强式安全（API_PASSWORD_FORCE），请在这里额外填写 Barkeep API 密码。
+        </p>
         <el-input
           v-if="multiUser"
           v-model="apiPassword"

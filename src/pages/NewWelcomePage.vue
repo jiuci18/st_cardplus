@@ -6,12 +6,8 @@
         <span>ST CardPlus</span>
       </div>
       <div class="toolbar-actions">
-        <el-button
-          :type="status ? 'success' : 'primary'"
-          plain
-          data-testid="open-barkeep-connection"
-          @click="barkeepDrawerVisible = true"
-        >
+        <el-button :type="status ? 'success' : 'primary'" plain data-testid="open-barkeep-connection"
+          @click="barkeepDrawerVisible = true">
           <template v-if="status">
             <div class="status-dot-mini"></div>
             Barkeep 已连接
@@ -21,13 +17,7 @@
             连接 Barkeep
           </template>
         </el-button>
-        <el-button
-          v-if="status"
-          type="danger"
-          plain
-          data-testid="logout-barkeep"
-          @click="logout"
-        >
+        <el-button v-if="status" type="danger" plain data-testid="logout-barkeep" @click="logout">
           <Icon icon="material-symbols:logout-rounded" />
           断开连接
         </el-button>
@@ -116,7 +106,6 @@
           <h1 class="title">欢迎使用 ST CardPlus</h1>
           <p class="subtitle">你今天要创造些什么？</p>
           <p class="hint">请先在右上方连接到你的 Barkeep 账户，同步你的角色卡和世界书等资产。</p>
-          <p class="hint hint-secondary">如果你的内嵌模式启用了增强式安全（API_PASSWORD_FORCE），请在连接面板额外填写 Barkeep API 密码。</p>
           
           <div class="welcome-actions">
             <el-button type="primary" size="large" @click="barkeepDrawerVisible = true">
@@ -631,6 +620,7 @@ onMounted(async () => {
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -658,11 +648,11 @@ onMounted(async () => {
   .brand span {
     display: none;
   }
-  
+
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .actions-grid {
     grid-template-columns: 1fr;
   }

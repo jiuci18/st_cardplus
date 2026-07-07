@@ -6,6 +6,7 @@ import {
   migrateMenuConfig,
   validateMenuConfig,
 } from "@/config/menuConfig";
+import { trackStorageEdit } from "@/utils/editSessionTracker";
 
 const SETTINGS_KEY = "settings";
 
@@ -43,6 +44,7 @@ const createStorageStore = (name: "localStorage" | "sessionStorage") => ({
   set(key: string, value: string): void {
     try {
       window[name].setItem(key, value);
+      trackStorageEdit({ storage: name, operation: "set", key });
     } catch (error) {
       console.error(`Failed to write ${name}:`, error);
     }
@@ -50,6 +52,7 @@ const createStorageStore = (name: "localStorage" | "sessionStorage") => ({
   remove(key: string): void {
     try {
       window[name].removeItem(key);
+      trackStorageEdit({ storage: name, operation: "remove", key });
     } catch (error) {
       console.error(`Failed to remove from ${name}:`, error);
     }
@@ -57,6 +60,7 @@ const createStorageStore = (name: "localStorage" | "sessionStorage") => ({
   clear(): void {
     try {
       window[name].clear();
+      trackStorageEdit({ storage: name, operation: "clear" });
     } catch (error) {
       console.error(`Failed to clear ${name}:`, error);
     }

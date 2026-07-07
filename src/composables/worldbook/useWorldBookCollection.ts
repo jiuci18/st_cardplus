@@ -110,6 +110,7 @@ export function useWorldBookCollection() {
         metadata: book.metadata,
         order: book.order,
         updatedAt: nowIso(),
+        barkeep: book.barkeep,
       };
 
       await worldBookService.updateBook(bookToUpdate);
@@ -279,6 +280,7 @@ export function useWorldBookCollection() {
           updatedAt: now,
           metadata: fromBook.metadata,
           order: fromBook.order,
+          barkeep: fromBook.barkeep,
         })
       );
 
@@ -291,6 +293,7 @@ export function useWorldBookCollection() {
           updatedAt: now,
           metadata: toBook.metadata,
           order: toBook.order,
+          barkeep: toBook.barkeep,
         })
       );
 
@@ -325,6 +328,7 @@ export function useWorldBookCollection() {
           updatedAt: now,
           metadata: book.metadata,
           order: book.order,
+          barkeep: book.barkeep,
         })
       );
 
@@ -406,6 +410,7 @@ export function useWorldBookCollection() {
           updatedAt: now,
           metadata: activeBook.value.metadata,
           order: activeBook.value.order,
+          barkeep: activeBook.value.barkeep,
         })
       );
 
@@ -455,6 +460,7 @@ export function useWorldBookCollection() {
           updatedAt: now,
           metadata: activeBook.value.metadata,
           order: activeBook.value.order,
+          barkeep: activeBook.value.barkeep,
         })
       );
 

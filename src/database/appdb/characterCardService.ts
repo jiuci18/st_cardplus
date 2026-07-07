@@ -39,6 +39,7 @@ export const characterCardService = {
         createdAt: storedCard.createdAt,
         updatedAt: storedCard.updatedAt,
         order: storedCard.order,
+        barkeep: storedCard.barkeep,
       };
     });
     const activeCardId = getSessionStorageItem(ACTIVE_CARD_ID_KEY);
@@ -107,6 +108,7 @@ export const characterCardService = {
       order?: number;
       tags?: string[];
       metadata?: Record<string, any>;
+      barkeep?: StoredCharacterCard['barkeep'];
     } = {}
   ): StoredCharacterCard {
     const now = nowIso();
@@ -122,6 +124,7 @@ export const characterCardService = {
       order: options.order ?? 0,
       tags: options.tags ?? cardData.tags ?? cardData.data?.tags ?? [],
       metadata: options.metadata ?? {},
+      barkeep: options.barkeep,
     };
   },
 

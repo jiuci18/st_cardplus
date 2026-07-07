@@ -265,6 +265,7 @@ export function useCharacterCardCollection() {
         order: existingCard.order,
         tags: synchronizedCardData.tags ?? [],
         metadata: {},
+        barkeep: existingCard.barkeep,
       };
 
       console.log("[handleUpdateCard] 准备写入数据库，名称:", storedCard.name);
@@ -281,6 +282,7 @@ export function useCharacterCardCollection() {
           createdAt: existingCard.createdAt,
           updatedAt: now,
           order: existingCard.order,
+          barkeep: existingCard.barkeep,
         };
       } else {
         console.log("[handleUpdateCard] 跳过本地状态更新");
