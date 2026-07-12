@@ -55,7 +55,7 @@ const buildMetadataPlugin = () => ({
     const metadata = {
       version: buildInfo.appSemver,
       channel: buildInfo.appChannel,
-      commitHash,
+      commitHash: buildInfo.appVersion,
       updateTitle: buildInfo.latestCommitTitle,
       updateDescription: buildInfo.latestCommitDescription,
       buildTime: new Date().toISOString(),

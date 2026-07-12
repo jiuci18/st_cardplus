@@ -9,6 +9,10 @@
         </span>
       </h1>
       <p class="hero-description">SillyTavern 角色卡编辑工具</p>
+      <p v-if="isWebBuild" class="hero-deployment-status">
+        <span>已自动更新，当前 Git ID：</span>
+        <code>{{ appVersion }}</code>
+      </p>
       <p class="hero-version">
         <code v-if="appCommitCount === '1'">在线版_{{ appVersion }}</code>
         <code v-else>dev_{{ appVersion }} ({{ appCommitCount }})</code>
@@ -100,10 +104,12 @@ import { fetchJsonResource } from '@/utils/fetchResource';
 import { Icon } from '@iconify/vue';
 import { ElMessage, ElOption, ElSelect, ElSkeleton, ElSkeletonItem } from 'element-plus';
 import { computed, onMounted, ref, watch } from 'vue';
+import { isTauriApp } from '@/utils/system/tauri';
 
 const appVersion = __APP_VERSION__;
 const appCommitCount = __APP_COMMIT_COUNT__;
 const appSemver = __APP_SEMVER__;
+const isWebBuild = !isTauriApp();
 const gitLogs = ref<any[]>([]);
 const page = ref(1);
 const hasMore = ref(true);
@@ -242,6 +248,23 @@ watch(selectedBranch, (newBranch) => {
   line-height: 1.5rem;
   margin: 0.25rem 0 0;
   color: var(--el-text-color-secondary);
+}
+
+.hero-deployment-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: var(--el-text-color-secondary);
+}
+
+.hero-deployment-status code {
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-regular);
 }
 
 .hero-version {

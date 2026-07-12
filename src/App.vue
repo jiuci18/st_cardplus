@@ -36,6 +36,7 @@ import AppSidebar from '@/components/ui/layout/AppSidebar.vue';
 import MobileDrawer from '@/components/ui/layout/MobileDrawer.vue';
 import MobileTabBar from '@/components/ui/layout/MobileTabBar.vue';
 import { useAppUpdate } from '@/composables/useAppUpdate';
+import { notifyWebDeploymentUpdate } from '@/composables/useWebDeploymentUpdate';
 import { provideNavigation } from '@/composables/useNavigation';
 import { usePersonalization } from '@/composables/usePersonalization';
 import { syncUmamiTelemetry } from '@/composables/useUmamiTelemetry';
@@ -76,6 +77,7 @@ onMounted(() => {
   umamiEnabled.value = getSetting('umamiEnabled');
   refreshSidebarConfig();
   void checkForAppUpdate();
+  notifyWebDeploymentUpdate();
   void syncUmamiTelemetry(umamiEnabled.value).catch((error) => {
     console.error('初始化 Umami 遥测失败:', error);
   });
