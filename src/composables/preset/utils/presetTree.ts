@@ -2,6 +2,7 @@ import type { StoredPresetFile } from "@/database/db";
 import { getPromptOrderIdentifiers } from "@/composables/preset/utils/presetPromptOrder";
 
 export const getHeaderNodeKey = (presetId: string) => `${presetId}:header`;
+export const getBatchSettingsNodeKey = (presetId: string) => `${presetId}:batch-settings`;
 export const getPromptNodeKey = (presetId: string, identifier: string) =>
   `${presetId}:prompt:${identifier}`;
 export const getRegexFolderNodeKey = (presetId: string) =>
@@ -151,6 +152,14 @@ export const buildPresetTreeData = (presets: StoredPresetFile[]) => {
           label: "头部设置",
           icon: "ph:sliders-duotone",
           isHeader: true,
+          presetId: preset.id,
+        },
+        {
+          id: "batch-settings",
+          nodeKey: getBatchSettingsNodeKey(preset.id),
+          label: "批量设置",
+          icon: "ph:sliders-horizontal-duotone",
+          isBatchSettings: true,
           presetId: preset.id,
         },
         {

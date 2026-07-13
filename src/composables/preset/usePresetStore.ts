@@ -24,6 +24,24 @@ export type PresetPrompt = Record<string, any> & {
   order?: number;
 };
 
+export const presetPromptBatchFields = [
+  'enabled',
+  'marker',
+  'role',
+  'injection_position',
+  'injection_depth',
+  'injection_order',
+  'forbid_overrides',
+  'injection_trigger',
+] as const;
+
+export type PresetPromptBatchField = (typeof presetPromptBatchFields)[number];
+
+export type PresetPromptBatchDraft = Pick<
+  PresetPrompt,
+  'enabled' | 'marker' | 'role' | 'injection_position' | 'injection_depth' | 'injection_order' | 'forbid_overrides' | 'injection_trigger'
+>;
+
 export interface PresetSelection {
   type: 'header' | 'prompt' | 'regex';
   promptIndex?: number;
@@ -418,6 +436,54 @@ export function usePresetStore() {
     });
   };
 
+  const batchUpdatePrompts = async (
+    presetId: string,
+    promptIndexes: number[],
+    fields: PresetPromptBatchField[],
+    draft: PresetPromptBatchDraft
+  ) => {
+    const targetIndexes = new Set(promptIndexes);
+    const selectedFields = new Set(fields);
+    if (targetIndexes.size === 0 || selectedFields.size === 0) return 0;
+
+    return await withPresetById(presetId, async (preset) => {
+      const prompts = getPresetPrompts(preset);
+      const orderList = getPromptOrderList(preset.data.prompt_order);
+      let orderChanged = false;
+      let updatedCount = 0;
+
+      const nextPrompts = prompts.map((prompt, index) => {
+        if (!targetIndexes.has(index)) return prompt;
+        const identifier = typeof prompt.identifier === 'string' ? prompt.identifier : '';
+        if (identifier === 'dialogueExamples' || identifier === 'chatHistory') return prompt;
+
+        const nextPrompt: PresetPrompt = { ...prompt };
+        selectedFields.forEach((field) => {
+          const value = draft[field];
+          nextPrompt[field] = Array.isArray(value) ? [...value] : value;
+        });
+
+        if (selectedFields.has('enabled') && identifier) {
+          const orderIndex = orderList.findIndex((item) => item.identifier === identifier);
+          if (orderIndex >= 0) {
+            orderList[orderIndex] = { ...orderList[orderIndex], enabled: Boolean(draft.enabled) };
+            orderChanged = true;
+          }
+        }
+        updatedCount += 1;
+        return nextPrompt;
+      });
+
+      if (updatedCount === 0) return 0;
+      setPresetPrompts(preset, nextPrompts);
+      if (orderChanged) {
+        preset.data.prompt_order = upsertPromptOrderEntry(preset.data.prompt_order, orderList);
+      }
+      await persistPreset(preset);
+      return updatedCount;
+    }) ?? 0;
+  };
+
   const updatePromptOrder = async (presetId: string, identifiers: string[]) => {
     await withPresetById(presetId, async (preset) => {
       const prompts = getPresetPrompts(preset);
@@ -452,6 +518,7 @@ export function usePresetStore() {
     updateHeader,
     updatePrompt,
     togglePromptEnabled,
+    batchUpdatePrompts,
     updatePromptOrder,
   };
 }

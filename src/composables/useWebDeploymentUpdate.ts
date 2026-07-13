@@ -14,7 +14,6 @@ const webCommitStorage: CommitIdStorage = {
     try {
       window.localStorage.setItem(key, value);
     } catch {
-      // Storage can be disabled by browser privacy settings.
     }
   },
 };

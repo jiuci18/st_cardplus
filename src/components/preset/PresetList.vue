@@ -1,31 +1,13 @@
 <template>
-  <SidebarTreePanel
-    title="预设列表"
-    :tree-data="treeData"
-    :tree-props="treeProps"
-    node-key="nodeKey"
-    :current-node-key="currentNodeKey"
-    :draggable="true"
-    :allow-drag="props.dragDropHandlers.allowDrag"
-    :allow-drop="props.dragDropHandlers.allowDrop"
-    :handle-node-drop="props.dragDropHandlers.handleNodeDrop"
-    @node-click="handleNodeClick"
-    @node-dblclick="handleNodeDblClick"
-  >
+  <SidebarTreePanel title="预设列表" :tree-data="treeData" :tree-props="treeProps" node-key="nodeKey"
+    :current-node-key="currentNodeKey" :draggable="true" :allow-drag="allowDrag" :allow-drop="allowDrop"
+    :handle-node-drop="props.dragDropHandlers.handleNodeDrop" @node-click="handleNodeClick"
+    @node-dblclick="handleNodeDblClick">
     <template #header-actions>
       <div class="split-create-actions">
-        <el-tooltip
-          content="创建新预设"
-          placement="top"
-          :show-arrow="false"
-          :offset="8"
-          :hide-after="0"
-        >
-          <button
-            @click="$emit('create-preset')"
-            class="btn-adv btn-primary-adv sidebar-header-button split-create-main"
-            aria-label="创建新预设"
-          >
+        <el-tooltip content="创建新预设" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
+          <button @click="$emit('create-preset')"
+            class="btn-adv btn-primary-adv sidebar-header-button split-create-main" aria-label="创建新预设">
             <Icon icon="ph:plus-bold" />
           </button>
         </el-tooltip>
@@ -33,136 +15,58 @@
     </template>
 
     <template #node="{ node, data }">
-      <div
-        class="sidebar-tree-node"
-        :class="{
-          'is-header': data.isHeader,
-          'is-disabled': data.isPrompt && data.enabled === false,
-          'is-multi-selected': isMultiSelected(data),
-        }"
-      >
+      <div class="sidebar-tree-node" :class="{
+        'is-header': data.isHeader,
+        'is-disabled': data.isPrompt && data.enabled === false,
+        'is-multi-selected': isMultiSelected(data),
+      }">
         <div class="sidebar-tree-node-main">
-          <Icon
-            :icon="data.icon"
-            class="sidebar-tree-node-icon"
-          />
+          <Icon :icon="data.icon" class="sidebar-tree-node-icon" />
           <span class="sidebar-tree-node-label">{{ node.label }}</span>
         </div>
-        <div
-          class="sidebar-tree-node-actions"
-          v-if="data.isPreset"
-        >
-          <el-tooltip
-            content="新增条目"
-            placement="top"
-            :show-arrow="false"
-            :offset="8"
-            :hide-after="0"
-          >
-            <button
-              @click.stop="$emit('add-prompt', data.id)"
-              class="sidebar-tree-node-action-button"
-            >
+        <div class="sidebar-tree-node-actions" v-if="data.isPreset">
+          <el-tooltip content="新增条目" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
+            <button @click.stop="$emit('add-prompt', data.id)" class="sidebar-tree-node-action-button">
               <Icon icon="ph:plus-circle-duotone" />
             </button>
           </el-tooltip>
-          <el-tooltip
-            content="重命名"
-            placement="top"
-            :show-arrow="false"
-            :offset="8"
-            :hide-after="0"
-          >
-            <button
-              @click.stop="$emit('rename-preset', data.id)"
-              class="sidebar-tree-node-action-button"
-            >
+          <el-tooltip content="重命名" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
+            <button @click.stop="$emit('rename-preset', data.id)" class="sidebar-tree-node-action-button">
               <Icon icon="ph:pencil-simple-duotone" />
             </button>
           </el-tooltip>
-          <el-tooltip
-            content="删除"
-            placement="top"
-            :show-arrow="false"
-            :offset="8"
-            :hide-after="0"
-          >
-            <button
-              @click.stop="$emit('delete-preset', data.id)"
-              class="sidebar-tree-node-action-button is-danger"
-            >
+          <el-tooltip content="删除" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
+            <button @click.stop="$emit('delete-preset', data.id)" class="sidebar-tree-node-action-button is-danger">
               <Icon icon="ph:trash-duotone" />
             </button>
           </el-tooltip>
         </div>
-        <div
-          class="sidebar-tree-node-actions"
-          v-if="data.isPrompt"
-        >
-          <el-tooltip
-            content="复制条目"
-            placement="top"
-            :show-arrow="false"
-            :offset="8"
-            :hide-after="0"
-          >
-            <button
-              @click.stop="$emit('duplicate-prompt', data.presetId, data.promptIndex)"
-              class="sidebar-tree-node-action-button"
-            >
+        <div class="sidebar-tree-node-actions" v-if="data.isPrompt">
+          <el-tooltip content="复制条目" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
+            <button @click.stop="$emit('duplicate-prompt', data.presetId, data.promptIndex)"
+              class="sidebar-tree-node-action-button">
               <Icon icon="ph:copy-duotone" />
             </button>
           </el-tooltip>
-          <el-tooltip
-            v-if="!isProtectedPrompt(data.raw)"
-            content="删除条目"
-            placement="top"
-            :show-arrow="false"
-            :offset="8"
-            :hide-after="0"
-          >
-            <button
-              @click.stop="$emit('delete-prompt', data.presetId, data.promptIndex)"
-              class="sidebar-tree-node-action-button is-danger"
-            >
+          <el-tooltip v-if="!isProtectedPrompt(data.raw)" content="删除条目" placement="top" :show-arrow="false" :offset="8"
+            :hide-after="0">
+            <button @click.stop="$emit('delete-prompt', data.presetId, data.promptIndex)"
+              class="sidebar-tree-node-action-button is-danger">
               <Icon icon="ph:trash-duotone" />
             </button>
           </el-tooltip>
         </div>
-        <div
-          class="sidebar-tree-node-actions"
-          v-if="data.isRegexFolder"
-        >
-          <el-tooltip
-            content="新增正则脚本"
-            placement="top"
-            :show-arrow="false"
-            :offset="8"
-            :hide-after="0"
-          >
-            <button
-              @click.stop="$emit('add-regex', data.presetId)"
-              class="sidebar-tree-node-action-button"
-            >
+        <div class="sidebar-tree-node-actions" v-if="data.isRegexFolder">
+          <el-tooltip content="新增正则脚本" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
+            <button @click.stop="$emit('add-regex', data.presetId)" class="sidebar-tree-node-action-button">
               <Icon icon="ph:plus-circle-duotone" />
             </button>
           </el-tooltip>
         </div>
-        <div
-          class="sidebar-tree-node-actions"
-          v-if="data.isRegexScript"
-        >
-          <el-tooltip
-            content="删除正则脚本"
-            placement="top"
-            :show-arrow="false"
-            :offset="8"
-            :hide-after="0"
-          >
-            <button
-              @click.stop="$emit('delete-regex', data.presetId, data.regexIndex)"
-              class="sidebar-tree-node-action-button is-danger"
-            >
+        <div class="sidebar-tree-node-actions" v-if="data.isRegexScript">
+          <el-tooltip content="删除正则脚本" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
+            <button @click.stop="$emit('delete-regex', data.presetId, data.regexIndex)"
+              class="sidebar-tree-node-action-button is-danger">
               <Icon icon="ph:trash-duotone" />
             </button>
           </el-tooltip>
@@ -172,45 +76,17 @@
 
     <template #footer>
       <div class="preset-footer-actions">
-        <el-tooltip
-          content="导出当前预设"
-          placement="top"
-          :show-arrow="false"
-          :offset="8"
-          :hide-after="0"
-        >
-          <button
-            class="btn-adv btn-success-adv preset-bottom-button-text"
-            @click="$emit('export-preset')"
-          >
-            <Icon
-              icon="ph:export-duotone"
-              width="16"
-              height="16"
-              class="preset-button-text-icon"
-            />
+        <el-tooltip content="导出当前预设" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
+          <button class="btn-adv btn-success-adv preset-bottom-button-text" @click="$emit('export-preset')">
+            <Icon icon="ph:export-duotone" width="16" height="16" class="preset-button-text-icon" />
             <span class="preset-button-text-short">导出</span>
             <span class="preset-button-text-long">导出预设</span>
           </button>
         </el-tooltip>
-        <el-tooltip
-          content="从文件导入预设"
-          placement="top"
-          :show-arrow="false"
-          :offset="8"
-          :hide-after="0"
-        >
-          <BrowserFilePicker
-            accept=".json"
-            @select-first="$emit('import-preset', $event)"
-          >
+        <el-tooltip content="从文件导入预设" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
+          <BrowserFilePicker accept=".json" @select-first="$emit('import-preset', $event)">
             <button class="btn-adv btn-warning-adv preset-bottom-button-text">
-              <Icon
-                icon="ph:file-text-duotone"
-                width="16"
-                height="16"
-                class="preset-button-text-icon"
-              />
+              <Icon icon="ph:file-text-duotone" width="16" height="16" class="preset-button-text-icon" />
               <span class="preset-button-text-short">导入</span>
               <span class="preset-button-text-long">input</span>
             </button>
@@ -231,6 +107,7 @@ import SidebarTreePanel from '@/components/ui/layout/common/SidebarTreePanel.vue
 import type { StoredPresetFile } from '@/database/db';
 import {
   buildPresetTreeData,
+  getBatchSettingsNodeKey,
   getHeaderNodeKey,
   getRegexFolderNodeKey,
   getRegexNodeKey,
@@ -244,6 +121,7 @@ interface Props {
   selectedPromptIndex: number | null;
   selectedRegexIndex: number | null;
   selectedIsHeader: boolean;
+  isBatchSettingsActive?: boolean;
   multiSelectedNodeKeys?: string[];
   dragDropHandlers: {
     allowDrag: (draggingNode: any) => boolean;
@@ -254,11 +132,13 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   multiSelectedNodeKeys: () => [],
+  isBatchSettingsActive: false,
 });
 
 const emit = defineEmits<{
   (e: 'select-preset', id: string): void;
   (e: 'select-header', id: string): void;
+  (e: 'select-batch-settings', id: string): void;
   (e: 'select-prompt', presetId: string, promptIndex: number): void;
   (e: 'select-regex', presetId: string, regexIndex?: number): void;
   (e: 'toggle-prompt-enabled', presetId: string, promptIndex: number): void;
@@ -284,6 +164,9 @@ const treeData = computed(() => buildPresetTreeData(props.presets));
 
 const currentNodeKey = computed(() => {
   if (!props.activePresetId) return undefined;
+  if (props.isBatchSettingsActive) {
+    return getBatchSettingsNodeKey(props.activePresetId);
+  }
   if (props.selectedIsHeader) {
     return getHeaderNodeKey(props.activePresetId);
   }
@@ -321,6 +204,11 @@ const handleNodeClick = (data: any, context?: { event?: MouseEvent; node?: any }
 
   if (data.isGroup) return;
 
+  if (data.isBatchSettings) {
+    emit('select-batch-settings', data.presetId);
+    return;
+  }
+
   emit('toggle-node-selection', data, additive);
   if (data.isHeader) {
     emit('select-header', data.presetId);
@@ -333,6 +221,13 @@ const handleNodeClick = (data: any, context?: { event?: MouseEvent; node?: any }
   } else {
     emit('select-preset', data.id);
   }
+};
+
+const allowDrag = (node: any) => !node.data?.isBatchSettings && props.dragDropHandlers.allowDrag(node);
+
+const allowDrop = (draggingNode: any, dropNode: any, type: AllowDropType) => {
+  if (draggingNode.data?.isBatchSettings || dropNode.data?.isBatchSettings) return false;
+  return props.dragDropHandlers.allowDrop(draggingNode, dropNode, type);
 };
 
 const handleNodeDblClick = (data: any) => {

@@ -4,7 +4,6 @@ import { useRoute, useRouter } from 'vue-router';
 
 import type { MenuItemConfig } from '@/config/menuConfig';
 import { getIconComponent } from '@/config/menuConfig';
-
 import { useDark, useToggle } from '@vueuse/core';
 import { useDevice } from './useDevice';
 

@@ -92,6 +92,8 @@ declare module 'vue' {
     MobileTabBar: typeof import('./src/components/ui/layout/MobileTabBar.vue')['default']
     OldWorldEditorTool: typeof import('./src/components/toolsbox/OldWorldEditorTool.vue')['default']
     PersonalizationSettings: typeof import('./src/components/settingPage/PersonalizationSettings.vue')['default']
+    PresetBatchSettings: typeof import('./src/components/preset/PresetBatchSettings.vue')['default']
+    PresetBatchTargetSelector: typeof import('./src/components/preset/PresetBatchTargetSelector.vue')['default']
     PresetClipboardPanel: typeof import('./src/components/preset/PresetClipboardPanel.vue')['default']
     PresetEditor: typeof import('./src/components/preset/PresetEditor.vue')['default']
     PresetList: typeof import('./src/components/preset/PresetList.vue')['default']
