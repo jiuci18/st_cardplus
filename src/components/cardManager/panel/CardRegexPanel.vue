@@ -51,7 +51,7 @@
                     :key="script.id"
                     class="script-item"
                     :class="{ 'is-active': currentScriptId === script.id, 'is-disabled': script.disabled }"
-                    @click="selectScript(script.id)"
+                    @click="currentScriptId = script.id"
                   >
                     <div class="script-item-content">
                       <Icon
@@ -530,10 +530,6 @@ watch(
 );
 
 // 方法
-const selectScript = (scriptId: string) => {
-  currentScriptId.value = scriptId;
-};
-
 const truncateRegex = (regex: string, maxLength: number = 40) => {
   if (regex.length > maxLength) {
     return regex.substring(0, maxLength) + '...';

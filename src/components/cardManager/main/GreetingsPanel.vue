@@ -27,7 +27,7 @@
     </el-scrollbar>
     <el-button
       type="primary"
-      @click="addGreeting"
+      @click="model = [...model, '']"
       class="add-button"
     >
       添加开场白
@@ -40,10 +40,6 @@ import { ElScrollbar, ElInput, ElButton } from 'element-plus';
 import { Delete } from '@element-plus/icons-vue';
 
 const model = defineModel<string[]>({ required: true });
-
-const addGreeting = () => {
-  model.value = [...model.value, ''];
-};
 
 const removeGreeting = (index: number) => {
   const newGreetings = [...model.value];

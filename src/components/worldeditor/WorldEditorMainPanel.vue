@@ -19,7 +19,7 @@
           :all-regions="props.allRegions"
           :all-forces="props.forces"
           :create-region="props.createRegion"
-          @select-force="handleSelectForce"
+          @select-force="force => emit('update:selectedItem', force)"
         />
         <RegionEditor
           v-else-if="isRegion(props.selectedItem)"
@@ -57,7 +57,7 @@
         <button
           type="button"
           class="create-project-link"
-          @click="handleCreateProject"
+          @click="emit('create-project')"
         >
           新建
         </button>
@@ -101,13 +101,6 @@ const emit = defineEmits<{
   (e: 'create-project'): void;
 }>();
 
-const handleCreateProject = () => {
-  emit('create-project');
-};
-
-const handleSelectForce = (force: EnhancedForce) => {
-  emit('update:selectedItem', force);
-};
 
 const isProject = (item: any): item is Project => {
   return item && 'createdAt' in item && !('projectId' in item);

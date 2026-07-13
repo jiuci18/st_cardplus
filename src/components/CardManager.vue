@@ -31,8 +31,8 @@
               <div class="header-actions" v-if="rightEditorTab === 'card'">
                 <CharacterCardActions context="editor" :has-active-card="!!currentCardInTab" :save-status="saveStatus"
                   :auto-save-mode="autoSaveMode" @toggle-mode="toggleAutoSaveMode" @save-card="handleSaveCurrentAsNew"
-                  @save-as-new="handleSaveAsNewCard" @update-card="handleUpdateActiveCard"
-                  @export-current="handleExportCurrentCard" />
+                  @save-as-new="handleSaveCurrentAsNew" @update-card="handleUpdateActiveCard"
+                  @export-current="currentSession && handleExportCard(currentSession.cardId)" />
                 <el-divider direction="vertical" />
                 <el-select v-if="isDesktopApp" v-model="selectedProvider" size="small" class="header-provider-select"
                   clearable placeholder="上传驱动" :disabled="isUploading">
@@ -54,13 +54,14 @@
               </div>
               <div class="header-actions" v-else-if="rightEditorTab === 'worldbook'">
                 <el-tooltip content="将当前世界书添加到世界书数据库，不影响角色卡" placement="bottom">
-                  <el-button size="small" @click="handleAddWorldBookToDB" :disabled="!worldbookPanelRef?.hasWorldBook">
+                  <el-button size="small" @click="worldbookPanelRef?.handleAddToDB()"
+                    :disabled="!worldbookPanelRef?.hasWorldBook">
                     <Icon icon="ph:database-duotone" />
                     <span class="button-text">添加到 DB</span>
                   </el-button>
                 </el-tooltip>
                 <el-tooltip content="用世界书数据库中的世界书替换当前世界书" placement="bottom">
-                  <el-button size="small" @click="handleReplaceWorldBookFromDB"
+                  <el-button size="small" @click="worldbookPanelRef?.handleReplaceFromDB()"
                     :disabled="!worldbookPanelRef?.hasWorldBook">
                     <Icon icon="ph:arrows-counter-clockwise-duotone" />
                     <span class="button-text">从 DB 替换</span>
@@ -110,7 +111,7 @@
                     :image-preview-url="imagePreviewUrl" :avatar-url="avatarUrl" :is-desktop-app="isDesktopApp"
                     :selected-provider="selectedProvider" :all-tags="allTags"
                     v-model:advanced-options-visible="advancedOptionsVisible" @image-change="handleImageUpdate"
-                    @image-url-change="handleImageUrlUpdate" @provider-change="selectedProvider = $event"
+                    @image-url-change="setCurrentSessionAvatarUrl" @provider-change="selectedProvider = $event"
                     @upload-to-hosting="handleUploadToHosting" @update-field="handleCardEditorFieldUpdate" />
                 </div>
               </el-tab-pane>
@@ -358,10 +359,6 @@ const handleImageUpdate = (file: File) => {
   setCurrentSessionImageFile(file);
 };
 
-const handleImageUrlUpdate = (url: string) => {
-  setCurrentSessionAvatarUrl(url);
-};
-
 const isDesktopApp = isTauriApp();
 const selectedProvider = ref<HostingProvider | null>(
   (getSetting("defaultImageProvider") as HostingProvider | "") || null,
@@ -453,10 +450,6 @@ const handleSaveCurrentAsNew = async () => {
   }
 };
 
-const handleSaveAsNewCard = async () => {
-  await handleSaveCurrentAsNew();
-};
-
 const handleUpdateActiveCard = async () => {
   if (currentSession.value) {
     await handleUpdateCard(
@@ -467,12 +460,6 @@ const handleUpdateActiveCard = async () => {
       preserveImageFile: true,
       markAsPersisted: true,
     });
-  }
-};
-
-const handleExportCurrentCard = async () => {
-  if (currentSession.value) {
-    await handleExportCard(currentSession.value.cardId);
   }
 };
 
@@ -563,15 +550,6 @@ const handleWorldBookChanged = async () => {
 };
 
 const worldbookPanelRef = ref<InstanceType<typeof CardWorldBookPanel>>();
-
-const handleAddWorldBookToDB = () => {
-  worldbookPanelRef.value?.handleAddToDB();
-};
-
-const handleReplaceWorldBookFromDB = () => {
-  worldbookPanelRef.value?.handleReplaceFromDB();
-};
-
 const regexPanelRef = ref<InstanceType<typeof CardRegexPanel>>();
 
 const hasRegexScripts = computed(() => {

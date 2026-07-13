@@ -17,13 +17,13 @@
         <div class="selector-actions">
           <el-button
             size="small"
-            @click="handleSelectAll"
+            @click="selectedScriptIds = [...allScriptIds]"
           >
             全选
           </el-button>
           <el-button
             size="small"
-            @click="handleDeselectAll"
+            @click="selectedScriptIds = []"
           >
             取消全选
           </el-button>
@@ -174,16 +174,6 @@ const categories = computed<RegexCategory[]>(() => {
 const allScriptIds = computed(() => {
   return categories.value.flatMap((cat) => cat.scripts.map((s) => s.id));
 });
-
-// 全选
-const handleSelectAll = () => {
-  selectedScriptIds.value = [...allScriptIds.value];
-};
-
-// 取消全选
-const handleDeselectAll = () => {
-  selectedScriptIds.value = [];
-};
 
 // 确认选择
 const handleConfirm = () => {

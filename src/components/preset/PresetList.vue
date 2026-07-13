@@ -1,6 +1,7 @@
 <template>
   <SidebarTreePanel title="预设列表" :tree-data="treeData" :tree-props="treeProps" node-key="nodeKey"
-    :current-node-key="currentNodeKey" :draggable="true" :allow-drag="allowDrag" :allow-drop="allowDrop"
+    :current-node-key="currentNodeKey" :draggable="true"
+    :allow-drag="node => !node.data?.isBatchSettings && props.dragDropHandlers.allowDrag(node)" :allow-drop="allowDrop"
     :handle-node-drop="props.dragDropHandlers.handleNodeDrop" @node-click="handleNodeClick"
     @node-dblclick="handleNodeDblClick">
     <template #header-actions>
@@ -18,7 +19,7 @@
       <div class="sidebar-tree-node" :class="{
         'is-header': data.isHeader,
         'is-disabled': data.isPrompt && data.enabled === false,
-        'is-multi-selected': isMultiSelected(data),
+        'is-multi-selected': data?.nodeKey && props.multiSelectedNodeKeys.includes(data.nodeKey),
       }">
         <div class="sidebar-tree-node-main">
           <Icon :icon="data.icon" class="sidebar-tree-node-icon" />
@@ -48,7 +49,7 @@
               <Icon icon="ph:copy-duotone" />
             </button>
           </el-tooltip>
-          <el-tooltip v-if="!isProtectedPrompt(data.raw)" content="删除条目" placement="top" :show-arrow="false" :offset="8"
+          <el-tooltip v-if="data.raw?.system_prompt !== true" content="删除条目" placement="top" :show-arrow="false" :offset="8"
             :hide-after="0">
             <button @click.stop="$emit('delete-prompt', data.presetId, data.promptIndex)"
               class="sidebar-tree-node-action-button is-danger">
@@ -223,8 +224,6 @@ const handleNodeClick = (data: any, context?: { event?: MouseEvent; node?: any }
   }
 };
 
-const allowDrag = (node: any) => !node.data?.isBatchSettings && props.dragDropHandlers.allowDrag(node);
-
 const allowDrop = (draggingNode: any, dropNode: any, type: AllowDropType) => {
   if (draggingNode.data?.isBatchSettings || dropNode.data?.isBatchSettings) return false;
   return props.dragDropHandlers.allowDrop(draggingNode, dropNode, type);
@@ -234,17 +233,6 @@ const handleNodeDblClick = (data: any) => {
   if (data?.isPrompt && !isFullyLockedPrompt(data.raw)) {
     emit('toggle-prompt-enabled', data.presetId, data.promptIndex);
   }
-};
-
-const isMultiSelected = (data: any) => {
-  const nodeKey = data?.nodeKey;
-  if (!nodeKey) return false;
-  return props.multiSelectedNodeKeys.includes(nodeKey);
-};
-
-const isProtectedPrompt = (prompt: Record<string, any> | undefined) => {
-  if (!prompt) return false;
-  return Boolean(prompt.system_prompt === true);
 };
 
 const isFullyLockedPrompt = (prompt: Record<string, any> | undefined) => {

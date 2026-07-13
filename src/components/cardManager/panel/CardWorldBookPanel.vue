@@ -17,7 +17,7 @@
             <Icon icon="ph:plus-circle-duotone" />
             创建新世界书
           </el-button>
-          <el-button @click="handleBindExistingWorldBook">
+          <el-button @click="showWorldBookSelector = true">
             <Icon icon="ph:link-duotone" />
             绑定已有世界书
           </el-button>
@@ -621,10 +621,6 @@ const handleClearAllEntries = async () => {
   } catch {
     // 用户取消
   }
-};
-
-const handleBindExistingWorldBook = () => {
-  showWorldBookSelector.value = true;
 };
 
 const handleBindWorldBook = async (bookId: string) => {

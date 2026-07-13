@@ -33,7 +33,7 @@
             :key="book.id"
             class="worldbook-item"
             :class="{ 'is-selected': selectedBookId === book.id }"
-            @click="handleSelectBook(book.id)"
+            @click="selectedBookId = book.id"
           >
             <div class="worldbook-item-header">
               <div class="worldbook-item-title">
@@ -186,11 +186,6 @@ const loadWorldBooks = async () => {
   } finally {
     isLoading.value = false;
   }
-};
-
-// 选择世界书
-const handleSelectBook = (bookId: string) => {
-  selectedBookId.value = bookId;
 };
 
 // 确认绑定

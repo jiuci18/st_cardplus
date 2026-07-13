@@ -3,34 +3,22 @@
     <!-- 基础信息与图片 -->
     <section class="form-section">
       <h3 class="form-section-title">
-        <Icon
-          icon="ph:user-circle-gear-duotone"
-          class="form-section-icon"
-        />
+        <Icon icon="ph:user-circle-gear-duotone" class="form-section-icon" />
         核心设定
       </h3>
       <div class="form-section-content two-column">
         <div class="image-panel-container">
           <h4 class="sub-section-title">角色图片</h4>
           <p class="image-persistence-notice">注意：本地上传图片仅用于导出；通过 🔗 设置的 URL 会随角色卡保存。</p>
-          <ImagePanel
-            :preview-url="imagePreviewUrl"
-            :avatar-url="avatarUrl"
-            :is-desktop-app="isDesktopApp"
-            :selected-provider="selectedProvider"
-            @image-change="emit('imageChange', $event)"
-            @image-url-change="emit('imageUrlChange', $event)"
-            @provider-change="emit('providerChange', $event)"
-            @upload-to-hosting="emit('uploadToHosting', $event)"
-          />
+          <ImagePanel :preview-url="imagePreviewUrl" :avatar-url="avatarUrl" :is-desktop-app="isDesktopApp"
+            :selected-provider="selectedProvider" @image-change="emit('imageChange', $event)"
+            @image-url-change="emit('imageUrlChange', $event)" @provider-change="emit('providerChange', $event)"
+            @upload-to-hosting="emit('uploadToHosting', $event)" />
         </div>
         <div class="basic-info-container">
           <h4 class="sub-section-title">基础信息</h4>
-          <BasicInfoPanel
-            :character="character"
-            :all-tags="props.allTags"
-            @update-field="emit('update-field', $event)"
-          />
+          <BasicInfoPanel :character="character" :all-tags="props.allTags"
+            @update-field="emit('update-field', $event)" />
         </div>
       </div>
     </section>
@@ -38,44 +26,29 @@
     <!-- 开场白 -->
     <section class="form-section">
       <h3 class="form-section-title">
-        <Icon
-          icon="ph:chat-teardrop-dots-duotone"
-          class="form-section-icon"
-        />
+        <Icon icon="ph:chat-teardrop-dots-duotone" class="form-section-icon" />
         多开场白
       </h3>
       <div class="form-section-content">
-        <GreetingsPanel
-          :model-value="character.data.alternate_greetings"
-          @update:model-value="emit('update-field', { field: 'alternate_greetings', value: $event })"
-        />
+        <GreetingsPanel :model-value="character.data.alternate_greetings"
+          @update:model-value="emit('update-field', { field: 'alternate_greetings', value: $event })" />
       </div>
     </section>
 
     <!-- 其他与正则 -->
     <section class="form-section">
       <h3 class="form-section-title">
-        <Icon
-          icon="ph:puzzle-piece-duotone"
-          class="form-section-icon"
-        />
+        <Icon icon="ph:puzzle-piece-duotone" class="form-section-icon" />
         其他与正则
       </h3>
-      <InfoDisplayPanel
-        type="regex"
-        :character="character"
-      />
+      <InfoDisplayPanel type="regex" :character="character" />
     </section>
 
     <!-- 高级选项 -->
-    <div
-      class="form-section-title advanced-options-toggle"
-      @click="toggleAdvancedOptions"
-    >
-      <Icon
-        :icon="advancedOptionsVisible ? 'ph:caret-down-duotone' : 'ph:caret-right-duotone'"
-        class="form-section-icon"
-      />
+    <div class="form-section-title advanced-options-toggle"
+      @click="emit('update:advancedOptionsVisible', !props.advancedOptionsVisible)">
+      <Icon :icon="advancedOptionsVisible ? 'ph:caret-down-duotone' : 'ph:caret-right-duotone'"
+        class="form-section-icon" />
       <span>高级设定</span>
       <span class="advanced-options-hint">{{ advancedOptionsVisible ? '点击折叠' : '点击展开' }}</span>
     </div>
@@ -84,10 +57,7 @@
       <div v-show="advancedOptionsVisible">
         <section class="form-section">
           <div class="form-section-content">
-            <AdvancedInfoPanel
-              :character="character"
-              @update-field="emit('update-field', $event)"
-            />
+            <AdvancedInfoPanel :character="character" @update-field="emit('update-field', $event)" />
           </div>
         </section>
       </div>
@@ -128,9 +98,6 @@ const emit = defineEmits<{
   (e: 'update:advancedOptionsVisible', value: boolean): void;
 }>();
 
-const toggleAdvancedOptions = () => {
-  emit('update:advancedOptionsVisible', !props.advancedOptionsVisible);
-};
 </script>
 
 <style scoped>

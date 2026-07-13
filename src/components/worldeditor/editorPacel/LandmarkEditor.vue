@@ -1,56 +1,28 @@
 <template>
   <el-scrollbar class="worldbook-editor-scrollbar">
     <div class="content-panel-body">
-      <div
-        v-if="!landmark"
-        class="worldbook-editor-empty-state"
-      >
-        <el-empty
-          description="请在列表中选择或新增一个地标进行编辑 "
-          :image-size="80"
-        ></el-empty>
+      <div v-if="!landmark" class="worldbook-editor-empty-state">
+        <el-empty description="请在列表中选择或新增一个地标进行编辑 " :image-size="80"></el-empty>
       </div>
-      <el-form
-        v-if="landmark"
-        :model="landmark"
-        label-position="top"
-        class="worldbook-editor-form"
-      >
+      <el-form v-if="landmark" :model="landmark" label-position="top" class="worldbook-editor-form">
         <!-- 基础信息 -->
         <section class="form-section">
           <h3 class="form-section-title">
-            <Icon
-              icon="ph:info-duotone"
-              class="form-section-icon"
-            />
+            <Icon icon="ph:info-duotone" class="form-section-icon" />
             基础信息
           </h3>
           <div class="form-section-content">
             <div>
               <label class="form-label">名称</label>
-              <el-input
-                v-model="landmark.name"
-                placeholder="例如：风语者山峰"
-              />
-              <p
-                v-if="errors.name"
-                class="error-message"
-              >
+              <el-input v-model="landmark.name" placeholder="例如：风语者山峰" />
+              <p v-if="errors.name" class="error-message">
                 {{ errors.name }}
               </p>
             </div>
             <div>
               <label class="form-label">描述</label>
-              <el-input
-                v-model="landmark.description"
-                type="textarea"
-                :rows="5"
-                placeholder="关于这个地标的详细描述..."
-              />
-              <p
-                v-if="errors.description"
-                class="error-message"
-              >
+              <el-input v-model="landmark.description" type="textarea" :rows="5" placeholder="关于这个地标的详细描述..." />
+              <p v-if="errors.description" class="error-message">
                 {{ errors.description }}
               </p>
             </div>
@@ -60,60 +32,28 @@
         <!-- 分类属性 -->
         <section class="form-section">
           <h3 class="form-section-title">
-            <Icon
-              icon="ph:tag-duotone"
-              class="form-section-icon"
-            />
+            <Icon icon="ph:tag-duotone" class="form-section-icon" />
             分类属性
           </h3>
           <div class="form-grid-3-col">
             <div>
               <label class="form-label">类型</label>
-              <el-select
-                v-model="landmark.type"
-                class="form-full-width"
-                filterable
-                allow-create
-                default-first-option
-                :reserve-keyword="false"
-                placeholder="选择或输入地标类型"
-              >
-                <el-option
-                  v-for="type in landmarkTypes"
-                  :key="type"
-                  :label="localizeLandmarkType(type)"
-                  :value="type"
-                />
+              <el-select v-model="landmark.type" class="form-full-width" filterable allow-create default-first-option
+                :reserve-keyword="false" placeholder="选择或输入地标类型">
+                <el-option v-for="type in landmarkTypes" :key="type" :label="localizeLandmarkType(type)"
+                  :value="type" />
               </el-select>
             </div>
             <div class="form-grid-span-2">
               <label class="form-label">重要性 (1-5)</label>
-              <el-input-number
-                v-model.number="landmark.importance"
-                :min="1"
-                controls-position="right"
-                class="form-full-width"
-              />
+              <el-input-number v-model.number="landmark.importance" :min="1" controls-position="right"
+                class="form-full-width" />
             </div>
             <div class="form-grid-span-3">
               <label class="form-label">标签</label>
-              <el-select
-                ref="tagsSelectRef"
-                v-model="landmark.tags"
-                multiple
-                filterable
-                allow-create
-                default-first-option
-                :reserve-keyword="false"
-                placeholder="例如：山脉, 险峻, 神秘"
-                class="form-full-width"
-              >
-                <el-option
-                  v-for="tag in props.allTags"
-                  :key="tag"
-                  :label="tag"
-                  :value="tag"
-                />
+              <el-select ref="tagsSelectRef" v-model="landmark.tags" multiple filterable allow-create
+                default-first-option :reserve-keyword="false" placeholder="例如：山脉, 险峻, 神秘" class="form-full-width">
+                <el-option v-for="tag in props.allTags" :key="tag" :label="tag" :value="tag" />
               </el-select>
             </div>
           </div>
@@ -122,182 +62,78 @@
         <!-- 位置信息 -->
         <section class="form-section">
           <h3 class="form-section-title">
-            <Icon
-              icon="ph:map-pin-duotone"
-              class="form-section-icon"
-            />
+            <Icon icon="ph:map-pin-duotone" class="form-section-icon" />
             位置与关系
           </h3>
           <div class="form-section-content form-grid-2-col">
             <div class="form-section-content">
               <div>
                 <label class="form-label">所属区域</label>
-                <RegionSelect
-                  v-model="landmark.regionId"
-                  :regions="projectRegions"
-                  :project-id="landmark.projectId"
-                  :allow-create="true"
-                  placeholder="选择或输入区域名称"
-                  :create-region="props.createRegion"
-                />
+                <RegionSelect v-model="landmark.regionId" :regions="projectRegions" :project-id="landmark.projectId"
+                  :allow-create="true" placeholder="选择或输入区域名称" :create-region="props.createRegion" />
               </div>
               <div class="form-grid-2-col">
                 <div>
                   <label class="form-label">父级地标</label>
-                  <el-select
-                    v-model="selectedParentId"
-                    clearable
-                    filterable
-                    placeholder="选择父级地标"
-                    class="form-full-width"
-                  >
-                    <el-option
-                      v-for="item in availableParentLandmarks"
-                      :key="item.id"
-                      :label="item.name"
-                      :value="item.id"
-                    />
+                  <el-select v-model="selectedParentId" clearable filterable placeholder="选择父级地标"
+                    class="form-full-width">
+                    <el-option v-for="item in availableParentLandmarks" :key="item.id" :label="item.name"
+                      :value="item.id" />
                   </el-select>
                 </div>
                 <div>
                   <label class="form-label">道路链接</label>
-                  <el-select
-                    v-model="selectedRoadLinkIds"
-                    multiple
-                    clearable
-                    filterable
-                    :reserve-keyword="false"
-                    :disabled="roadLinkOptions.length === 0"
-                    placeholder="取消选择即可断开道路链接"
-                    class="form-full-width"
-                  >
-                    <el-option
-                      v-for="item in roadLinkOptions"
-                      :key="item.id"
-                      :label="item.name"
-                      :value="item.id"
-                    />
+                  <el-select v-model="selectedRoadLinkIds" multiple clearable filterable :reserve-keyword="false"
+                    :disabled="roadLinkOptions.length === 0" placeholder="取消选择即可断开道路链接" class="form-full-width">
+                    <el-option v-for="item in roadLinkOptions" :key="item.id" :label="item.name" :value="item.id" />
                   </el-select>
                 </div>
               </div>
               <div>
                 <label class="form-label">重要地标</label>
-                <el-select
-                  v-model="landmark.keyLandmarkId"
-                  clearable
-                  filterable
-                  placeholder="选择一个重要地标"
-                  class="form-full-width"
-                >
-                  <el-option
-                    v-for="item in filteredLandmarks"
-                    :key="item.id"
-                    :label="item.name"
-                    :value="item.id"
-                  />
+                <el-select v-model="landmark.keyLandmarkId" clearable filterable placeholder="选择一个重要地标"
+                  class="form-full-width">
+                  <el-option v-for="item in filteredLandmarks" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </div>
             </div>
-            <div
-              v-if="landmark.relativePosition"
-              class="form-grid-4-col"
-            >
+            <div v-if="landmark.relativePosition" class="form-grid-4-col">
               <div>
                 <label class="form-label">北</label>
-                <el-select
-                  v-model="landmark.relativePosition.north"
-                  multiple
-                  clearable
-                  filterable
-                  collapse-tags
-                  :reserve-keyword="false"
-                  placeholder="选择北方地标"
-                  class="form-full-width"
-                >
-                  <el-option
-                    v-for="item in filteredLandmarks"
-                    :key="item.id"
-                    :label="item.name"
-                    :value="item.id"
-                  />
+                <el-select v-model="landmark.relativePosition.north" multiple clearable filterable collapse-tags
+                  :reserve-keyword="false" placeholder="选择北方地标" class="form-full-width">
+                  <el-option v-for="item in filteredLandmarks" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </div>
               <div>
                 <label class="form-label">南</label>
-                <el-select
-                  v-model="landmark.relativePosition.south"
-                  multiple
-                  clearable
-                  filterable
-                  collapse-tags
-                  :reserve-keyword="false"
-                  placeholder="选择南方地标"
-                  class="form-full-width"
-                >
-                  <el-option
-                    v-for="item in filteredLandmarks"
-                    :key="item.id"
-                    :label="item.name"
-                    :value="item.id"
-                  />
+                <el-select v-model="landmark.relativePosition.south" multiple clearable filterable collapse-tags
+                  :reserve-keyword="false" placeholder="选择南方地标" class="form-full-width">
+                  <el-option v-for="item in filteredLandmarks" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </div>
               <div>
                 <label class="form-label">东</label>
-                <el-select
-                  v-model="landmark.relativePosition.east"
-                  multiple
-                  clearable
-                  filterable
-                  collapse-tags
-                  :reserve-keyword="false"
-                  placeholder="选择东方地标"
-                  class="form-full-width"
-                >
-                  <el-option
-                    v-for="item in filteredLandmarks"
-                    :key="item.id"
-                    :label="item.name"
-                    :value="item.id"
-                  />
+                <el-select v-model="landmark.relativePosition.east" multiple clearable filterable collapse-tags
+                  :reserve-keyword="false" placeholder="选择东方地标" class="form-full-width">
+                  <el-option v-for="item in filteredLandmarks" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </div>
               <div>
                 <label class="form-label">西</label>
-                <el-select
-                  v-model="landmark.relativePosition.west"
-                  multiple
-                  clearable
-                  filterable
-                  collapse-tags
-                  :reserve-keyword="false"
-                  placeholder="选择西方地标"
-                  class="form-full-width"
-                >
-                  <el-option
-                    v-for="item in filteredLandmarks"
-                    :key="item.id"
-                    :label="item.name"
-                    :value="item.id"
-                  />
+                <el-select v-model="landmark.relativePosition.west" multiple clearable filterable collapse-tags
+                  :reserve-keyword="false" placeholder="选择西方地标" class="form-full-width">
+                  <el-option v-for="item in filteredLandmarks" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </div>
             </div>
             <div class="form-grid-span-2">
               <label class="form-label">子地标</label>
               <div class="child-landmark-list">
-                <span
-                  v-if="childLandmarks.length === 0"
-                  class="child-landmark-empty"
-                >
+                <span v-if="childLandmarks.length === 0" class="child-landmark-empty">
                   暂无子地标
                 </span>
-                <el-tag
-                  v-for="child in childLandmarks"
-                  :key="child.id"
-                  size="small"
-                  effect="plain"
-                >
+                <el-tag v-for="child in childLandmarks" :key="child.id" size="small" effect="plain">
                   {{ child.name }}
                 </el-tag>
               </div>
@@ -308,48 +144,24 @@
         <!-- 势力驻地 -->
         <section class="form-section">
           <h3 class="form-section-title">
-            <Icon
-              icon="ph:flag-duotone"
-              class="form-section-icon"
-            />
+            <Icon icon="ph:flag-duotone" class="form-section-icon" />
             势力驻地
           </h3>
           <div class="form-section-content">
-            <div
-              v-if="forcesAtLandmark.length === 0"
-              class="empty-inline"
-            >
+            <div v-if="forcesAtLandmark.length === 0" class="empty-inline">
               暂无势力驻扎在此地标
             </div>
-            <div
-              v-else
-              class="force-summary-list"
-            >
-              <div
-                v-for="force in forcesAtLandmark"
-                :key="force.id"
-                class="force-summary-item"
-              >
+            <div v-else class="force-summary-list">
+              <div v-for="force in forcesAtLandmark" :key="force.id" class="force-summary-item">
                 <div class="force-summary-main">
                   <span class="force-summary-name">{{ force.name }}</span>
                   <div class="force-summary-tags">
-                    <el-tag
-                      v-for="tag in force.roles"
-                      :key="tag"
-                      size="small"
-                      type="info"
-                      effect="plain"
-                    >
+                    <el-tag v-for="tag in force.roles" :key="tag" size="small" type="info" effect="plain">
                       {{ tag }}
                     </el-tag>
                   </div>
                 </div>
-                <el-button
-                  size="small"
-                  type="primary"
-                  plain
-                  @click="emitSelectForce(force.raw)"
-                >
+                <el-button size="small" type="primary" plain @click="emit('select-force', force.raw)">
                   快速编辑
                 </el-button>
               </div>
@@ -360,39 +172,19 @@
         <!-- 扩展属性 -->
         <section class="form-section">
           <h3 class="form-section-title">
-            <Icon
-              icon="ph:leaf-duotone"
-              class="form-section-icon"
-            />
+            <Icon icon="ph:leaf-duotone" class="form-section-icon" />
             扩展属性
           </h3>
           <div class="form-grid-3-col">
             <div>
               <label class="form-label">气候</label>
-              <el-select
-                v-model="landmark.climate"
-                filterable
-                allow-create
-                default-first-option
-                placeholder="例如：寒带苔原"
-                class="form-full-width"
-              >
-                <el-option
-                  v-for="item in commonClimates"
-                  :key="item.name"
-                  :label="item.name"
-                  :value="item.name"
-                >
+              <el-select v-model="landmark.climate" filterable allow-create default-first-option placeholder="例如：寒带苔原"
+                class="form-full-width">
+                <el-option v-for="item in commonClimates" :key="item.name" :label="item.name" :value="item.name">
                   <div style="display: flex; justify-content: space-between; align-items: center; width: 100%">
                     <span>{{ item.name }}</span>
-                    <el-tooltip
-                      :content="item.description"
-                      placement="right"
-                    >
-                      <Icon
-                        icon="ph:info-duotone"
-                        style="margin-left: 8px; color: var(--el-text-color-secondary)"
-                      />
+                    <el-tooltip :content="item.description" placement="right">
+                      <Icon icon="ph:info-duotone" style="margin-left: 8px; color: var(--el-text-color-secondary)" />
                     </el-tooltip>
                   </div>
                 </el-option>
@@ -400,51 +192,25 @@
             </div>
             <div>
               <label class="form-label">地形</label>
-              <el-select
-                v-model="landmark.terrain"
-                filterable
-                allow-create
-                default-first-option
-                placeholder="例如：山地, 森林"
-                class="form-full-width"
-              >
-                <el-option
-                  v-for="terrain in commonTerrains"
-                  :key="terrain"
-                  :label="terrain"
-                  :value="terrain"
-                />
+              <el-select v-model="landmark.terrain" filterable allow-create default-first-option placeholder="例如：山地, 森林"
+                class="form-full-width">
+                <el-option v-for="terrain in commonTerrains" :key="terrain" :label="terrain" :value="terrain" />
               </el-select>
             </div>
             <div>
               <label class="form-label">人口</label>
-              <el-input-number
-                v-model.number="landmark.population"
-                controls-position="right"
-                class="form-full-width"
-              />
+              <el-input-number v-model.number="landmark.population" controls-position="right" class="form-full-width" />
             </div>
             <div>
               <label class="form-label">防御等级</label>
-              <el-input-number
-                v-model.number="landmark.defenseLevel"
-                controls-position="right"
-                class="form-full-width"
-              />
+              <el-input-number v-model.number="landmark.defenseLevel" controls-position="right"
+                class="form-full-width" />
             </div>
             <div class="form-grid-span-3">
               <label class="form-label">资源</label>
-              <el-select
-                ref="resourcesSelectRef"
-                v-model="landmark.resources"
-                multiple
-                filterable
-                allow-create
-                default-first-option
-                :reserve-keyword="false"
-                placeholder="例如：铁矿, 魔法水晶"
-                class="form-full-width"
-              ></el-select>
+              <el-select ref="resourcesSelectRef" v-model="landmark.resources" multiple filterable allow-create
+                default-first-option :reserve-keyword="false" placeholder="例如：铁矿, 魔法水晶"
+                class="form-full-width"></el-select>
             </div>
           </div>
         </section>
@@ -452,20 +218,12 @@
         <!-- 元数据 -->
         <section class="form-section">
           <h3 class="form-section-title">
-            <Icon
-              icon="ph:note-pencil-duotone"
-              class="form-section-icon"
-            />
+            <Icon icon="ph:note-pencil-duotone" class="form-section-icon" />
             元数据
           </h3>
           <div>
             <label class="form-label">备注</label>
-            <el-input
-              v-model="landmark.notes"
-              type="textarea"
-              :rows="3"
-              placeholder="内部备注或额外信息..."
-            />
+            <el-input v-model="landmark.notes" type="textarea" :rows="3" placeholder="内部备注或额外信息..." />
           </div>
         </section>
       </el-form>
@@ -516,10 +274,8 @@ const tagsSelectRef = ref<SelectComponentInstance | null>(null);
 const resourcesSelectRef = ref<SelectComponentInstance | null>(null);
 let pasteCleanupFns: Array<() => void> = [];
 
-// 虽然WorldBookEditor中没有直接使用，但考虑到LandmarkEditor原有功能，暂时保留校验逻辑
-// 如果父组件统一处理，则可以移除
-const { errors } = useValidation();
 
+const { errors } = useValidation();
 const landmarkTypes = Object.values(LandmarkType);
 
 const commonClimates = [
@@ -674,10 +430,6 @@ const forcesAtLandmark = computed(() => {
     })
     .filter((force) => force.roles.length > 0);
 });
-
-const emitSelectForce = (force: EnhancedForce) => {
-  emit('select-force', force);
-};
 
 const clearPasteHandlers = () => {
   pasteCleanupFns.forEach((cleanup) => cleanup());

@@ -1,56 +1,27 @@
 <template>
-  <aside
-    class="app-sidebar"
-    :class="{ 'sidebar-expanded': sidebarExpanded }"
-  >
+  <aside class="app-sidebar" :class="{ 'sidebar-expanded': sidebarExpanded }">
     <!-- 顶部 Logo -->
-    <div
-      class="sidebar-logo"
-      @click="navigateTo('/')"
-    >
+    <div class="sidebar-logo" @click="router.push('/')">
       <span class="logo-wrap">
-        <img
-          src="/image/logo.png"
-          alt="Logo"
-          class="logo-img"
-        />
-        <span
-          v-if="updateAvailable"
-          class="logo-update-dot"
-        ></span>
+        <img src="/image/logo.png" alt="Logo" class="logo-img" />
+        <span v-if="updateAvailable" class="logo-update-dot"></span>
       </span>
       <span class="logo-text">ST CardPlus</span>
     </div>
 
     <!-- 主要导航项 -->
     <nav class="sidebar-nav">
-      <el-tooltip
-        v-for="item in mainNavItems"
-        :key="item.index"
-        :content="item.title + (item.beta ? ' (Beta)' : '')"
-        placement="right"
-        :show-after="200"
-        :disabled="sidebarExpanded"
-      >
-        <router-link
-          :to="item.index"
-          class="nav-item"
-          :class="{ active: isActive(item.index) }"
-        >
+      <el-tooltip v-for="item in mainNavItems" :key="item.index" :content="item.title + (item.beta ? ' (Beta)' : '')"
+        placement="right" :show-after="200" :disabled="sidebarExpanded">
+        <router-link :to="item.index" class="nav-item" :class="{ active: isActive(item.index) }">
           <el-icon :size="20">
             <component :is="item.icon" />
           </el-icon>
           <span class="nav-text">{{ item.title }}</span>
-          <span
-            v-if="item.beta && sidebarExpanded"
-            class="beta-tag"
-          >
+          <span v-if="item.beta && sidebarExpanded" class="beta-tag">
             Beta
           </span>
-          <span
-            v-if="item.beta && !sidebarExpanded"
-            class="beta-dot"
-          ></span>
+          <span v-if="item.beta && !sidebarExpanded" class="beta-dot"></span>
         </router-link>
       </el-tooltip>
     </nav>
@@ -58,18 +29,9 @@
     <!-- 底部固定项 -->
     <div class="sidebar-footer">
       <!-- 工具箱 -->
-      <el-tooltip
-        v-if="toolboxItem"
-        :content="toolboxItem.title"
-        placement="right"
-        :show-after="200"
-        :disabled="sidebarExpanded"
-      >
-        <router-link
-          :to="toolboxItem.index"
-          class="nav-item"
-          :class="{ active: isActive(toolboxItem.index) }"
-        >
+      <el-tooltip v-if="toolboxItem" :content="toolboxItem.title" placement="right" :show-after="200"
+        :disabled="sidebarExpanded">
+        <router-link :to="toolboxItem.index" class="nav-item" :class="{ active: isActive(toolboxItem.index) }">
           <el-icon :size="20">
             <component :is="toolboxItem.icon" />
           </el-icon>
@@ -81,16 +43,9 @@
       <div class="sidebar-divider"></div>
 
       <!-- 主题切换 -->
-      <el-tooltip
-        :content="isDark ? '切换浅色模式' : '切换暗黑模式'"
-        placement="right"
-        :show-after="200"
-        :disabled="sidebarExpanded"
-      >
-        <button
-          class="nav-item theme-toggle"
-          @click="toggleDark"
-        >
+      <el-tooltip :content="isDark ? '切换浅色模式' : '切换暗黑模式'" placement="right" :show-after="200"
+        :disabled="sidebarExpanded">
+        <button class="nav-item theme-toggle" @click="toggleDark">
           <el-icon :size="20">
             <Moon v-if="!isDark" />
             <Sunny v-else />
@@ -100,50 +55,29 @@
       </el-tooltip>
 
       <!-- 设置 -->
-      <el-tooltip
-        content="设置"
-        placement="right"
-        :show-after="200"
-        :disabled="sidebarExpanded"
-      >
-        <router-link
-          to="/settings"
-          class="nav-item"
-          :class="{ active: isActive('/settings') }"
-        >
-          <el-icon :size="20"><Setting /></el-icon>
+      <el-tooltip content="设置" placement="right" :show-after="200" :disabled="sidebarExpanded">
+        <router-link to="/settings" class="nav-item" :class="{ active: isActive('/settings') }">
+          <el-icon :size="20">
+            <Setting />
+          </el-icon>
           <span class="nav-text">设置</span>
         </router-link>
       </el-tooltip>
 
       <!-- 关于 -->
-      <el-tooltip
-        content="关于"
-        placement="right"
-        :show-after="200"
-        :disabled="sidebarExpanded"
-      >
-        <router-link
-          to="/about"
-          class="nav-item"
-          :class="{ active: isActive('/about') }"
-        >
-          <el-icon :size="20"><InfoFilled /></el-icon>
+      <el-tooltip content="关于" placement="right" :show-after="200" :disabled="sidebarExpanded">
+        <router-link to="/about" class="nav-item" :class="{ active: isActive('/about') }">
+          <el-icon :size="20">
+            <InfoFilled />
+          </el-icon>
           <span class="nav-text">关于</span>
         </router-link>
       </el-tooltip>
 
       <!-- 展开/折叠按钮 -->
-      <el-tooltip
-        :content="sidebarExpanded ? '收起侧边栏' : '展开侧边栏'"
-        placement="right"
-        :show-after="200"
-        :disabled="sidebarExpanded"
-      >
-        <button
-          class="nav-item toggle-btn"
-          @click="toggleSidebar"
-        >
+      <el-tooltip :content="sidebarExpanded ? '收起侧边栏' : '展开侧边栏'" placement="right" :show-after="200"
+        :disabled="sidebarExpanded">
+        <button class="nav-item toggle-btn" @click="toggleSidebar">
           <el-icon :size="20">
             <DArrowLeft v-if="sidebarExpanded" />
             <DArrowRight v-else />
@@ -177,9 +111,6 @@ onMounted(() => {
   sidebarExpanded.value = getSetting('autoExpandSidebar') ?? true;
 });
 
-const navigateTo = (path: string) => {
-  router.push(path);
-};
 </script>
 
 <style scoped>

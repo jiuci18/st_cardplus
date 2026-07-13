@@ -1,38 +1,16 @@
 <template>
   <div class="character-card-tabs">
-    <div
-      class="tabs-container"
-      @wheel="handleWheel"
-    >
-      <div
-        class="tabs-scroll-wrapper"
-        ref="scrollWrapper"
-      >
-        <draggable
-          v-model="localTabs"
-          class="tabs-list"
-          item-key="id"
-          :animation="200"
-          ghost-class="tab-ghost"
-          :disabled="false"
-          :delay="200"
-          :delay-on-touch-only="true"
-          :touch-start-threshold="5"
-          @end="handleDragEnd"
-        >
+    <div class="tabs-container" @wheel="handleWheel">
+      <div class="tabs-scroll-wrapper" ref="scrollWrapper">
+        <draggable v-model="localTabs" class="tabs-list" item-key="id" :animation="200" ghost-class="tab-ghost"
+          :disabled="false" :delay="200" :delay-on-touch-only="true" :touch-start-threshold="5"
+          @end="emit('reorder-tabs', localTabs)">
           <template #item="{ element: tab }">
-            <div
-              :class="['tab-item', { active: tab.id === activeTabId, 'is-home': tab.type === 'home' }]"
-              @click="handleTabClick(tab.id)"
-              :title="tab.label"
-            >
+            <div :class="['tab-item', { active: tab.id === activeTabId, 'is-home': tab.type === 'home' }]"
+              @click="emit('switch-tab', tab.id)" :title="tab.label">
               <span class="tab-label">{{ tab.label }}</span>
-              <button
-                v-if="tab.closable"
-                class="tab-close-btn"
-                @click.stop="handleCloseTab(tab.id)"
-                :title="`关闭 ${tab.label}`"
-              >
+              <button v-if="tab.closable" class="tab-close-btn" @click.stop="emit('close-tab', tab.id)"
+                :title="`关闭 ${tab.label}`">
                 <Icon icon="ph:x" />
               </button>
             </div>
@@ -63,7 +41,6 @@ const emit = defineEmits<{
 const scrollWrapper = ref<HTMLElement>();
 const localTabs = ref<Tab[]>([...props.tabs]);
 
-// 同步 props 的 tabs 到 localTabs
 watch(
   () => props.tabs,
   (newTabs) => {
@@ -71,21 +48,6 @@ watch(
   },
   { deep: true }
 );
-
-// 点击标签页
-const handleTabClick = (tabId: string) => {
-  emit('switch-tab', tabId);
-};
-
-// 关闭标签页
-const handleCloseTab = (tabId: string) => {
-  emit('close-tab', tabId);
-};
-
-// 拖拽结束
-const handleDragEnd = () => {
-  emit('reorder-tabs', localTabs.value);
-};
 
 // 鼠标滚轮横向滚动
 const handleWheel = (event: WheelEvent) => {

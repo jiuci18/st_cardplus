@@ -201,7 +201,8 @@
               <div class="card-header">
                 <span>关键词提取</span>
                 <div class="preview-actions">
-                  <el-button type="primary" size="small" @click="copySelectedKeywords">
+                  <el-button type="primary" size="small"
+                    @click="copyText(selectedKeywordText, '已复制关键词到剪贴板', '当前没有可复制的关键词')">
                     <Icon icon="ph:copy-duotone" />
                     复制关键词
                   </el-button>
@@ -645,14 +646,6 @@ const copySelectedJSON = async () => {
     generateJSON(selectedItems.value),
     `已复制 ${selectedItems.value.length} 项内容的JSON到剪贴板`,
     "",
-  );
-};
-
-const copySelectedKeywords = async () => {
-  await copyText(
-    selectedKeywordText.value,
-    "已复制关键词到剪贴板",
-    "当前没有可复制的关键词",
   );
 };
 
