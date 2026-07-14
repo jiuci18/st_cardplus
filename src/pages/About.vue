@@ -9,15 +9,16 @@
         </span>
       </h1>
       <p class="hero-description">SillyTavern 角色卡编辑工具</p>
+      <p v-if="isWebBuild" class="hero-deployment-status">
+        <span>已自动更新，当前 Git ID：</span>
+        <code>{{ appVersion }}</code>
+      </p>
       <p class="hero-version">
         <code v-if="appCommitCount === '1'">在线版_{{ appVersion }}</code>
         <code v-else>dev_{{ appVersion }} ({{ appCommitCount }})</code>
         <code class="version-tag">v{{ appSemver }}</code>
       </p>
     </div>
-
-    <SystemBanner bannerId="docsContributionBanner2026" startDate="2026-01-01" endDate="2027-01-01"
-      message="想要贡献？来贡献文档吧！" link="https://github.com/awaae001/doc" linkText="参与文档贡献" :dismissible="false" />
 
     <!-- 快速链接 -->
     <div class="links-card">
@@ -28,13 +29,6 @@
           <span>
             GitHub
             <small>查看源码与贡献</small>
-          </span>
-        </ExternalLink>
-        <ExternalLink href="https://doc.awaae001.top/" class="link-item">
-          <Icon icon="mdi:book-open-page-variant-outline" width="16" height="16" />
-          <span>
-            文档站
-            <small>查看使用文档</small>
           </span>
         </ExternalLink>
         <ExternalLink href="https://t.me/jiuci_channel" class="link-item">
@@ -105,15 +99,17 @@
 
 <script setup lang="ts">
 import ExternalLink from '@/components/ui/common/ExternalLink.vue';
-import SystemBanner from '@/components/SystemBanner.vue';
 import { formatDate } from '@/utils/datetime';
+import { fetchJsonResource } from '@/utils/fetchResource';
 import { Icon } from '@iconify/vue';
 import { ElMessage, ElOption, ElSelect, ElSkeleton, ElSkeletonItem } from 'element-plus';
 import { computed, onMounted, ref, watch } from 'vue';
+import { isTauriApp } from '@/utils/system/tauri';
 
 const appVersion = __APP_VERSION__;
 const appCommitCount = __APP_COMMIT_COUNT__;
 const appSemver = __APP_SEMVER__;
+const isWebBuild = !isTauriApp();
 const gitLogs = ref<any[]>([]);
 const page = ref(1);
 const hasMore = ref(true);
@@ -155,10 +151,9 @@ const loadMore = async (isBranchChange = false) => {
 
   try {
     if (!selectedBranch.value) return;
-    const response = await fetch(
+    const { data: commits } = await fetchJsonResource<Commit[]>(
       `https://api.github.com/repos/jiuci18/st_cardplus/commits?sha=${selectedBranch.value}&per_page=10&page=${page.value}`
     );
-    const commits: Commit[] = await response.json();
     if (commits.length < 10) {
       hasMore.value = false;
     }
@@ -186,12 +181,12 @@ const loadMore = async (isBranchChange = false) => {
 
 const fetchBranches = async () => {
   try {
-    const response = await fetch('https://api.github.com/repos/jiuci18/st_cardplus/branches');
-    if (response.ok) {
-      branches.value = await response.json();
-      const branchNames = branches.value.map((branch: { name: string }) => branch.name);
-      selectedBranch.value = resolvePreferredBranch(branchNames);
-    }
+    const { data } = await fetchJsonResource<Array<{ name: string }>>(
+      'https://api.github.com/repos/jiuci18/st_cardplus/branches',
+    );
+    branches.value = data;
+    const branchNames = branches.value.map((branch: { name: string }) => branch.name);
+    selectedBranch.value = resolvePreferredBranch(branchNames);
   } catch (error) {
     console.error('Error fetching branches:', error);
   }
@@ -253,6 +248,23 @@ watch(selectedBranch, (newBranch) => {
   line-height: 1.5rem;
   margin: 0.25rem 0 0;
   color: var(--el-text-color-secondary);
+}
+
+.hero-deployment-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: var(--el-text-color-secondary);
+}
+
+.hero-deployment-status code {
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-regular);
 }
 
 .hero-version {

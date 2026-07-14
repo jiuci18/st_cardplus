@@ -1,20 +1,4 @@
 <template>
-  <el-alert
-    type="info"
-    show-icon
-    :closable="false"
-    style="margin-bottom: 12px"
-  >
-    <template #title>想要贡献？来贡献文档吧！</template>
-    <template #default>
-      文档贡献地址：
-      <ExternalLink
-        href="https://github.com/awaae001/doc"
-      >
-        https://github.com/awaae001/doc
-      </ExternalLink>
-    </template>
-  </el-alert>
   <div class="app-settings">
     <div
       class="setting-card update-card"
@@ -202,7 +186,6 @@
 </template>
 
 <script setup lang="ts">
-import ExternalLink from '@/components/ui/common/ExternalLink.vue';
 import { getAppSettings } from '@/composables/appSettings';
 import { useAppUpdate } from '@/composables/useAppUpdate';
 import { openExternalUrl } from '@/utils/system/externalLink';
@@ -213,6 +196,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
 const betaFeaturesEnabled = ref(false);
+const useNewWelcomePage = ref(false);
 const umamiEnabled = ref(true);
 const disableSyncSnapshotRecovery = ref(false);
 const autoSaveInterval = ref(5);
@@ -292,6 +276,11 @@ const onBetaFeaturesToggle = (value: boolean) => {
 
 const onDefaultImageProviderChange = (value: string) => {
   setSetting('defaultImageProvider', value);
+};
+
+const onUseNewWelcomePageToggle = (value: boolean) => {
+  setSetting('useNewWelcomePage', value);
+  window.dispatchEvent(new CustomEvent('useNewWelcomePageToggle', { detail: value }));
 };
 
 const onPngImportUploadBehaviorChange = (value: string) => {
@@ -429,6 +418,7 @@ const settings = computed(() =>
   getAppSettings(
     {
       betaFeaturesEnabled,
+      useNewWelcomePage,
       umamiEnabled,
       disableSyncSnapshotRecovery,
       autoSaveInterval,
@@ -439,6 +429,7 @@ const settings = computed(() =>
     },
     {
       onBetaFeaturesToggle,
+      onUseNewWelcomePageToggle,
       onUmamiToggle,
       onDisableSyncSnapshotRecoveryToggle,
       onAutoSaveIntervalChange,
@@ -452,6 +443,7 @@ const settings = computed(() =>
 
 onMounted(() => {
   betaFeaturesEnabled.value = getSetting('betaFeaturesEnabled');
+  useNewWelcomePage.value = getSetting('useNewWelcomePage');
   umamiEnabled.value = getSetting('umamiEnabled');
   disableSyncSnapshotRecovery.value = getSetting('disableSyncSnapshotRecovery');
   autoSaveInterval.value = getSetting('autoSaveInterval');

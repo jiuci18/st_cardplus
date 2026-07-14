@@ -1,4 +1,5 @@
 import type { CharacterCardV3 } from './character-card-v3';
+import type { BarkeepResourceLink } from '@/types/barkeep';
 
 /**
  * 角色卡集合中的单个角色卡接口
@@ -9,6 +10,7 @@ export interface CharacterCardItem extends CharacterCardV3 {
   createdAt: string; // 创建时间 ISO 8601
   updatedAt: string; // 更新时间 ISO 8601
   order: number; // 排序序号
+  barkeep?: BarkeepResourceLink; // Barkeep 稳定资源映射
 }
 
 /**

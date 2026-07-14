@@ -12,7 +12,7 @@
         :offset="8"
         :hide-after="0"
       >
-        <BrowserFilePicker accept=".json" @select-first="handleBookUpload">
+        <BrowserFilePicker accept=".json" @select-first="file => emit('import-book-file', file)">
           <button class="btn-adv btn-primary-adv worldbook-bottom-button-text worldbook-primary-import">
             <Icon
               icon="ph:book-open-duotone"
@@ -264,9 +264,6 @@ const emit = defineEmits<{
   (e: 'toggle-mode'): void;
 }>();
 
-const handleBookUpload = (file: File) => {
-  emit('import-book-file', file);
-};
 
 const handleListCommand = (command: string) => {
   if (command === 'copy') emit('copy-book');

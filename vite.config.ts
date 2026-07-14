@@ -55,7 +55,7 @@ const buildMetadataPlugin = () => ({
     const metadata = {
       version: buildInfo.appSemver,
       channel: buildInfo.appChannel,
-      commitHash,
+      commitHash: buildInfo.appVersion,
       updateTitle: buildInfo.latestCommitTitle,
       updateDescription: buildInfo.latestCommitDescription,
       buildTime: new Date().toISOString(),
@@ -105,10 +105,10 @@ export default defineConfig({
     include: ['js-yaml', 'ejs', 'vue', 'vuedraggable'],
   },
   build: {
-    outDir, // 打包输出目录
+    outDir,
     rolldownOptions: {
       output: {
-        chunkFileNames: 'assets/[name]-[hash].js', // 分割后的文件命名规则
+        chunkFileNames: 'assets/[name]-[hash].js',
         minify: {
           compress: {
             dropConsole: true,

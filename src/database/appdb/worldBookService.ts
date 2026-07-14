@@ -59,8 +59,8 @@ export const worldBookService = {
   },
 
   /**
-   * 将当前活动的 bookId 保存到 localStorage
-   * @param bookId - 活动书籍的 ID
+   * Stores the active book ID for the current browser session.
+   * @param bookId - Active book ID.
    */
   setActiveBookId(bookId: string | null): void {
     if (bookId) {

@@ -1,90 +1,36 @@
 <template>
   <div class="old-world-editor-tool p-4 min-h-screen">
     <div class="header-top">
-      <el-button
-        type="primary"
-        plain
-        @click="router.push('/toolbox')"
-        class="back-button"
-      >
-        <Icon
-          icon="material-symbols:arrow-back"
-          width="16"
-          height="16"
-        />
+      <el-button type="primary" plain @click="router.push('/toolbox')" class="back-button">
+        <Icon icon="material-symbols:arrow-back" width="16" height="16" />
         返回工具箱
       </el-button>
-      <el-alert
-        title="旧版世界编辑器用于兼容旧工作流，功能不再持续维护"
-        type="warning"
-        :closable="false"
-        class="info-alert"
-      />
+      <el-alert title="旧版世界编辑器用于兼容旧工作流，功能不再持续维护" type="warning" :closable="false" class="info-alert" />
     </div>
 
     <div id="titleMain">
       <h1 class="page-title">地标编辑器</h1>
       <div class="btnSL">
         <div class="btnSL2">
-          <el-button
-            type="success"
-            @click="loadWorld"
-          >
-            <Icon
-              icon="material-symbols:folder-open-outline-sharp"
-              width="18"
-              height="18"
-              style="margin-right: 4px"
-            />
+          <el-button type="success" @click="loadWorld">
+            <Icon icon="material-symbols:folder-open-outline-sharp" width="18" height="18" style="margin-right: 4px" />
             加载 json
           </el-button>
-          <el-button
-            type="primary"
-            @click="saveWorld"
-          >
-            <Icon
-              icon="material-symbols:file-save-outline-sharp"
-              width="18"
-              height="18"
-              style="margin-right: 4px"
-            />
+          <el-button type="primary" @click="saveWorld">
+            <Icon icon="material-symbols:file-save-outline-sharp" width="18" height="18" style="margin-right: 4px" />
             保存 json
           </el-button>
-          <el-button
-            plain
-            @click="resetForm"
-          >
-            <Icon
-              icon="material-symbols:refresh"
-              width="18"
-              height="18"
-              style="margin-right: 4px"
-            />
+          <el-button plain @click="resetForm">
+            <Icon icon="material-symbols:refresh" width="18" height="18" style="margin-right: 4px" />
             重置数据
           </el-button>
         </div>
         <div class="btnSL2">
-          <el-button
-            type="info"
-            @click="copyToClipboard"
-            title="复制到剪贴板"
-          >
-            <Icon
-              icon="material-symbols:content-copy-outline"
-              width="18"
-              height="18"
-            />
+          <el-button type="info" @click="copyToClipboard" title="复制到剪贴板">
+            <Icon icon="material-symbols:content-copy-outline" width="18" height="18" />
           </el-button>
-          <el-button
-            type="warning"
-            @click="showImportDialog"
-            title="导入数据"
-          >
-            <Icon
-              icon="material-symbols:content-paste-go-rounded"
-              width="18"
-              height="18"
-            />
+          <el-button type="warning" @click="showImportDialog" title="导入数据">
+            <Icon icon="material-symbols:content-paste-go-rounded" width="18" height="18" />
           </el-button>
         </div>
       </div>
@@ -94,42 +40,23 @@
       <div>
         <el-card>
           <h2>基本信息</h2>
-          <el-form
-            :model="form"
-            label-width="80px"
-          >
+          <el-form :model="form" label-width="80px">
             <el-form-item label="名称">
-              <el-input
-                v-model="form.name"
-                placeholder="请输入地标名称"
-              />
+              <el-input v-model="form.name" placeholder="请输入地标名称" />
             </el-form-item>
             <el-form-item label="所属空间">
-              <el-input
-                v-model="form.space"
-                placeholder="请输入所属空间"
-              />
+              <el-input v-model="form.space" placeholder="请输入所属空间" />
             </el-form-item>
           </el-form>
         </el-card>
         <el-card style="margin-top: 10px">
           <h2>关键词（每行一条）</h2>
-          <el-input
-            v-model="form.keywords"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入关键词"
-          />
+          <el-input v-model="form.keywords" type="textarea" :rows="3" placeholder="请输入关键词" />
         </el-card>
       </div>
       <el-card style="width: 75%">
         <h2>介绍（每行一段）</h2>
-        <el-input
-          v-model="form.info"
-          type="textarea"
-          :rows="12"
-          placeholder="请输入介绍"
-        />
+        <el-input v-model="form.info" type="textarea" :rows="12" placeholder="请输入介绍" />
       </el-card>
     </div>
 
@@ -139,67 +66,25 @@
       <div class="title-Btn-add">
         <h2>地标</h2>
         <div style="display: flex; gap: 8px">
-          <el-button
-            type="primary"
-            @click="addLandmark"
-            style="margin-left: 16px"
-          >
-            <Icon
-              icon="material-symbols:desktop-landscape-add-outline"
-              width="18"
-              height="18"
-              style="margin-right: 4px"
-            />
+          <el-button type="primary" @click="addLandmark" style="margin-left: 16px">
+            <Icon icon="material-symbols:desktop-landscape-add-outline" width="18" height="18"
+              style="margin-right: 4px" />
             添加地标（卡片）
           </el-button>
-          <el-button
-            type="success"
-            @click="exportLandmarks"
-            title="导出地标"
-          >
-            <Icon
-              icon="material-symbols:content-copy-outline"
-              width="18"
-              height="18"
-            />
+          <el-button type="success" @click="exportLandmarks" title="导出地标">
+            <Icon icon="material-symbols:content-copy-outline" width="18" height="18" />
           </el-button>
         </div>
       </div>
-      <draggable
-        v-model="form.landmarks"
-        item-key="index"
-        class="el-row"
-        :gutter="16"
-      >
+      <draggable v-model="form.landmarks" item-key="index" class="el-row" :gutter="16">
         <template #item="{ element }">
-          <el-col
-            :xs="24"
-            :sm="12"
-            :md="8"
-            :lg="6"
-          >
+          <el-col :xs="24" :sm="12" :md="8" :lg="6">
             <el-card class="mb-4 landmark-card">
-              <el-input
-                v-model="element.name"
-                placeholder="地标名称"
-              />
-              <el-input
-                v-model="element.description"
-                type="textarea"
-                :rows="3"
-                placeholder="地标介绍"
-              />
+              <el-input v-model="element.name" placeholder="地标名称" />
+              <el-input v-model="element.description" type="textarea" :rows="3" placeholder="地标介绍" />
               <div style="margin: 4px"></div>
-              <el-button
-                type="danger"
-                @click="removeLandmark(element)"
-              >
-                <Icon
-                  icon="material-symbols:delete-outline"
-                  width="18"
-                  height="18"
-                  style="margin-right: 4px"
-                />
+              <el-button type="danger" @click="removeLandmark(element)">
+                <Icon icon="material-symbols:delete-outline" width="18" height="18" style="margin-right: 4px" />
                 删除地标
               </el-button>
             </el-card>
@@ -213,73 +98,27 @@
       <div class="title-Btn-add">
         <h2>势力</h2>
         <div style="display: flex; gap: 8px">
-          <el-button
-            type="primary"
-            @click="addForce"
-            style="margin-left: 16px"
-          >
-            <Icon
-              icon="material-symbols:desktop-landscape-add-outline"
-              width="18"
-              height="18"
-              style="margin-right: 4px"
-            />
+          <el-button type="primary" @click="form.forces.push({ name: '', members: '', description: '' })"
+            style="margin-left: 16px">
+            <Icon icon="material-symbols:desktop-landscape-add-outline" width="18" height="18"
+              style="margin-right: 4px" />
             添加势力（卡片）
           </el-button>
-          <el-button
-            type="success"
-            @click="exportForces"
-            title="导出势力"
-          >
-            <Icon
-              icon="material-symbols:content-copy-outline"
-              width="18"
-              height="18"
-            />
+          <el-button type="success" @click="exportForces" title="导出势力">
+            <Icon icon="material-symbols:content-copy-outline" width="18" height="18" />
           </el-button>
         </div>
       </div>
-      <draggable
-        v-model="form.forces"
-        item-key="index"
-        class="el-row"
-        :gutter="16"
-      >
+      <draggable v-model="form.forces" item-key="index" class="el-row" :gutter="16">
         <template #item="{ element }">
-          <el-col
-            :xs="24"
-            :sm="12"
-            :md="8"
-            :lg="6"
-          >
+          <el-col :xs="24" :sm="12" :md="8" :lg="6">
             <el-card class="mb-4 force-card">
-              <el-input
-                v-model="element.name"
-                placeholder="势力名称"
-              />
-              <el-input
-                v-model="element.members"
-                type="textarea"
-                :rows="2"
-                placeholder="成员（每行一个）"
-              />
-              <el-input
-                v-model="element.description"
-                type="textarea"
-                :rows="2"
-                placeholder="势力描述"
-              />
+              <el-input v-model="element.name" placeholder="势力名称" />
+              <el-input v-model="element.members" type="textarea" :rows="2" placeholder="成员（每行一个）" />
+              <el-input v-model="element.description" type="textarea" :rows="2" placeholder="势力描述" />
               <div style="margin: 4px"></div>
-              <el-button
-                type="danger"
-                @click="removeForce(element)"
-              >
-                <Icon
-                  icon="material-symbols:delete-outline"
-                  width="18"
-                  height="18"
-                  style="margin-right: 4px"
-                />
+              <el-button type="danger" @click="removeForce(element)">
+                <Icon icon="material-symbols:delete-outline" width="18" height="18" style="margin-right: 4px" />
                 删除势力
               </el-button>
             </el-card>
@@ -434,10 +273,6 @@ const handleIntervalChange = (event: Event) => {
 const addLandmark = () => {
   form.value.landmarks.push({ name: '', description: '' });
   ElMessage.success('已添加新地标');
-};
-
-const addForce = () => {
-  form.value.forces.push({ name: '', members: '', description: '' });
 };
 
 const removeForce = (force: Force) => {
@@ -634,7 +469,7 @@ defineExpose({
   margin-bottom: 0.5rem;
 }
 
-.section-container > * {
+.section-container>* {
   flex: 1;
   min-width: 100%;
 }
@@ -667,7 +502,7 @@ defineExpose({
     margin-bottom: 1rem;
   }
 
-  .section-container > * {
+  .section-container>* {
     min-width: auto;
   }
 

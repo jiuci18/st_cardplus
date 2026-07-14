@@ -3,149 +3,75 @@
     <div class="selector-header">
       <h4>智能文本选择器</h4>
       <div class="mode-controls">
-        <el-radio-group
-          v-model="inputMode"
-          size="small"
-        >
+        <el-radio-group v-model="inputMode" size="small">
           <el-radio-button label="manual">手动选择</el-radio-button>
           <el-radio-button label="token">分词选择</el-radio-button>
         </el-radio-group>
-        <el-radio-group
-          v-if="inputMode === 'manual'"
-          v-model="selectionMode"
-          size="small"
-        >
+        <el-radio-group v-if="inputMode === 'manual'" v-model="selectionMode" size="small">
           <el-radio-button label="anchor">锚点模式</el-radio-button>
           <el-radio-button label="variable">变量模式</el-radio-button>
           <el-radio-button label="start">起始符</el-radio-button>
           <el-radio-button label="end">终止符</el-radio-button>
         </el-radio-group>
-        <el-button
-          size="small"
-          type="danger"
-          @click="handleClearAll"
-          :disabled="selections.length === 0"
-        >
-          <Icon
-            icon="material-symbols:clear-all"
-            width="16"
-            height="16"
-          />
+        <el-button size="small" type="danger" @click="handleClearAll" :disabled="selections.length === 0">
+          <Icon icon="material-symbols:clear-all" width="16" height="16" />
           清除所有选择
         </el-button>
       </div>
     </div>
 
-    <div
-      class="tool-description"
-      v-if="inputMode === 'manual'"
-    >
-      <Icon
-        icon="material-symbols:info-outline"
-        width="16"
-        height="16"
-        class="info-icon"
-      />
+    <div class="tool-description" v-if="inputMode === 'manual'">
+      <Icon icon="material-symbols:info-outline" width="16" height="16" class="info-icon" />
       <span>{{ getToolDescription(selectionMode) }}</span>
     </div>
 
-    <div
-      class="text-area-wrapper"
-      v-if="inputMode === 'manual'"
-    >
-      <div
-        ref="textAreaRef"
-        class="selectable-text"
-        @mouseup="handleTextSelection"
-        @mousedown="startSelection"
-        v-html="renderedText"
-      ></div>
+    <div class="text-area-wrapper" v-if="inputMode === 'manual'">
+      <div ref="textAreaRef" class="selectable-text" @mouseup="handleTextSelection" @mousedown="isSelecting = true"
+        v-html="renderedText"></div>
     </div>
 
-    <TokenSelector
-      v-if="inputMode === 'token'"
-      :input-text="inputText"
-      @selection-created="handleTokenSelection"
-    />
+    <TokenSelector v-if="inputMode === 'token'" :input-text="inputText" @selection-created="handleTokenSelection" />
 
-    <div
-      class="selection-summary"
-      v-if="selections.length > 0"
-    >
+    <div class="selection-summary" v-if="selections.length > 0">
       <h5>已选择的区域:</h5>
       <div class="selection-items">
-        <div
-          v-for="(selection, index) in selections"
-          :key="index"
-          class="selection-item"
-          :class="selection.type"
-        >
+        <div v-for="(selection, index) in selections" :key="index" class="selection-item" :class="selection.type">
           <div class="selection-type">
-            <Icon
-              :icon="getSelectionIcon(selection.type)"
-              width="16"
-              height="16"
-            />
+            <Icon :icon="getSelectionIcon(selection.type)" width="16" height="16" />
             {{ getSelectionLabel(selection.type) }} {{ index + 1 }}
           </div>
           <div class="selection-text">{{ selection.text }}</div>
-          <el-button
-            size="small"
-            type="danger"
-            text
-            @click="handleRemoveSelection(index)"
-            :icon="Delete"
-          />
+          <el-button size="small" type="danger" text @click="handleRemoveSelection(index)" :icon="Delete" />
         </div>
       </div>
     </div>
 
-    <div
-      class="regex-output"
-      v-if="generatedRegex"
-    >
+    <div class="regex-output" v-if="generatedRegex">
       <h5>生成的正则表达式:</h5>
       <div class="regex-display">
         <code>{{ generatedRegex }}</code>
-        <el-button
-          size="small"
-          @click="copyRegex"
-          :icon="CopyIcon"
-        >
+        <el-button size="small" @click="copyRegex" :icon="CopyIcon">
           复制
         </el-button>
       </div>
 
-      <div
-        class="replace-preview"
-        v-if="generateRegex.replaceString"
-      >
+      <div class="replace-preview" v-if="generateRegex.replaceString">
         <h5>替换字符串:</h5>
         <div class="replace-display">
           <code>{{ generateRegex.replaceString }}</code>
         </div>
       </div>
 
-      <div
-        class="validation-info"
-        v-if="validateSelections.issues.length > 0"
-      >
+      <div class="validation-info" v-if="validateSelections.issues.length > 0">
         <h5>建议:</h5>
         <ul class="validation-issues">
-          <li
-            v-for="issue in validateSelections.issues"
-            :key="issue"
-            class="validation-issue"
-          >
+          <li v-for="issue in validateSelections.issues" :key="issue" class="validation-issue">
             {{ issue }}
           </li>
         </ul>
       </div>
 
-      <div
-        class="selection-stats"
-        v-if="selections.length > 0"
-      >
+      <div class="selection-stats" v-if="selections.length > 0">
         <div class="stats-item">
           <span class="stats-label">锚点:</span>
           <span class="stats-value">{{ selectionStats.anchors }}</span>
@@ -154,17 +80,11 @@
           <span class="stats-label">变量:</span>
           <span class="stats-value">{{ selectionStats.variables }}</span>
         </div>
-        <div
-          class="stats-item"
-          v-if="selectionStats.starts > 0"
-        >
+        <div class="stats-item" v-if="selectionStats.starts > 0">
           <span class="stats-label">起始:</span>
           <span class="stats-value">{{ selectionStats.starts }}</span>
         </div>
-        <div
-          class="stats-item"
-          v-if="selectionStats.ends > 0"
-        >
+        <div class="stats-item" v-if="selectionStats.ends > 0">
           <span class="stats-label">终止:</span>
           <span class="stats-value">{{ selectionStats.ends }}</span>
         </div>
@@ -254,10 +174,6 @@ const renderedText = computed(() => {
 });
 
 const generatedRegex = computed(() => generateRegex.value.regex);
-
-const startSelection = () => {
-  isSelecting.value = true;
-};
 
 const handleTextSelection = async () => {
   if (!isSelecting.value) return;

@@ -32,3 +32,5 @@ doc/
 
 temp/*
 .codex
+
+test-results/

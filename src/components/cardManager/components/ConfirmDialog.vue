@@ -36,7 +36,7 @@
         <el-button @click="handleCancel">{{ cancelText }}</el-button>
         <el-button
           :type="type === 'danger' ? 'danger' : 'primary'"
-          @click="handleConfirm"
+          @click="emit('confirm')"
           :loading="loading"
         >
           {{ confirmText }}
@@ -85,10 +85,6 @@ const close = () => {
 
 const setLoading = (value: boolean) => {
   loading.value = value;
-};
-
-const handleConfirm = () => {
-  emit('confirm');
 };
 
 const handleCancel = () => {

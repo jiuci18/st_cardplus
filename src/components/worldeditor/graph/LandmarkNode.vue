@@ -1,18 +1,8 @@
 <template>
-  <div
-    class="landmark-node"
-    :class="nodeSizeClass(data.type)"
-  >
+  <div class="landmark-node" :class="nodeSizeClass(data.type)">
     <div class="landmark-badge-stack">
-      <div
-        v-if="data.forces.length > 0"
-        class="landmark-badge"
-        title="势力"
-      >
-        <Icon
-          icon="ph:users-three"
-          class="landmark-badge-icon is-forces"
-        />
+      <div v-if="data.forces.length > 0" class="landmark-badge" title="势力">
+        <Icon icon="ph:users-three" class="landmark-badge-icon is-forces" />
         <span class="landmark-badge-count">{{ data.forces.length }}</span>
       </div>
       <div
@@ -32,10 +22,7 @@
       :style="{ backgroundColor: data.regionColor || 'transparent' }"
     ></span>
     <div class="landmark-node-header">
-      <Icon
-        :icon="iconForType(data.type)"
-        class="landmark-node-icon"
-      />
+      <Icon :icon="getLandmarkTypeIcon(data.type)" class="landmark-node-icon" />
       <div class="landmark-node-title">{{ data.name }}</div>
     </div>
     <el-tooltip placement="top">
@@ -43,18 +30,14 @@
         <div class="landmark-tooltip">
           <div class="landmark-tooltip-title">{{ tooltipTitle }}</div>
           <div class="landmark-tooltip-row">
-            <Icon
-              class="landmark-tooltip-icon"
-              icon="ph:users-three"
-            />
+            <Icon class="landmark-tooltip-icon" icon="ph:users-three" />
             <span>人口</span>
-            <span class="landmark-tooltip-value">{{ formatPopulation(data.population) }}</span>
+            <span class="landmark-tooltip-value">{{
+              formatPopulation(data.population)
+            }}</span>
           </div>
           <div class="landmark-tooltip-row">
-            <Icon
-              class="landmark-tooltip-icon"
-              icon="ph:shield-fill"
-            />
+            <Icon class="landmark-tooltip-icon" icon="ph:shield-fill" />
             <span>重要性</span>
             <span class="landmark-tooltip-value">{{ data.importance }}</span>
           </div>
@@ -121,25 +104,26 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { Handle, Position } from '@vue-flow/core';
-import { Icon } from '@iconify/vue';
-import { ElTooltip } from 'element-plus';
-import { getLandmarkTypeIcon } from '@/utils/worldeditor/typeMeta';
-import type { LandmarkNodeData } from '@/types/worldeditor/worldGraphNodes';
+import { computed } from "vue";
+import { Handle, Position } from "@vue-flow/core";
+import { Icon } from "@iconify/vue";
+import { ElTooltip } from "element-plus";
+import { getLandmarkTypeIcon } from "@/utils/worldeditor/typeMeta";
+import type { LandmarkNodeData } from "@/types/worldeditor/worldGraphNodes";
 
 const props = defineProps<{
   data: LandmarkNodeData;
 }>();
 
-const iconForType = (type?: string) => getLandmarkTypeIcon(type);
-
 const nodeSizeClass = (type?: string) => {
-  if (type === 'natural') return 'is-large';
-  if (type && (type === 'chasm' || type === 'canyon' || type.includes('天堑'))) {
-    return 'is-large';
+  if (type === "natural") return "is-large";
+  if (
+    type &&
+    (type === "chasm" || type === "canyon" || type.includes("天堑"))
+  ) {
+    return "is-large";
   }
-  return '';
+  return "";
 };
 
 const tooltipTitle = computed(() => {
@@ -148,7 +132,7 @@ const tooltipTitle = computed(() => {
 });
 
 const formatPopulation = (value?: number) => {
-  if (value === null || value === undefined) return '-';
+  if (value === null || value === undefined) return "-";
   if (value >= 1000) return `${Math.round(value / 1000)}K`;
   return `${value}`;
 };

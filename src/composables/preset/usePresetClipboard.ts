@@ -1,4 +1,5 @@
 import { computed, ref, watch } from 'vue';
+import { readSessionStorageJSON, writeSessionStorageJSON } from '@/utils/localStorageUtils';
 
 export interface PresetClipboardItem {
   id: string;
@@ -9,19 +10,12 @@ export interface PresetClipboardItem {
 const STORAGE_KEY = 'preset-clipboard';
 
 function loadClipboard(): PresetClipboardItem[] {
-  try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) return parsed;
-    return [];
-  } catch {
-    return [];
-  }
+  const items = readSessionStorageJSON<PresetClipboardItem[]>(STORAGE_KEY);
+  return Array.isArray(items) ? items : [];
 }
 
 function saveClipboard(items: PresetClipboardItem[]) {
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  writeSessionStorageJSON(STORAGE_KEY, items);
 }
 
 export function usePresetClipboard() {

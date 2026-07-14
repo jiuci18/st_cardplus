@@ -56,7 +56,7 @@
       </div>
       <div v-else class="card-grid">
         <div v-for="card in filteredCards" :key="card.id" class="card-grid-item"
-          @click="handleCardClick(card.id, card.name)">
+          @click="emit('open-card', card.id, card.name)">
           <el-checkbox v-model="checkedCards[card.id]" class="card-grid-checkbox" @click.stop />
           <div class="card-grid-avatar">
             <img v-if="card.avatar && card.avatar !== 'none'" :src="card.avatar" :alt="card.name"
@@ -194,11 +194,6 @@ const emptyHint = computed(() => {
   }
   return '点击"创建角色卡"按钮开始';
 });
-
-// 点击卡片
-const handleCardClick = (cardId: string, cardName: string) => {
-  emit('open-card', cardId, cardName);
-};
 
 const handleFileChange = (files: File[]) => {
   if (files.length > 0) {

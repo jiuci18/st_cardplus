@@ -4,42 +4,21 @@
       <div class="setting-header">
         <div class="setting-info">
           <span class="setting-label">存储空间使用情况</span>
-          <Icon
-            icon="material-symbols:database-outline"
-            width="20"
-            height="20"
-            style="margin-left: 8px; color: var(--el-color-primary)"
-          />
+          <Icon icon="material-symbols:database-outline" width="20" height="20"
+            style="margin-left: 8px; color: var(--el-color-primary)" />
         </div>
-        <el-button
-          class="storage-refresh"
-          text
-          @click="handleRefresh"
-          :disabled="isRefreshing"
-        >
-          <Icon
-            icon="material-symbols:refresh"
-            width="18"
-            height="18"
-            :class="{ 'spin-refresh': isRefreshing }"
-          />
+        <el-button class="storage-refresh" text @click="handleRefresh" :disabled="isRefreshing">
+          <Icon icon="material-symbols:refresh" width="18" height="18" :class="{ 'spin-refresh': isRefreshing }" />
         </el-button>
       </div>
       <div class="storage-info">
         <div class="storage-bar">
           <span>IndexedDB</span>
-          <el-progress
-            :percentage="indexedDBUsage.percentage"
-            :text-inside="true"
-            :stroke-width="20"
-            :status="getProgressStatus(indexedDBUsage.percentage)"
-          >
+          <el-progress :percentage="indexedDBUsage.percentage" :text-inside="true" :stroke-width="20"
+            :status="getProgressStatus(indexedDBUsage.percentage)">
             <span>{{ indexedDBUsage.text }}</span>
           </el-progress>
-          <div
-            class="storage-details"
-            v-if="worldBookStats && characterCardStats"
-          >
+          <div class="storage-details" v-if="worldBookStats && characterCardStats && worldEditorStats">
             <span>
               世界书：{{ worldBookStats.bookCount }} 本，{{ worldBookStats.entryCount }} 条目，约
               {{ formatBytes(worldBookStats.approxBytes) }}
@@ -47,24 +26,21 @@
             <span>
               角色卡：{{ characterCardStats.cardCount }} 张，约 {{ formatBytes(characterCardStats.approxBytes) }}
             </span>
+            <span>
+              世界编辑器：{{ worldEditorStats.projectCount }} 个项目，{{ worldEditorStats.landmarkCount }} 个地标，约
+              {{ formatBytes(worldEditorStats.approxBytes) }}
+            </span>
           </div>
         </div>
         <div class="storage-bar">
           <span>浏览器缓存 (localStorage)</span>
-          <el-progress
-            :percentage="localStorageUsage.percentage"
-            :text-inside="true"
-            :stroke-width="20"
-            :status="getProgressStatus(localStorageUsage.percentage)"
-          >
+          <el-progress :percentage="localStorageUsage.percentage" :text-inside="true" :stroke-width="20"
+            :status="getProgressStatus(localStorageUsage.percentage)">
             <span>{{ localStorageUsage.text }}</span>
           </el-progress>
         </div>
       </div>
-      <p
-        class="setting-description"
-        style="margin-top: 12px"
-      >
+      <p class="setting-description" style="margin-top: 12px">
         存储大小由浏览器自动管理
       </p>
     </div>
@@ -81,6 +57,7 @@ const {
   localStorageUsage,
   worldBookStats,
   characterCardStats,
+  worldEditorStats,
   formatBytes,
   getProgressStatus,
   updateStorageInfo,
@@ -141,6 +118,7 @@ onMounted(updateStorageInfo);
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }

@@ -1,4 +1,5 @@
 import { getSetting, setSetting } from '@/utils/localStorageUtils';
+import { fetchJsonResource } from '@/utils/fetchResource';
 import { computed, readonly, ref } from 'vue';
 
 type AppChannel = 'stable' | 'dev';
@@ -154,13 +155,10 @@ const runUpdateCheck = async () => {
 
     for (const branch of branchesToTry) {
       try {
-        const response = await fetch(UPDATE_METADATA_URLS[branch], { cache: 'no-store' });
-
-        if (!response.ok) {
-          throw new Error(`metadata request failed with status ${response.status}`);
-        }
-
-        const metadata = (await response.json()) as UpdateMetadata;
+        const { data: metadata } = await fetchJsonResource<UpdateMetadata>(
+          UPDATE_METADATA_URLS[branch],
+          { cache: 'no-store' },
+        );
         const { remoteVersion, remoteCommitHash } = applyRemoteMetadata(metadata);
         resolvedUpdateBranch.value = branch;
         setDetectedUpdate(resolveUpdateKind(remoteVersion, remoteCommitHash));

@@ -49,6 +49,7 @@ export type SettingOption =
 
 interface AppSettingsModels {
   betaFeaturesEnabled: Ref<boolean>;
+  useNewWelcomePage: Ref<boolean>;
   umamiEnabled: Ref<boolean>;
   disableSyncSnapshotRecovery: Ref<boolean>;
   autoSaveInterval: Ref<number>;
@@ -59,6 +60,7 @@ interface AppSettingsModels {
 }
 interface AppSettingsHandlers {
   onBetaFeaturesToggle: (value: boolean) => void;
+  onUseNewWelcomePageToggle: (value: boolean) => void;
   onUmamiToggle: (value: boolean) => void;
   onDisableSyncSnapshotRecoveryToggle: (value: boolean) => void;
   onAutoSaveIntervalChange: (value: number | undefined) => void;
@@ -73,6 +75,17 @@ export const getAppSettings = (
   handlers: AppSettingsHandlers,
 ): SettingOption[] => {
   return [
+    {
+      id: "useNewWelcomePage",
+      label: "使用新欢迎页",
+      icon: "material-symbols:dashboard-customize-outline",
+      iconColor: "var(--el-color-primary)",
+      description: "[WIP] 启用首页文件资源管理器，管理本地资源。",
+      type: "switch",
+      model: models.useNewWelcomePage,
+      handler: handlers.onUseNewWelcomePageToggle,
+      disabled: true,
+    },
     {
       id: "betaFeaturesEnabled",
       label: "显示测试版功能",

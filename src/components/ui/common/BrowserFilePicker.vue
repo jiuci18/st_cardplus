@@ -1,13 +1,17 @@
 <template>
-  <span v-if="$slots.default" class="browser-file-picker" @click="handleTriggerClick">
+  <span v-bind="attrs" class="browser-file-picker" @click="handleTriggerClick">
     <slot :open="open" />
+    <input ref="inputRef" class="browser-file-picker-input" type="file" :accept="accept" :multiple="multiple"
+      :disabled="disabled" @change="handleChange" />
   </span>
-  <input ref="inputRef" class="browser-file-picker-input" type="file" :accept="accept" :multiple="multiple"
-    :disabled="disabled" @change="handleChange" />
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, useAttrs } from 'vue';
+
+defineOptions({
+  inheritAttrs: false,
+});
 
 interface Props {
   accept?: string;
@@ -30,6 +34,7 @@ const emit = defineEmits<{
   (e: 'select-first', file: File): void;
 }>();
 
+const attrs = useAttrs();
 const inputRef = ref<HTMLInputElement | null>(null);
 
 const reset = () => {

@@ -5,8 +5,8 @@
     :tree-props="treeProps"
     :current-node-key="currentNodeKey"
     :draggable="true"
-    :allow-drag="props.dragDropHandlers.allowDrag"
-    :allow-drop="props.dragDropHandlers.allowDrop"
+    :allow-drag="allowDrag"
+    :allow-drop="allowDrop"
     :handle-node-drop="props.dragDropHandlers.handleNodeDrop"
     @node-click="handleNodeClick"
   >
@@ -31,7 +31,11 @@
     <template #node="{ node, data }">
       <div
         class="sidebar-tree-node"
-        :class="{ 'is-disabled': data.isEntry && data.raw.disable, 'is-constant': data.isEntry && data.raw.constant }"
+        :class="{
+          'is-disabled': data.isEntry && data.raw.disable,
+          'is-constant': data.isEntry && data.raw.constant,
+          'is-utility': data.isUtility,
+        }"
       >
         <div class="sidebar-tree-node-main">
           <Icon
@@ -40,7 +44,7 @@
           />
           <span class="sidebar-tree-node-label">{{ node.label }}</span>
           <el-tooltip
-            v-if="!data.isEntry && data.raw.sourceCharacterName"
+            v-if="!data.isEntry && !data.isUtility && data.raw?.sourceCharacterName"
             :content="`来自: ${data.raw.sourceCharacterName}`"
             placement="top"
             :show-arrow="false"
@@ -55,7 +59,7 @@
         </div>
         <div
           class="sidebar-tree-node-actions"
-          v-if="!data.isEntry"
+          v-if="!data.isEntry && !data.isUtility"
         >
           <el-tooltip
             content="新增条目"
@@ -162,6 +166,7 @@ interface Props {
   collection: WorldBookCollection;
   activeBookId: string | null;
   selectedEntry: WorldBookEntry | null;
+  isBatchSettingsActive?: boolean;
   dragDropHandlers: {
     allowDrag: (draggingNode: any) => boolean;
     allowDrop: (draggingNode: any, dropNode: any, type: AllowDropType) => boolean;
@@ -172,9 +177,11 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   sidebarWidth: Infinity,
+  isBatchSettingsActive: false,
 });
 
 const emit = defineEmits<{
+  (e: 'select-batch-settings', bookId: string): void;
   (e: 'select-book', id: string): void;
   (e: 'select-entry', bookId: string, entryIndex: number | null): void;
   (e: 'create-book'): void;
@@ -203,19 +210,33 @@ const treeData = computed(() => {
       icon: 'ph:book-duotone',
       isEntry: false,
       raw: book,
-      children: book.entries.map((entry, index) => ({
-        id: `${book.id}-${entry.uid}`,
-        label: entry.comment || `条目 ${index + 1}`,
-        icon: 'ph:note-duotone',
-        isEntry: true,
-        bookId: book.id,
-        entryIndex: index,
-        raw: entry,
-      })),
+      children: [
+        {
+          id: `${book.id}-batch-settings`,
+          label: '批量设置',
+          icon: 'ph:sliders-horizontal-duotone',
+          isEntry: false,
+          isUtility: true,
+          bookId: book.id,
+          raw: null,
+        },
+        ...book.entries.map((entry, index) => ({
+          id: `${book.id}-${entry.uid}`,
+          label: entry.comment || `条目 ${index + 1}`,
+          icon: 'ph:note-duotone',
+          isEntry: true,
+          bookId: book.id,
+          entryIndex: index,
+          raw: entry,
+        })),
+      ],
     }));
 });
 
 const currentNodeKey = computed(() => {
+  if (props.isBatchSettingsActive) {
+    return props.activeBookId ? `${props.activeBookId}-batch-settings` : undefined;
+  }
   if (props.selectedEntry && props.activeBookId) {
     return `${props.activeBookId}-${props.selectedEntry.uid}`;
   }
@@ -223,6 +244,11 @@ const currentNodeKey = computed(() => {
 });
 
 const handleNodeClick = (data: any) => {
+  if (data.isUtility) {
+    emit('select-batch-settings', data.bookId);
+    return;
+  }
+
   if (data.isEntry) {
     if (props.activeBookId === data.bookId && props.selectedEntry?.uid === data.raw.uid) {
       emit('select-entry', data.bookId, null);
@@ -233,9 +259,25 @@ const handleNodeClick = (data: any) => {
     emit('select-book', data.id);
   }
 };
+
+const allowDrag = (draggingNode: any) => {
+  if (draggingNode.data?.isUtility) return false;
+  return props.dragDropHandlers.allowDrag(draggingNode);
+};
+
+const allowDrop = (draggingNode: any, dropNode: any, type: AllowDropType) => {
+  if (draggingNode.data?.isUtility || dropNode.data?.isUtility) return false;
+  return props.dragDropHandlers.allowDrop(draggingNode, dropNode, type);
+};
 </script>
 
 <style scoped>
+.sidebar-tree-node.is-utility .sidebar-tree-node-label,
+.sidebar-tree-node.is-utility .sidebar-tree-node-icon {
+  color: var(--el-color-primary);
+  font-weight: 600;
+}
+
 .sidebar-tree-node.is-constant .sidebar-tree-node-label,
 .sidebar-tree-node.is-constant .sidebar-tree-node-icon {
   color: var(--el-color-primary);

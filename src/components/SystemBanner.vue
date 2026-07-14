@@ -26,6 +26,7 @@
 <script setup lang="ts">
 import ExternalLink from '@/components/ui/common/ExternalLink.vue';
 import { now, toDateSafe } from '@/utils/datetime';
+import { readLocalStorageJSON, writeLocalStorageJSON } from '@/utils/localStorageUtils';
 import { onMounted, ref } from 'vue';
 
 const props = withDefaults(
@@ -61,8 +62,7 @@ onMounted(() => {
 
   if (currentTime >= bannerStartDate && currentTime < bannerEndDate) {
     if (props.dismissible) {
-      const dismissedBannersRaw = localStorage.getItem(DISMISSED_KEY);
-      const dismissedBanners = dismissedBannersRaw ? JSON.parse(dismissedBannersRaw) : {};
+      const dismissedBanners = readLocalStorageJSON<Record<string, number>>(DISMISSED_KEY) ?? {};
       const dismissedTimestamp = dismissedBanners[props.bannerId];
 
       if (dismissedTimestamp) {
@@ -81,10 +81,9 @@ onMounted(() => {
 
 const dismissBanner = () => {
   showBanner.value = false;
-  const dismissedBannersRaw = localStorage.getItem(DISMISSED_KEY);
-  const dismissedBanners = dismissedBannersRaw ? JSON.parse(dismissedBannersRaw) : {};
+  const dismissedBanners = readLocalStorageJSON<Record<string, number>>(DISMISSED_KEY) ?? {};
   dismissedBanners[props.bannerId] = now().getTime();
-  localStorage.setItem(DISMISSED_KEY, JSON.stringify(dismissedBanners));
+  writeLocalStorageJSON(DISMISSED_KEY, dismissedBanners);
 };
 </script>
 

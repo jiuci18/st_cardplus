@@ -10,14 +10,14 @@
             />
             编辑:
             <span class="content-panel-text-highlight">
-              {{ selectedEntry ? selectedEntry.comment || '新条目' : '未选择条目' }}
+              {{ editorTitle }}
             </span>
           </h2>
           <div class="worldbook-editor-header-actions">
             <span class="worldbook-import-notice">导入须知：请使用从酒馆导出的世界书进行导入</span>
             <WorldBookActions
               context="editor"
-              :has-selection="!!selectedEntry"
+              :has-selection="activeView === 'entry' && !!selectedEntry"
               :save-status="saveStatus"
               :auto-save-mode="autoSaveMode"
               @toggle-mode="toggleAutoSaveMode"
@@ -27,7 +27,14 @@
             />
           </div>
         </div>
+        <WorldBookBatchSettings
+          v-if="activeView === 'batch'"
+          :book="activeBook"
+          :all-keywords="allKeywords"
+          @apply="applyBatchSettings"
+        />
         <WorldBookEditor
+          v-else
           :entry="selectedEntry"
           v-model="editableEntry"
           :all-keywords="allKeywords"
@@ -84,11 +91,13 @@
               @create-book="handleCreateBook"
               @rename-book="handleRenameBook"
               @delete-book="handleDeleteBook"
+              @select-batch-settings="handleSelectBatchSettings"
               @select-entry="handleSelectEntry"
               @add-entry="addNewEntry"
               @duplicate-entry="handleDuplicateEntry"
               @delete-entry="handleDeleteEntryFromList"
               :selected-entry="selectedEntry"
+              :is-batch-settings-active="activeView === 'batch'"
               @copy-book="copyWorldBookToClipboard"
               @export-json="exportToJson"
               @import-book-file="handleImportBookFile"
@@ -119,11 +128,13 @@
             @create-book="handleCreateBook"
             @rename-book="handleRenameBook"
             @delete-book="handleDeleteBook"
+            @select-batch-settings="handleSelectBatchSettings"
             @select-entry="handleSelectEntry"
             @add-entry="addNewEntry"
             @duplicate-entry="handleDuplicateEntry"
             @delete-entry="handleDeleteEntryFromList"
             :selected-entry="selectedEntry"
+            :is-batch-settings-active="activeView === 'batch'"
             @copy-book="copyWorldBookToClipboard"
             @export-json="exportToJson"
             @import-book-file="handleImportBookFile"
@@ -145,14 +156,14 @@
                 />
                 编辑:
                 <span class="content-panel-text-highlight">
-                  {{ selectedEntry ? selectedEntry.comment || '新条目' : '未选择条目' }}
+                  {{ editorTitle }}
                 </span>
               </h2>
               <div class="worldbook-editor-header-actions">
                 <span class="worldbook-import-notice">导入须知：请使用从酒馆导出的世界书进行导入</span>
                 <WorldBookActions
                   context="editor"
-                  :has-selection="!!selectedEntry"
+                  :has-selection="activeView === 'entry' && !!selectedEntry"
                   :save-status="saveStatus"
                   :auto-save-mode="autoSaveMode"
                   @toggle-mode="toggleAutoSaveMode"
@@ -162,7 +173,14 @@
                 />
               </div>
             </div>
+            <WorldBookBatchSettings
+              v-if="activeView === 'batch'"
+              :book="activeBook"
+              :all-keywords="allKeywords"
+              @apply="applyBatchSettings"
+            />
             <WorldBookEditor
+              v-else
               :entry="selectedEntry"
               v-model="editableEntry"
               :all-keywords="allKeywords"
@@ -195,6 +213,7 @@ import { useWorldBookEntry } from '../composables/worldbook/useWorldBookEntry';
 import type { WorldBookEntry } from '@/types/worldbook';
 import MobileBookmarkDrawer from './ui/common/MobileBookmarkDrawer.vue';
 import WorldBookActions from './worldbook/WorldBookActions.vue';
+import WorldBookBatchSettings from './worldbook/WorldBookBatchSettings.vue';
 import WorldBookEditor from './worldbook/WorldBookEditor.vue';
 import WorldBookList from './worldbook/WorldBookList.vue';
 
@@ -269,6 +288,7 @@ const {
 });
 
 const { isMobile } = useDevice();
+const activeView = ref<'entry' | 'batch'>('batch');
 const mobileDrawerVisible = ref(false);
 const mobilePanelTab = ref('list');
 const mobileBookmarkItems = [
@@ -307,6 +327,11 @@ const currentEntryIndex = computed(() => {
 
 const totalEntries = computed(() => {
   return activeBook.value ? activeBook.value.entries.length : 0;
+});
+
+const editorTitle = computed(() => {
+  if (activeView.value === 'batch') return '批量设置';
+  return selectedEntry.value ? selectedEntry.value.comment || '新条目' : '未选择条目';
 });
 
 const isNextEntryInDifferentBook = computed(() => {
@@ -392,6 +417,7 @@ const closeMobileDrawer = () => {
 };
 
 const handleSelectBook = (bookId: string) => {
+  activeView.value = 'entry';
   selectBook(bookId);
   nextTick(() => {
     if (activeBook.value && activeBook.value.entries.length > 0) {
@@ -406,6 +432,7 @@ const handleSelectBook = (bookId: string) => {
 };
 
 const handleSelectEntry = (bookId: string, entryIndex: number | null) => {
+  activeView.value = 'entry';
   if (entryIndex === null) {
     if (activeBookId.value === bookId) {
       selectEntry(null);
@@ -432,7 +459,33 @@ const handleSelectEntry = (bookId: string, entryIndex: number | null) => {
   }
 };
 
+const handleSelectBatchSettings = (bookId: string) => {
+  if (activeBookId.value !== bookId) {
+    selectBook(bookId);
+  }
+  activeView.value = 'batch';
+  activeTab.value = 'editor';
+  closeMobileDrawer();
+};
+
+const applyBatchSettings = async (entries: WorldBookEntry[]) => {
+  if (!activeBook.value) {
+    ElMessage.error('请先选择一个世界书');
+    return;
+  }
+
+  await updateBookEntries(activeBook.value.id, entries);
+
+  if (selectedEntry.value) {
+    const refreshedEntry = activeBook.value.entries.find((entry) => entry.uid === selectedEntry.value?.uid);
+    if (refreshedEntry) {
+      editableEntry.value = JSON.parse(JSON.stringify(refreshedEntry));
+    }
+  }
+};
+
 const addNewEntry = async (bookId?: string) => {
+  activeView.value = 'entry';
   const targetBookId = bookId || activeBookId.value;
   if (!targetBookId) {
     ElMessage.error('请先选择一个世界书 ');
@@ -449,6 +502,7 @@ const addNewEntry = async (bookId?: string) => {
 };
 
 const handleDuplicateEntry = async (bookId: string, entryIndex: number) => {
+  activeView.value = 'entry';
   if (activeBookId.value !== bookId) {
     selectBook(bookId);
     await nextTick();
@@ -460,6 +514,7 @@ const handleDuplicateEntry = async (bookId: string, entryIndex: number) => {
 };
 
 const handleDeleteEntryFromList = (bookId: string, entryIndex: number) => {
+  activeView.value = 'entry';
   if (activeBookId.value !== bookId) {
     selectBook(bookId);
     nextTick(() => {

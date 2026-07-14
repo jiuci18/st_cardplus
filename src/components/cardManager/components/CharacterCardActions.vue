@@ -10,7 +10,7 @@
       :offset="8"
       :hide-after="0"
     >
-      <BrowserFilePicker accept=".json" @select-first="handleFileUpload">
+      <BrowserFilePicker accept=".json" @select-first="file => emit('import-file', file)">
         <button class="btn-adv btn-primary-adv character-card-action-button-text">
           <Icon
             icon="ph:upload-duotone"
@@ -200,9 +200,6 @@ const emit = defineEmits<{
   (e: 'toggle-mode'): void;
 }>();
 
-const handleFileUpload = (file: File) => {
-  emit('import-file', file);
-};
 
 const getModeIcon = () => {
   switch (props.autoSaveMode) {

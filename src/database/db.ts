@@ -2,13 +2,24 @@ import Dexie, { type Table } from 'dexie';
 import type { WorldBook, WorldBookEntry } from '@/types/worldbook';
 import type { CharacterCardV3 } from '@/types/character/character-card-v3';
 import type { OpenAIChatCompletionPreset } from '../types/openai-preset';
+import type { BarkeepResourceLink } from '@/types/barkeep';
+import { trackIndexedDbEdit } from '@/utils/editSessionTracker';
+import type {
+  Project,
+  EnhancedLandmark,
+  EnhancedForce,
+  EnhancedRegion,
+} from '@/types/worldeditor/world-editor';
 
 // 定义存储在 IndexedDB 中的 WorldBookEntry 结构，增加了 bookId 作为外键
 export interface StoredWorldBookEntry extends WorldBookEntry {
-  id?: number; // 自增主键
+  id?: number;
   bookId: string;
 }
-export interface StoredWorldBook extends Omit<WorldBook, 'entries'> {}
+export interface StoredWorldBook extends Omit<WorldBook, 'entries'> {
+  /** Optional stable Barkeep UUID/path mapping for this world book. */
+  barkeep?: BarkeepResourceLink;
+}
 export interface StoredCharacterCard {
   id: string; // UUID 主键
   name: string; // 角色名称
@@ -20,15 +31,39 @@ export interface StoredCharacterCard {
   order: number; // 排序序号
   tags?: string[]; // 标签
   metadata?: Record<string, any>; // 额外元数据
+  /** Optional stable Barkeep UUID/path mapping for this character card. */
+  barkeep?: BarkeepResourceLink;
 }
 
 export interface StoredPresetFile {
-  id: string; // UUID 主键
-  name: string; // 预设名称
-  order: number; // 排序序号
-  createdAt: string; // 创建时间 ISO 8601
-  updatedAt: string; // 更新时间 ISO 8601
+  id: string;
+  name: string;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
   data: Omit<OpenAIChatCompletionPreset, 'prompts'> & { prompts: Record<string, any>[] };
+  /** Optional stable Barkeep UUID/path mapping for this preset file. */
+  barkeep?: BarkeepResourceLink;
+}
+
+/** Ordered project record stored by the world editor. */
+export interface StoredWorldProject extends Project {
+  order: number;
+}
+
+/** Ordered landmark record stored by the world editor. */
+export interface StoredWorldLandmark extends EnhancedLandmark {
+  order: number;
+}
+
+/** Ordered force record stored by the world editor. */
+export interface StoredWorldForce extends EnhancedForce {
+  order: number;
+}
+
+/** Ordered region record stored by the world editor. */
+export interface StoredWorldRegion extends EnhancedRegion {
+  order: number;
 }
 
 /**
@@ -36,6 +71,8 @@ export interface StoredPresetFile {
  * 包含世界书、角色卡等所有应用数据
  */
 class AppDatabase extends Dexie {
+  private editTrackingHooksRegistered = false;
+
   /**
    * `books` 表，用于存储世界书的元数据
    * 主键是 `id` (string, UUID)
@@ -65,6 +102,18 @@ class AppDatabase extends Dexie {
    */
   presets!: Table<StoredPresetFile, string>;
 
+  /** World editor project records. */
+  worldProjects!: Table<StoredWorldProject, string>;
+
+  /** World editor landmark records. */
+  worldLandmarks!: Table<StoredWorldLandmark, string>;
+
+  /** World editor force records. */
+  worldForces!: Table<StoredWorldForce, string>;
+
+  /** World editor region records. */
+  worldRegions!: Table<StoredWorldRegion, string>;
+
   constructor() {
     super('appDatabase');
     this.version(1).stores({
@@ -82,6 +131,52 @@ class AppDatabase extends Dexie {
       characterCards: '&id, name, order, updatedAt',
       presets: '&id, name, order, updatedAt',
     });
+    this.version(4).stores({
+      books: '&id, name, order, updatedAt',
+      entries: '++id, bookId, uid',
+      characterCards: '&id, name, order, updatedAt',
+      presets: '&id, name, order, updatedAt',
+      worldProjects: '&id, order, updatedAt',
+      worldLandmarks: '&id, projectId, regionId, order, updatedAt',
+      worldForces: '&id, projectId, order, updatedAt',
+      worldRegions: '&id, projectId, order, updatedAt',
+    });
+    this.version(5).stores({
+      books: '&id, name, order, updatedAt',
+      entries: '++id, bookId, uid',
+      characterCards: '&id, name, order, updatedAt',
+      presets: '&id, name, order, updatedAt',
+      worldProjects: '&id, order, updatedAt',
+      worldLandmarks: '&id, projectId, regionId, order, updatedAt',
+      worldForces: '&id, projectId, order, updatedAt',
+      worldRegions: '&id, projectId, order, updatedAt',
+    });
+    this.on('ready', () => {
+      this.registerEditTrackingHooks();
+    });
+  }
+
+  private registerEditTrackingHooks(): void {
+    if (this.editTrackingHooksRegistered) return;
+    this.editTrackingHooksRegistered = true;
+
+    for (const table of this.tables) {
+      const tableName = table.name;
+      table.hook('creating', (primaryKey) => {
+        trackIndexedDbEdit({ table: tableName, operation: 'create', primaryKey });
+      });
+      table.hook('updating', (modifications, primaryKey) => {
+        trackIndexedDbEdit({
+          table: tableName,
+          operation: 'update',
+          primaryKey,
+          fields: Object.keys(modifications),
+        });
+      });
+      table.hook('deleting', (primaryKey) => {
+        trackIndexedDbEdit({ table: tableName, operation: 'delete', primaryKey });
+      });
+    }
   }
 }
 

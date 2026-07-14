@@ -1,4 +1,4 @@
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue';
 import type {
   Project,
   EnhancedLandmark,
@@ -8,12 +8,20 @@ import type {
 } from '@/types/worldeditor/world-editor';
 import { LandmarkType, ImportanceLevel, ForceType, PowerLevel } from '@/types/worldeditor/world-editor';
 import { v4 as uuidv4 } from 'uuid';
-import { saveToLocalStorage, loadFromLocalStorage } from '@/utils/localStorageUtils';
+import { getSetting, localStorageStore } from '@/utils/localStorageUtils';
+import {
+  worldEditorService,
+  type WorldEditorSnapshot,
+} from '@/database/appdb/worldEditorService';
 import { nowIso } from '@/utils/datetime';
 import { pickRandomRegionColor } from '@/utils/worldeditor/regionColors';
 import { normalizeLandmarkHierarchy, removeLandmarkFromHierarchy } from '@/utils/worldeditor/landmarkHierarchy';
 import { removeLandmarkLinksForIds } from '@/composables/worldeditor/graph/worldGraphLinks';
 import { saveFile } from '@/utils/system/fileSave';
+import {
+  LegacyWorldEditorDataError,
+  parseLegacyWorldEditorSnapshot,
+} from '@/utils/worldeditor/legacyWorldEditorData';
 import { ElMessage } from 'element-plus';
 
 const WORLD_EDITOR_DATA_KEY = 'world-editor-data';
@@ -36,19 +44,78 @@ export function useWorldEditor() {
   const selectedItem = ref<Project | EnhancedLandmark | EnhancedForce | EnhancedRegion | ProjectIntegration | null>(
     null
   );
+  const isLoading = ref(true);
+  const loadError = ref<string | null>(null);
+  const canRecoverLegacyData = ref(false);
+  const isRecoveringLegacyData = ref(false);
+  let isHydrated = false;
+  let saveTimer: ReturnType<typeof setTimeout> | null = null;
+  let pendingSnapshot: WorldEditorSnapshot | null = null;
+  let saveInFlight: Promise<void> | null = null;
+
+  const createSnapshot = (): WorldEditorSnapshot =>
+    JSON.parse(
+      JSON.stringify({
+        projects: projects.value,
+        landmarks: landmarks.value,
+        forces: forces.value,
+        regions: regions.value,
+      })
+    ) as WorldEditorSnapshot;
+
+  const drainSaveQueue = (): Promise<void> => {
+    if (saveInFlight) return saveInFlight;
+
+    const task = (async () => {
+      while (pendingSnapshot) {
+        const snapshot = pendingSnapshot;
+        pendingSnapshot = null;
+        try {
+          await worldEditorService.saveSnapshot(snapshot);
+        } catch (error) {
+          console.error('Failed to save world editor data:', error);
+          ElMessage.error('世界编辑器数据保存失败，后续修改时将重试');
+          break;
+        }
+      }
+    })();
+
+    saveInFlight = task.finally(() => {
+      saveInFlight = null;
+      if (pendingSnapshot) void drainSaveQueue();
+    });
+    return saveInFlight;
+  };
+
+  const scheduleSave = () => {
+    if (!isHydrated) return;
+    if (saveTimer) clearTimeout(saveTimer);
+    const delay = Math.max(0, getSetting('autoSaveDebounce') * 1000);
+    saveTimer = setTimeout(() => {
+      saveTimer = null;
+      pendingSnapshot = createSnapshot();
+      void drainSaveQueue();
+    }, delay);
+  };
+
+  const flushSave = async () => {
+    if (!isHydrated) return;
+    if (saveTimer) {
+      clearTimeout(saveTimer);
+      saveTimer = null;
+      pendingSnapshot = createSnapshot();
+    }
+    if (pendingSnapshot) {
+      await drainSaveQueue();
+    } else if (saveInFlight) {
+      await saveInFlight;
+    }
+  };
 
   // Data Persistence
   watch(
     [projects, landmarks, forces, regions],
-    ([newProjects, newLandmarks, newForces, newRegions]) => {
-      const dataToSave = {
-        projects: newProjects,
-        landmarks: newLandmarks,
-        forces: newForces,
-        regions: newRegions,
-      };
-      saveToLocalStorage(dataToSave, WORLD_EDITOR_DATA_KEY);
-    },
+    scheduleSave,
     { deep: true }
   );
 
@@ -374,21 +441,81 @@ export function useWorldEditor() {
     input.click();
   };
 
-  // Data Loading and Mock Data Generation
-  onMounted(() => {
-    const savedData = loadFromLocalStorage(WORLD_EDITOR_DATA_KEY);
+  const loadWorldEditorData = async () => {
+    isLoading.value = true;
+    loadError.value = null;
+    canRecoverLegacyData.value = false;
+    isHydrated = false;
 
-    if (savedData && savedData.projects && savedData.projects.length > 0) {
-      projects.value = savedData.projects;
-      landmarks.value = savedData.landmarks || [];
-      forces.value = savedData.forces || [];
-      regions.value = savedData.regions || [];
-    }
-    normalizeLandmarkHierarchy(landmarks.value);
+    try {
+      const legacyRaw = localStorageStore.get(WORLD_EDITOR_DATA_KEY);
+      const hasIndexedData = await worldEditorService.hasData();
+      let snapshot: WorldEditorSnapshot;
 
-    if (!selectedItem.value) {
+      if (!hasIndexedData && legacyRaw !== null) {
+        snapshot = parseLegacyWorldEditorSnapshot(legacyRaw);
+        normalizeLandmarkHierarchy(snapshot.landmarks);
+        await worldEditorService.saveSnapshot(snapshot);
+        localStorageStore.remove(WORLD_EDITOR_DATA_KEY);
+      } else {
+        snapshot = await worldEditorService.loadSnapshot();
+        if (legacyRaw !== null) localStorageStore.remove(WORLD_EDITOR_DATA_KEY);
+      }
+
+      projects.value = snapshot.projects;
+      landmarks.value = snapshot.landmarks;
+      forces.value = snapshot.forces;
+      regions.value = snapshot.regions;
+      normalizeLandmarkHierarchy(landmarks.value);
       selectedItem.value = landmarks.value[0] || forces.value[0] || regions.value[0] || null;
+      isHydrated = true;
+    } catch (error) {
+      console.error('Failed to load world editor data:', error);
+      canRecoverLegacyData.value = error instanceof LegacyWorldEditorDataError;
+      loadError.value = error instanceof Error ? error.message : '世界编辑器数据加载失败';
+    } finally {
+      isLoading.value = false;
     }
+  };
+
+  const downloadLegacyDataAndReset = async () => {
+    const raw = localStorageStore.get(WORLD_EDITOR_DATA_KEY);
+    if (raw === null || isRecoveringLegacyData.value) return;
+
+    isRecoveringLegacyData.value = true;
+    try {
+      const result = await saveFile({
+        data: new TextEncoder().encode(raw),
+        fileName: `world-editor-legacy-recovery-${nowIso().slice(0, 10)}.json`,
+        mimeType: 'application/json;charset=utf-8',
+        quickSave: false,
+      });
+      if (result.canceled) return;
+
+      await worldEditorService.clearDatabase();
+      localStorageStore.remove(WORLD_EDITOR_DATA_KEY);
+      ElMessage.success('旧数据已下载，世界编辑器工作区已重建');
+      await loadWorldEditorData();
+    } catch (error) {
+      console.error('Failed to recover legacy world editor data:', error);
+      ElMessage.error('下载或重建工作区失败，旧数据未被删除');
+    } finally {
+      isRecoveringLegacyData.value = false;
+    }
+  };
+
+  const handlePageHide = () => {
+    void flushSave();
+  };
+
+  onMounted(() => {
+    window.addEventListener('pagehide', handlePageHide);
+    void loadWorldEditorData();
+  });
+
+  onBeforeUnmount(() => {
+    window.removeEventListener('pagehide', handlePageHide);
+    void flushSave();
   });
 
   return {
@@ -397,6 +524,10 @@ export function useWorldEditor() {
     forces,
     regions,
     selectedItem,
+    isLoading,
+    loadError,
+    canRecoverLegacyData,
+    isRecoveringLegacyData,
     activeProjectId,
     allTags,
     allRegions,
@@ -408,5 +539,7 @@ export function useWorldEditor() {
     handleProjectSubmit,
     exportProject,
     importProjectOverwrite,
+    retryStorageLoad: loadWorldEditorData,
+    downloadLegacyDataAndReset,
   };
 }

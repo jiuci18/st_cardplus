@@ -21,7 +21,7 @@
       <div class="project-editor-actions">
         <el-button
           type="primary"
-          @click="handleExportProject"
+          @click="props.onExportProject?.(props.project.id)"
         >
           导出当前项目
         </el-button>
@@ -45,9 +45,6 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const handleExportProject = () => {
-  props.onExportProject?.(props.project.id);
-};
 
 const handleImportOverwrite = async () => {
   try {

@@ -9,7 +9,7 @@
     </el-image>
 
     <div class="image-actions">
-      <el-button type="primary" class="upload-button" @click="openUploadDialog">
+      <el-button type="primary" class="upload-button" @click="uploadDialogVisible = true">
         🖼️ 选择图片
       </el-button>
 
@@ -126,10 +126,6 @@ const handleImageChange = (
   } else {
     console.warn("ImagePanel: No raw file found in uploadFile");
   }
-};
-
-const openUploadDialog = () => {
-  uploadDialogVisible.value = true;
 };
 
 const handleUploadInDialog = () => {

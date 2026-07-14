@@ -8,7 +8,7 @@
       <template #extra>
         <el-button
           type="primary"
-          @click="goHome"
+          @click="router.push('/')"
         >
           返回首页
         </el-button>
@@ -23,9 +23,6 @@ import { ElResult, ElButton } from 'element-plus';
 
 const router = useRouter();
 
-const goHome = () => {
-  router.push('/');
-};
 </script>
 
 <style scoped>

@@ -1,33 +1,13 @@
 <template>
   <div class="region-select">
-    <span
-      v-if="props.showSelectedColor"
-      class="region-select-dot"
-      :class="{ 'is-empty': !selectedColor }"
-      :style="{ backgroundColor: selectedColor || 'transparent' }"
-    ></span>
-    <el-select
-      class="region-select-input"
-      :model-value="props.modelValue"
-      :clearable="props.clearable"
-      :filterable="props.filterable"
-      :allow-create="props.allowCreate"
-      :default-first-option="props.allowCreate"
-      :reserve-keyword="false"
-      :placeholder="props.placeholder"
-      @change="handleChange"
-    >
-      <el-option
-        v-for="region in props.regions"
-        :key="region.id"
-        :label="region.name"
-        :value="region.id"
-      >
+    <span v-if="props.showSelectedColor" class="region-select-dot" :class="{ 'is-empty': !selectedColor }"
+      :style="{ backgroundColor: selectedColor || 'transparent' }"></span>
+    <el-select class="region-select-input" :model-value="props.modelValue" :clearable="props.clearable"
+      :filterable="props.filterable" :allow-create="props.allowCreate" :default-first-option="props.allowCreate"
+      :reserve-keyword="false" :placeholder="props.placeholder" @change="handleChange">
+      <el-option v-for="region in props.regions" :key="region.id" :label="region.name" :value="region.id">
         <div class="region-option">
-          <span
-            class="region-option-dot"
-            :style="{ backgroundColor: region.color }"
-          ></span>
+          <span class="region-option-dot" :style="{ backgroundColor: region.color }"></span>
           <span>{{ region.name }}</span>
         </div>
       </el-option>

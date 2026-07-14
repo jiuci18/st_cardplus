@@ -1,27 +1,15 @@
 <template>
-  <div
-    class="graph-inspector-popup"
-    :style="inspectorStyle"
-  >
-    <div
-      class="graph-inspector-header"
-      @mousedown="startDrag"
-    >
+  <div class="graph-inspector-popup" :style="inspectorStyle">
+    <div class="graph-inspector-header" @mousedown="startDrag">
       <div class="graph-inspector-title">节点信息</div>
-      <button
-        @click="onClose"
-        class="close-button"
-      >
+      <button @click="emit('close')" class="close-button">
         <Icon icon="ph:x" />
       </button>
     </div>
     <div class="graph-inspector-body">
       <div class="inspector-field">
         <label class="inspector-label">名称</label>
-        <el-input
-          v-model="selectedLandmark.name"
-          placeholder="节点名称"
-        />
+        <el-input v-model="selectedLandmark.name" placeholder="节点名称" />
       </div>
       <div class="inspector-field">
         <label class="inspector-label">类型</label>
@@ -65,10 +53,7 @@
           :show-selected-color="true"
         />
       </div>
-      <div
-        v-if="selectedForces.length > 0"
-        class="inspector-field"
-      >
+      <div v-if="selectedForces.length > 0" class="inspector-field">
         <label class="inspector-label">势力列表</label>
         <div class="inspector-list">
           <div
@@ -77,20 +62,14 @@
             class="inspector-list-item"
           >
             <span>{{ item.name }}</span>
-            <span
-              v-if="item.role"
-              class="force-role"
-            >
+            <span v-if="item.role" class="force-role">
               {{ item.role }}
             </span>
           </div>
         </div>
       </div>
       <div class="inspector-actions">
-        <el-button
-          type="primary"
-          @click="onEdit"
-        >
+        <el-button type="primary" @click="emit('edit', props.selectedLandmark)">
           打开详细编辑
         </el-button>
       </div>
@@ -99,14 +78,23 @@
 </template>
 
 <script setup lang="ts">
-import type { EnhancedLandmark, EnhancedRegion } from '@/types/worldeditor/world-editor';
-import { LandmarkType } from '@/types/worldeditor/world-editor';
-import type { LandmarkNodeForce } from '@/types/worldeditor/worldGraphNodes';
-import { getLandmarkTypeLabel } from '@/utils/worldeditor/typeMeta';
-import { Icon } from '@iconify/vue';
-import { ElButton, ElInput, ElInputNumber, ElOption, ElSelect } from 'element-plus';
-import type { CSSProperties } from 'vue';
-import RegionSelect from '../RegionSelect.vue';
+import type {
+  EnhancedLandmark,
+  EnhancedRegion,
+} from "@/types/worldeditor/world-editor";
+import { LandmarkType } from "@/types/worldeditor/world-editor";
+import type { LandmarkNodeForce } from "@/types/worldeditor/worldGraphNodes";
+import { getLandmarkTypeLabel } from "@/utils/worldeditor/typeMeta";
+import { Icon } from "@iconify/vue";
+import {
+  ElButton,
+  ElInput,
+  ElInputNumber,
+  ElOption,
+  ElSelect,
+} from "element-plus";
+import type { CSSProperties } from "vue";
+import RegionSelect from "../RegionSelect.vue";
 
 const props = defineProps<{
   selectedLandmark: EnhancedLandmark;
@@ -117,15 +105,13 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'close'): void;
-  (e: 'edit', item: EnhancedLandmark): void;
+  (e: "close"): void;
+  (e: "edit", item: EnhancedLandmark): void;
 }>();
 
 const landmarkTypes = Object.values(LandmarkType);
-const localizeLandmarkType = (type: string): string => getLandmarkTypeLabel(type);
-
-const onClose = () => emit('close');
-const onEdit = () => emit('edit', props.selectedLandmark);
+const localizeLandmarkType = (type: string): string =>
+  getLandmarkTypeLabel(type);
 </script>
 
 <style scoped>

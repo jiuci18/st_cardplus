@@ -1,3 +1,5 @@
+import type { BarkeepResourceLink } from '@/types/barkeep';
+
 export interface WorldBookEntry {
   id?: number; // Database primary key
   uid?: number;
@@ -53,6 +55,7 @@ export interface WorldBook {
   description?: string;
   sourceCharacterId?: string; // 来源角色卡ID
   sourceCharacterName?: string; // 来源角色名称
+  barkeep?: BarkeepResourceLink; // Barkeep 稳定资源映射
   // 为将来的功能预留
   metadata?: Record<string, any>;
 }
