@@ -67,9 +67,31 @@ export interface BarkeepResourceCounts {
   chats: number;
 }
 
-/** Minimal validated status response used as the Barkeep ping result. */
+/** A file exposed by Barkeep's remote resource directory. */
+export interface BarkeepRemoteAsset {
+  name: string;
+  file: string;
+  extension: string;
+  size: number;
+  updatedAt: string;
+}
+
+/** A remote preset together with its SillyTavern preset category. */
+export interface BarkeepRemotePreset extends BarkeepRemoteAsset {
+  category: string;
+}
+
+/** Resources relevant to CardPlus returned by Barkeep's status endpoint. */
+export interface BarkeepRemoteDirectory {
+  characters: BarkeepRemoteAsset[];
+  worlds: BarkeepRemoteAsset[];
+  presets: BarkeepRemotePreset[];
+}
+
+/** Validated status and remote directory returned by a Barkeep ping. */
 export interface BarkeepStatus {
   user: string;
   mode: "single-user" | "multi-user";
   counts: BarkeepResourceCounts;
+  resources: BarkeepRemoteDirectory;
 }

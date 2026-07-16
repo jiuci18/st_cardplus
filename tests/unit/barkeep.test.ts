@@ -16,6 +16,36 @@ const statusBody = {
     groupChats: 1,
     chats: 6,
   },
+  characters: [
+    {
+      name: 'Alice',
+      file: 'Alice.png',
+      extension: '.png',
+      size: 1024,
+      updatedAt: '2026-07-16T10:00:00.000Z',
+    },
+  ],
+  worlds: [
+    {
+      name: 'Academy',
+      file: 'Academy.json',
+      extension: '.json',
+      size: 2048,
+      updatedAt: '2026-07-16T11:00:00.000Z',
+    },
+  ],
+  presets: {
+    all: [
+      {
+        name: 'Creative',
+        file: 'Creative.json',
+        extension: '.json',
+        size: 512,
+        updatedAt: '2026-07-16T12:00:00.000Z',
+        category: 'openai',
+      },
+    ],
+  },
 };
 
 afterEach(() => {
@@ -49,7 +79,16 @@ test('logs_in_and_pings_standalone_barkeep', async () => {
   const session = await loginToBarkeep(config);
   const status = await pingBarkeep(config, session);
 
-  assert.deepEqual(status, statusBody);
+  assert.deepEqual(status, {
+    user: statusBody.user,
+    mode: statusBody.mode,
+    counts: statusBody.counts,
+    resources: {
+      characters: statusBody.characters,
+      worlds: statusBody.worlds,
+      presets: statusBody.presets.all,
+    },
+  });
   assert.deepEqual(requests, [
     {
       url: 'http://127.0.0.1:10024/v1/login',

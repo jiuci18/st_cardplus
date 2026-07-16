@@ -18,7 +18,7 @@
         :tree-data="remoteResourceTree"
         :tree-props="resourceTreeProps"
         :expanded-keys="remoteResourceExpandedKeys"
-        :hint="status ? '等待同步功能加载远端条目。' : '连接 Barkeep 后查看远端资源。'"
+        :hint="status ? undefined : '连接 Barkeep 后查看远端资源。'"
         @node-click="handleRemoteResourceNodeClick"
       />
     </main>

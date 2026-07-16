@@ -5,7 +5,11 @@ import { characterCardService } from "@/database/appdb/characterCardService";
 import { presetService } from "@/database/appdb/presetService";
 import { worldBookService } from "@/database/appdb/worldBookService";
 import { worldEditorService } from "@/database/appdb/worldEditorService";
-import type { BarkeepStatus } from "@/types/barkeep";
+import type {
+  BarkeepRemoteAsset,
+  BarkeepRemotePreset,
+  BarkeepStatus,
+} from "@/types/barkeep";
 
 export interface LocalWelcomeStats {
   characters: number;
@@ -100,6 +104,66 @@ function createLocalTree(
   ];
 }
 
+function remoteAssetNode(
+  kind: "character" | "world",
+  asset: BarkeepRemoteAsset,
+  icon: string,
+): ResourceTreeNode {
+  return {
+    id: `remote-${kind}:${asset.file}`,
+    label: asset.name || asset.file,
+    icon,
+    nodeType: "resource",
+    count: 0,
+  };
+}
+
+function remotePresetNode(asset: BarkeepRemotePreset): ResourceTreeNode {
+  return {
+    id: `remote-preset:${asset.category}:${asset.file}`,
+    label: asset.name || asset.file,
+    icon: "material-symbols:tune",
+    nodeType: "resource",
+    count: 0,
+  };
+}
+
+function createRemoteTree(status: BarkeepStatus | null): ResourceTreeNode[] {
+  const resources = status?.resources;
+  return [
+    {
+      id: "remote-characters",
+      label: "角色",
+      icon: "material-symbols:person-outline",
+      nodeType: "group",
+      count: resources?.characters.length ?? 0,
+      children:
+        resources?.characters.map((asset) =>
+          remoteAssetNode("character", asset, "material-symbols:person-outline"),
+        ) ?? [],
+    },
+    {
+      id: "remote-worlds",
+      label: "世界书",
+      icon: "material-symbols:book-outline",
+      nodeType: "group",
+      count: resources?.worlds.length ?? 0,
+      children:
+        resources?.worlds.map((asset) =>
+          remoteAssetNode("world", asset, "material-symbols:article-outline"),
+        ) ?? [],
+    },
+    {
+      id: "remote-presets",
+      label: "预设",
+      icon: "material-symbols:settings-input-component-outline",
+      nodeType: "group",
+      count: resources?.presets.length ?? 0,
+      children: resources?.presets.map(remotePresetNode) ?? [],
+    },
+  ];
+}
+
 function toggleNode(context?: TreeNodeContext): void {
   const node = context?.node;
   if (node?.expanded) {
@@ -142,11 +206,9 @@ export function useWelcomeResources(
     { id: "presets", label: "预设", icon: "material-symbols:settings-input-component-outline", route: "/presetmanager", nodeType: "group", count: 0, children: [] },
   ]);
 
-  const remoteResourceTree = computed<ResourceTreeNode[]>(() => [
-    { id: "remote-characters", label: "角色", icon: "material-symbols:person-outline", nodeType: "group", count: status.value?.counts.characters ?? 0, children: [] },
-    { id: "remote-worlds", label: "世界书", icon: "material-symbols:book-outline", nodeType: "group", count: status.value?.counts.worlds ?? 0, children: [] },
-    { id: "remote-presets", label: "预设", icon: "material-symbols:settings-input-component-outline", nodeType: "group", count: status.value?.counts.presets ?? 0, children: [] },
-  ]);
+  const remoteResourceTree = computed<ResourceTreeNode[]>(() =>
+    createRemoteTree(status.value),
+  );
 
   const loadLocalStats = async (): Promise<void> => {
     try {
@@ -189,4 +251,3 @@ export function useWelcomeResources(
     handleRemoteResourceNodeClick: (_data, context) => toggleNode(context),
   };
 }
-
