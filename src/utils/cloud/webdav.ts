@@ -28,7 +28,6 @@ function buildTauriWebDAVArgs(
     username: options.username || "",
     password: options.password || "",
     remotePath,
-    remote_path: remotePath,
     data,
   };
 }

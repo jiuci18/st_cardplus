@@ -66,13 +66,9 @@ export async function saveFile(
       used_dialog: boolean;
     }>("save_binary_file", {
       base64Data,
-      base64_data: base64Data,
       fileName: options.fileName,
-      file_name: options.fileName,
       defaultDir,
-      default_dir: defaultDir,
       quickSave: options.quickSave ?? true,
-      quick_save: options.quickSave ?? true,
     });
 
     const savedDir = String(result?.saved_dir || "").trim();

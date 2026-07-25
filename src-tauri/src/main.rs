@@ -1,10 +1,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod handler;
+use st_cardplus::handler;
 
 fn main() {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    let state = handler::AppState::new().expect("failed to initialize shared HTTP clients");
+
     tauri::Builder::default()
+        .manage(state)
         .invoke_handler(tauri::generate_handler![
             handler::image_service::upload_image_to_hosting,
             handler::http_service::fetch_http,

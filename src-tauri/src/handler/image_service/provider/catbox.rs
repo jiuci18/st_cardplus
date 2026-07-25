@@ -1,8 +1,11 @@
-use crate::handler::image_service::provider::format_reqwest_error;
-use crate::handler::image_service::{err, AppResult, UploadImageResult};
+//! Catbox multipart upload implementation.
+
+use crate::handler::image_service::UploadImageResult;
+use crate::handler::support::{AppError, AppResult, format_reqwest_error};
 use log::warn;
 use std::time::Duration;
 
+/// Uploads image bytes to Catbox using the configured retry sequence.
 pub async fn upload_to_catbox(
     client: &reqwest::Client,
     bytes: &[u8],
@@ -26,7 +29,7 @@ pub async fn upload_to_catbox(
             let file_part = reqwest::multipart::Part::bytes(bytes.to_vec())
                 .file_name(upload_name.to_string())
                 .mime_str(upload_mime)
-                .map_err(|error| err!("无效的 MIME 类型: {error}"))?;
+                .map_err(|error| AppError::invalid(format!("无效的 MIME 类型: {error}")))?;
 
             let form = reqwest::multipart::Form::new()
                 .text("reqtype", "fileupload")
@@ -58,28 +61,31 @@ pub async fn upload_to_catbox(
     let response = match response {
         Some(resp) => resp,
         None => {
-            return Err(err!(
-                "{}",
-                last_error_message.unwrap_or_else(|| "请求 Catbox 失败：未知网络错误".to_string())
+            return Err(AppError::network(
+                last_error_message.unwrap_or_else(|| "请求 Catbox 失败：未知网络错误".to_string()),
             ));
         }
     };
 
     let status = response.status();
-    let body = response
-        .text()
-        .await
-        .map_err(|error| err!("读取 Catbox 响应失败: {}", format_reqwest_error(&error)))?;
+    let body = response.text().await.map_err(|error| {
+        AppError::network(format!(
+            "读取 Catbox 响应失败: {}",
+            format_reqwest_error(&error)
+        ))
+    })?;
     let result = body.trim().to_string();
 
     if !status.is_success() {
-        return Err(err!("Catbox 返回失败状态 {status}: {result}"));
+        return Err(AppError::remote(format!(
+            "Catbox 返回失败状态 {status}: {result}"
+        )));
     }
     if result.is_empty() {
-        return Err(err!("Catbox 返回为空"));
+        return Err(AppError::remote("Catbox 返回为空"));
     }
     if result.starts_with("ERROR") {
-        return Err(err!("{result}"));
+        return Err(AppError::remote(result));
     }
 
     Ok(UploadImageResult {

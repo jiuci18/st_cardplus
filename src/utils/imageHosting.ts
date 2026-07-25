@@ -118,14 +118,10 @@ export const uploadImageToHostingViaTauri = async (
     "upload_image_to_hosting",
     {
       base64Data,
-      base64_data: base64Data,
       fileName: file.name || "avatar.png",
-      file_name: file.name || "avatar.png",
       mimeType: file.type || "image/png",
-      mime_type: file.type || "image/png",
       provider,
       imgbbApiKey: imgbbApiKey || "",
-      imgbb_api_key: imgbbApiKey || "",
     },
   );
 

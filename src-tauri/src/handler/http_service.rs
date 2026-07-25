@@ -1,70 +1,16 @@
+//! General HTTP transport commands used when browser CORS is unavailable.
+
+use crate::handler::support::{
+    AppError, AppResult, AppState, format_reqwest_error, sanitize_file_name,
+};
 use base64::Engine;
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue, CONTENT_TYPE};
 use reqwest::Method;
+use reqwest::header::{CONTENT_TYPE, HeaderMap, HeaderName, HeaderValue};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::LazyLock;
-use std::time::Duration;
 
-static HTTP_CLIENT: LazyLock<Result<reqwest::Client, String>> = LazyLock::new(build_http_client);
-
-fn format_reqwest_error(error: &reqwest::Error) -> String {
-    let mut details: Vec<String> = Vec::new();
-
-    if error.is_timeout() {
-        details.push("timeout=true".to_string());
-    }
-    if error.is_connect() {
-        details.push("connect=true".to_string());
-    }
-    if error.is_request() {
-        details.push("request=true".to_string());
-    }
-    if error.is_body() {
-        details.push("body=true".to_string());
-    }
-    if error.is_decode() {
-        details.push("decode=true".to_string());
-    }
-    if let Some(status) = error.status() {
-        details.push(format!("status={status}"));
-    }
-    if let Some(url) = error.url() {
-        details.push(format!("url={url}"));
-    }
-
-    format!("{error}; debug={error:?}; {}", details.join(", "))
-}
-
-fn build_http_client() -> Result<reqwest::Client, String> {
-    reqwest::Client::builder()
-    .http1_only()
-    .cookie_store(true)
-    .connect_timeout(Duration::from_secs(10))
-    .timeout(Duration::from_secs(45))
-    .user_agent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) ST-CardPlus/0.1.20")
-    .build()
-    .map_err(|error| format!("创建 HTTP 客户端失败: {error}"))
-}
-
-fn http_client() -> Result<reqwest::Client, String> {
-    match &*HTTP_CLIENT {
-        Ok(client) => Ok(client.clone()),
-        Err(error) => Err(error.clone()),
-    }
-}
-
-fn sanitize_download_file_name(raw: &str) -> String {
-    let mut name = raw
-        .trim()
-        .replace(['\\', '/', ':', '*', '?', '"', '<', '>', '|'], "_");
-    if name.is_empty() {
-        name = "download".to_string();
-    }
-    name
-}
-
-fn infer_mime_from_name(file_name: &str) -> &'static str {
+/// Infers a supported response MIME type from a filename.
+pub fn infer_mime_from_name(file_name: &str) -> &'static str {
     let lower = file_name.to_ascii_lowercase();
     if lower.ends_with(".png") {
         "image/png"
@@ -81,11 +27,12 @@ fn infer_mime_from_name(file_name: &str) -> &'static str {
     }
 }
 
-fn file_name_from_url(url: &reqwest::Url) -> String {
+/// Extracts and sanitizes the final path segment from a URL.
+pub fn file_name_from_url(url: &reqwest::Url) -> String {
     url.path_segments()
         .and_then(|mut segments| segments.next_back())
         .filter(|segment| !segment.trim().is_empty())
-        .map(sanitize_download_file_name)
+        .map(|name| sanitize_file_name(name, "download"))
         .unwrap_or_else(|| "download".to_string())
 }
 
@@ -108,7 +55,20 @@ pub struct HttpRequest {
     body: Option<String>,
 }
 
-fn parse_http_method(raw: Option<&str>) -> Result<Method, String> {
+impl HttpRequest {
+    /// Creates a GET request without custom headers or a body.
+    pub fn get(url: impl Into<String>) -> Self {
+        Self {
+            url: url.into(),
+            method: None,
+            headers: None,
+            body: None,
+        }
+    }
+}
+
+/// Parses the HTTP methods supported by the desktop transport.
+pub fn parse_http_method(raw: Option<&str>) -> AppResult<Method> {
     let value = raw.unwrap_or("GET").trim().to_ascii_uppercase();
     match value.as_str() {
         "GET" => Ok(Method::GET),
@@ -118,41 +78,43 @@ fn parse_http_method(raw: Option<&str>) -> Result<Method, String> {
         "DELETE" => Ok(Method::DELETE),
         "HEAD" => Ok(Method::HEAD),
         "OPTIONS" => Ok(Method::OPTIONS),
-        _ => Err(format!("不支持的 HTTP 方法: {value}")),
+        _ => Err(AppError::invalid(format!("不支持的 HTTP 方法: {value}"))),
     }
 }
 
-fn parse_headers(headers: Option<HashMap<String, String>>) -> Result<HeaderMap, String> {
+/// Parses webview-provided header names and values into reqwest headers.
+pub fn parse_headers(headers: Option<HashMap<String, String>>) -> AppResult<HeaderMap> {
     let mut parsed = HeaderMap::new();
     for (name, value) in headers.unwrap_or_default() {
         let header_name = HeaderName::from_bytes(name.as_bytes())
-            .map_err(|error| format!("HTTP 请求头名称无效 {name}: {error}"))?;
+            .map_err(|error| AppError::invalid(format!("HTTP 请求头名称无效 {name}: {error}")))?;
         let header_value = HeaderValue::from_str(&value)
-            .map_err(|error| format!("HTTP 请求头值无效 {name}: {error}"))?;
+            .map_err(|error| AppError::invalid(format!("HTTP 请求头值无效 {name}: {error}")))?;
         parsed.insert(header_name, header_value);
     }
     Ok(parsed)
 }
 
-async fn request_http_result(request: HttpRequest) -> Result<HttpFetchResult, String> {
+async fn request_http_result(
+    client: &reqwest::Client,
+    request: HttpRequest,
+) -> AppResult<HttpFetchResult> {
     let parsed_url = reqwest::Url::parse(request.url.trim())
-        .map_err(|error| format!("URL 无效: {error}"))?;
+        .map_err(|error| AppError::invalid(format!("URL 无效: {error}")))?;
     match parsed_url.scheme() {
         "http" | "https" => {}
-        _ => return Err("仅支持下载 http/https 链接".to_string()),
+        _ => return Err(AppError::invalid("仅支持下载 http/https 链接")),
     }
 
     let method = parse_http_method(request.method.as_deref())?;
     let headers = parse_headers(request.headers)?;
-    let client = http_client()?;
     let mut builder = client.request(method, parsed_url.clone()).headers(headers);
     if let Some(body) = request.body {
         builder = builder.body(body);
     }
-    let response = builder
-        .send()
-        .await
-        .map_err(|error| format!("HTTP 请求失败: {}", format_reqwest_error(&error)))?;
+    let response = builder.send().await.map_err(|error| {
+        AppError::network(format!("HTTP 请求失败: {}", format_reqwest_error(&error)))
+    })?;
 
     let status = response.status();
     let header_mime = response
@@ -166,10 +128,12 @@ async fn request_http_result(request: HttpRequest) -> Result<HttpFetchResult, St
 
     let file_name = file_name_from_url(&parsed_url);
     let mime_type = header_mime.unwrap_or_else(|| infer_mime_from_name(&file_name).to_string());
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|error| format!("读取 HTTP 响应失败: {}", format_reqwest_error(&error)))?;
+    let bytes = response.bytes().await.map_err(|error| {
+        AppError::network(format!(
+            "读取 HTTP 响应失败: {}",
+            format_reqwest_error(&error)
+        ))
+    })?;
 
     Ok(HttpFetchResult {
         base64_data: base64::engine::general_purpose::STANDARD.encode(bytes),
@@ -180,30 +144,34 @@ async fn request_http_result(request: HttpRequest) -> Result<HttpFetchResult, St
     })
 }
 
-async fn fetch_http_result(url: String) -> Result<HttpFetchResult, String> {
-    let result = request_http_result(HttpRequest {
-        url,
-        method: None,
-        headers: None,
-        body: None,
-    }).await?;
+async fn fetch_http_result(client: &reqwest::Client, url: String) -> AppResult<HttpFetchResult> {
+    let result = request_http_result(client, HttpRequest::get(url)).await?;
     if result.status < 200 || result.status >= 300 {
-        return Err(format!("下载失败（HTTP {}）", result.status));
+        return Err(AppError::remote(format!(
+            "下载失败（HTTP {}）",
+            result.status
+        )));
     }
     if result.base64_data.is_empty() {
-        return Err("下载失败：响应数据为空".to_string());
+        return Err(AppError::remote("下载失败：响应数据为空"));
     }
     Ok(result)
 }
 
 /// Sends an HTTP(S) request from the desktop process and returns response metadata.
 #[tauri::command]
-pub async fn request_http(request: HttpRequest) -> Result<HttpFetchResult, String> {
-    request_http_result(request).await
+pub async fn request_http(
+    state: tauri::State<'_, AppState>,
+    request: HttpRequest,
+) -> AppResult<HttpFetchResult> {
+    request_http_result(&state.clients.transport, request).await
 }
 
 /// Fetches an HTTP(S) resource from the desktop process and returns response metadata.
 #[tauri::command]
-pub async fn fetch_http(url: String) -> Result<HttpFetchResult, String> {
-    fetch_http_result(url).await
+pub async fn fetch_http(
+    state: tauri::State<'_, AppState>,
+    url: String,
+) -> AppResult<HttpFetchResult> {
+    fetch_http_result(&state.clients.transport, url).await
 }
