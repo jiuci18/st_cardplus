@@ -44,4 +44,10 @@ export const toolboxRoutes = [
     component: () => import('@/components/toolsbox/JsonlNovelConverter.vue'),
     meta: { title: 'JSONL 小说转换器' },
   },
+  {
+    path: '/toolbox/image-generator',
+    name: 'imageGenerator',
+    component: () => import('@/components/toolsbox/ImageGenerator.vue'),
+    meta: { title: '图片生成' },
+  },
 ] satisfies RouteRecordRaw[];

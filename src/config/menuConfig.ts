@@ -217,6 +217,16 @@ const toolboxToolItems: MenuItemConfig[] = [
     route: '/toolbox/jsonl-novel-converter',
     description: '将 JSONL 聊天记录整理为可阅读的 Markdown 小说',
   },
+  {
+    id: 'image-generator',
+    type: 'tool',
+    visible: false,
+    order: 108,
+    title: '图片生成',
+    icon: 'material-symbols:add-photo-alternate-outline',
+    route: '/toolbox/image-generator',
+    description: '通过 OpenAI 兼容 ChatAPI 生成图片，支持参考图与批量请求',
+  },
 ];
 
 // 获取所有默认菜单项配置
