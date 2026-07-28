@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import { shallowRef } from 'vue';
-import NewWorldEditor from '../components/WorldEditor.vue';
+import NewWorldEditor from '@/components/WorldEditor.vue';
 
 const activeEditor = shallowRef(NewWorldEditor);
 </script>

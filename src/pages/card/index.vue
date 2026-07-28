@@ -107,9 +107,9 @@ import { ElEmpty } from 'element-plus';
 import { Splitpanes, Pane } from 'splitpanes';
 import 'splitpanes/dist/splitpanes.css';
 import MobileBookmarkDrawer from '@/components/ui/common/MobileBookmarkDrawer.vue';
-import CharacterListSidebar from '../components/charcard/CharacterListSidebar.vue';
-import { useCharacterCollection } from '../composables/characterInfo/useCharacterCollection';
-import { useDevice } from '../composables/useDevice';
+import CharacterListSidebar from '@/components/charcard/CharacterListSidebar.vue';
+import { useCharacterCollection } from '@/composables/characterInfo/useCharacterCollection';
+import { useDevice } from '@/composables/useDevice';
 import type { CharacterCard } from '@/types/character/character';
 
 const { isMobile } = useDevice();
@@ -191,7 +191,7 @@ watch(
 );
 
 onMounted(async () => {
-  const module = await import('../components/CharacterInfoEditor.vue');
+  const module = await import('@/components/CharacterInfoEditor.vue');
   editorComponent.value = module.default;
 });
 

@@ -37,7 +37,7 @@
 import { QuestionFilled } from '@element-plus/icons-vue';
 import { onActivated, onMounted, onUnmounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import NewWelcomePage from '@/pages/NewWelcomePage.vue';
+import NewWelcomePage from '@/pages/new-welcome/index.vue';
 import { useAppUpdate } from '@/composables/useAppUpdate';
 import { fetchJsonResource } from '@/utils/fetchResource';
 import { getSetting } from '@/utils/localStorageUtils';

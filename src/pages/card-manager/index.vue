@@ -1,15 +1,15 @@
 <template>
-  <div class="world-page">
-    <WorldBook />
+  <div class="main-page">
+    <CardManager />
   </div>
 </template>
 
 <script setup lang="ts">
-import WorldBook from '../components/WorldBook.vue';
+import CardManager from '@/components/CardManager.vue';
 </script>
 
 <style scoped>
-.world-page {
+.main-page {
   width: 100%;
   height: 100%;
 }
