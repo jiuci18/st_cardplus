@@ -58,6 +58,11 @@ const activeTab = ref('settings');
 }
 
 :deep(.el-tabs__header) {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--el-bg-color-page, var(--el-bg-color, #141414));
+  padding-top: 1.25rem;
   margin-bottom: 1.25rem;
   padding-bottom: 0;
   border-bottom: 2px solid var(--el-border-color-lighter);
