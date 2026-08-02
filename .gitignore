@@ -31,6 +31,6 @@ generated/
 doc/
 
 temp/*
-.codex
+.pi*
 
 test-results/
