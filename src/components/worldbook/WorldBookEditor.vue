@@ -44,8 +44,11 @@
             </div>
             <div v-if="!props.hideContent">
               <label class="form-label">条目内容 (Content)</label>
-              <el-input v-model="localModel.content" type="textarea" :rows="8"
-                placeholder="当条目激活时，这段文本会被插入到AI的提示中..." />
+              <div class="content-textarea-wrapper">
+                <el-input v-model="localModel.content" type="textarea" :rows="8"
+                  placeholder="当条目激活时，这段文本会被插入到AI的提示中..." />
+                <span class="content-char-count">{{ contentCharCount }} 字符</span>
+              </div>
             </div>
             <div class="form-checkbox-padding">
               <el-checkbox v-model="localModel.addMemo">插入时附带备注 (Add Memo)</el-checkbox>
@@ -365,6 +368,8 @@ const bindKeywordPasteHandlers = async () => {
   );
 };
 
+const contentCharCount = computed(() => (localModel.value.content ?? '').length);
+
 const combinedPosition = computed({
   get: () => {
     if (localModel.value.position === 4) {
@@ -405,3 +410,27 @@ onBeforeUnmount(() => {
   clearKeywordPasteHandlers();
 });
 </script>
+
+<style scoped>
+.content-textarea-wrapper {
+  position: relative;
+}
+
+.content-textarea-wrapper :deep(.el-textarea__inner) {
+  padding-bottom: 24px;
+}
+
+.content-char-count {
+  position: absolute;
+  right: 18px;
+  bottom: 8px;
+  font-size: 12px;
+  line-height: 1;
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: var(--el-text-color-secondary);
+  background-color: var(--el-fill-color-light);
+  pointer-events: none;
+  user-select: none;
+}
+</style>
