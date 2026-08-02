@@ -101,7 +101,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onUnmounted, ref, shallowRef, onMounted } from 'vue';
+import { computed, watch, ref, shallowRef, onMounted } from 'vue';
 import type { Component } from 'vue';
 import { ElEmpty } from 'element-plus';
 import { Splitpanes, Pane } from 'splitpanes';
@@ -174,9 +174,6 @@ const handleToggleStar = (characterId: string, starred: boolean) => {
   setCharacterStar(characterId, starred);
 };
 
-// Store the original title
-const originalTitle = document.title;
-
 // Watch for changes in the active character and update the document title
 watch(
   activeCharacter,
@@ -195,10 +192,6 @@ onMounted(async () => {
   editorComponent.value = module.default;
 });
 
-// Restore the original title when the component is unmounted
-onUnmounted(() => {
-  document.title = originalTitle;
-});
 </script>
 
 <style scoped>
