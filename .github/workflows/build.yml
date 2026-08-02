@@ -36,25 +36,6 @@ jobs:
       with:
         ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.merge_commit_sha || github.sha }}
 
-    - name: Install Linux dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y \
-          libwebkit2gtk-4.1-dev \
-          libgtk-3-dev \
-          libayatana-appindicator3-dev \
-          librsvg2-dev
-
-    - name: Setup Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        components: clippy, rustfmt
-
-    - name: Cache Rust build artifacts
-      uses: Swatinem/rust-cache@v2
-      with:
-        workspaces: src-tauri -> target
-
     - name: Setup pnpm
       uses: pnpm/action-setup@v4
       with:
@@ -69,15 +50,6 @@ jobs:
 
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
-
-    - name: Check Rust formatting
-      run: cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
-
-    - name: Run Rust lints
-      run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
-
-    - name: Run Rust tests
-      run: cargo test --manifest-path src-tauri/Cargo.toml --all-targets
 
     - name: Run unit tests
       run: pnpm test
@@ -101,6 +73,34 @@ jobs:
         name: browser-test-report
         path: playwright-report/
         retention-days: 7
+
+    - name: Install Linux dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libwebkit2gtk-4.1-dev \
+          libgtk-3-dev \
+          libayatana-appindicator3-dev \
+          librsvg2-dev
+
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        components: clippy, rustfmt
+
+    - name: Cache Rust build artifacts
+      uses: Swatinem/rust-cache@v2
+      with:
+        workspaces: src-tauri -> target
+
+    - name: Check Rust formatting
+      run: cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
+
+    - name: Run Rust lints
+      run: cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
+
+    - name: Run Rust tests
+      run: cargo test --manifest-path src-tauri/Cargo.toml --all-targets
 
   build-web:
     needs: check

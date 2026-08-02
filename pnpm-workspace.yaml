@@ -1,9 +1,3 @@
 allowBuilds:
   esbuild: true
   vue-demi: false
-minimumReleaseAgeExclude:
-  - '@codemirror/view@6.43.4'
-  - '@iconify-json/fluent@1.2.52'
-  - js-yaml@5.2.0
-  - knip@6.22.0
-  - prettier@3.9.0
