@@ -29,12 +29,16 @@
                         <Icon icon="ph:dice-five-duotone" width="20" height="20" />
                       </el-button>
                     </template>
-                    <div v-if="isPresetListLoading" class="name-preset-state">正在加载名称预设…</div>
+                    <div v-if="isPresetListLoading" class="name-preset-state">
+                      正在加载名称预设…
+                    </div>
                     <div v-else-if="presetListError" class="name-preset-state">
                       <span>名称预设加载失败</span>
                       <el-button size="small" type="primary" plain @click="handleLoadNamePresets">重试</el-button>
                     </div>
-                    <div v-else-if="namePresets.length === 0" class="name-preset-state">暂无可用的名称预设</div>
+                    <div v-else-if="namePresets.length === 0" class="name-preset-state">
+                      暂无可用的名称预设
+                    </div>
                     <div v-else class="name-preset-actions">
                       <div class="name-preset-gender">
                         <span>名称性别</span>
@@ -45,7 +49,7 @@
                           <el-radio-button value="random">随机</el-radio-button>
                         </el-radio-group>
                       </div>
-                      <el-button v-for="preset in namePresets" :key="preset.url" size="small" style="margin: 0;"
+                      <el-button v-for="preset in namePresets" :key="preset.url" size="small" style="margin: 0"
                         :disabled="rollingPresetLabel !== null" :loading="rollingPresetLabel === preset.label"
                         @click="handleRollName(preset)">
                         {{ preset.label }}
@@ -77,30 +81,36 @@
               </div>
               <div class="form-group-responsive">
                 <label class="form-label">年龄</label>
-                <div style="display: flex; gap: 8px; align-items: center;">
+                <div style="display: flex; gap: 8px; align-items: center">
                   <el-input-number v-model="form.data.age" controls-position="right" :min="-Infinity" :max="Infinity"
-                    :precision="0" class="form-full-width" style="flex: 1;" />
+                    :precision="0" class="form-full-width" style="flex: 1" />
                   <el-popover placement="bottom" title="随机生成年龄" :width="200" trigger="click">
                     <template #reference>
                       <el-button plain title="随机生成年龄">
                         <Icon icon="ph:dice-five-duotone" width="20" height="20" />
                       </el-button>
                     </template>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                      <el-button size="small" style="margin: 0;" @click="rollAge(8, 12)">幼年 (8-12)</el-button>
-                      <el-button size="small" style="margin: 0;" @click="rollAge(13, 17)">少年 (13-17)</el-button>
-                      <el-button size="small" style="margin: 0;" @click="rollAge(18, 35)">青年 (18-35)</el-button>
-                      <el-button size="small" style="margin: 0;" @click="rollAge(36, 55)">中年 (36-55)</el-button>
-                      <el-button size="small" style="margin: 0;" @click="rollAge(56, 100)">老年 (56-100)</el-button>
-                      <el-button size="small" style="margin: 0;" @click="rollAge(100, 1000)">长生种 (100-1000)</el-button>
-                      <div style="font-size: 12px; color: var(--el-text-color-secondary); margin-top: 4px;">自定义范围：</div>
-                      <div style="display: flex; gap: 4px; align-items: center;">
+                    <div style="display: flex; flex-direction: column; gap: 8px">
+                      <el-button size="small" style="margin: 0" @click="rollAge(8, 12)">幼年 (8-12)</el-button>
+                      <el-button size="small" style="margin: 0" @click="rollAge(13, 17)">少年 (13-17)</el-button>
+                      <el-button size="small" style="margin: 0" @click="rollAge(18, 35)">青年 (18-35)</el-button>
+                      <el-button size="small" style="margin: 0" @click="rollAge(36, 55)">中年 (36-55)</el-button>
+                      <el-button size="small" style="margin: 0" @click="rollAge(56, 100)">老年 (56-100)</el-button>
+                      <el-button size="small" style="margin: 0" @click="rollAge(100, 1000)">长生种 (100-1000)</el-button>
+                      <div style="
+                          font-size: 12px;
+                          color: var(--el-text-color-secondary);
+                          margin-top: 4px;
+                        ">
+                        自定义范围：
+                      </div>
+                      <div style="display: flex; gap: 4px; align-items: center">
                         <el-input-number v-model="customAgeMin" size="small" :controls="false" placeholder="最小"
-                          style="width: 100%;" />
+                          style="width: 100%" />
                         <span>-</span>
                         <el-input-number v-model="customAgeMax" size="small" :controls="false" placeholder="最大"
-                          style="width: 100%;" />
-                        <el-button size="small" type="primary" plain style="margin: 0;" @click="rollCustomAge">
+                          style="width: 100%" />
+                        <el-button size="small" type="primary" plain style="margin: 0" @click="rollCustomAge">
                           <Icon icon="ph:dice-five-duotone" width="16" height="16" />
                         </el-button>
                       </div>
@@ -128,7 +138,11 @@
               <el-input v-model="form.data.background" type="textarea" :rows="6" placeholder="请输入背景故事（每行一条）" />
             </div>
             <div style="margin-top: 1rem">
-              <div class="title-Btn" style="display: flex; align-items: center; justify-content: space-between">
+              <div class="title-Btn" style="
+                  display: flex;
+                  align-items: center;
+                  justify-content: space-between;
+                ">
                 <label class="form-label">MBTI性格</label>
                 <el-button type="primary" @click="validateMBTI">
                   <Icon icon="material-symbols:question-exchange" width="18" height="18" style="margin-right: 4px" />
@@ -136,7 +150,35 @@
                 </el-button>
               </div>
               <p class="form-help-text">必须是有效的MBTI数值或者是 none</p>
-              <el-input v-model="form.data.mbti" placeholder="请输入MBTI性格" />
+              <el-autocomplete v-model="form.data.mbti" :fetch-suggestions="querySearchMBTI" placeholder="请输入或选择MBTI性格"
+                class="form-full-width" clearable>
+                <template #default="{ item }">
+                  <div style="
+                      display: flex;
+                      flex-direction: column;
+                      padding: 4px 0;
+                      line-height: 1.4;
+                    ">
+                    <div style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                      ">
+                      <span style="font-weight: bold">{{ item.value }}</span>
+                      <span style="color: var(--el-color-primary); font-size: 13px">{{ item.desc }}</span>
+                    </div>
+                    <span style="
+                        color: var(--el-text-color-secondary);
+                        font-size: 12px;
+                        margin-top: 2px;
+                        white-space: normal;
+                        word-break: break-all;
+                      ">
+                      {{ item.detail }}
+                    </span>
+                  </div>
+                </template>
+              </el-autocomplete>
             </div>
           </div>
         </section>
@@ -163,59 +205,74 @@
   </el-scrollbar>
 
   <el-drawer v-model="isPresetSettingsVisible" title="名称预设管理" size="400px" append-to-body>
-    <div style="display: flex; flex-direction: column; gap: 20px; padding: 0 16px;">
-      <el-button type="success" @click="handleSavePresetSettings" style="width: 100%;">保存并重新加载</el-button>
-      <el-alert
-        title="免责声明与贡献指南"
-        type="warning"
-        show-icon
-        :closable="false"
-      >
+    <div style="display: flex; flex-direction: column; gap: 20px; padding: 0 16px">
+      <el-button type="success" @click="handleSavePresetSettings" style="width: 100%">保存并重新加载</el-button>
+      <el-alert title="免责声明与贡献指南" type="warning" show-icon :closable="false">
         <template #default>
-          <div style="margin-top: 4px;">
+          <div style="margin-top: 4px">
             随机名称仅供创作参考，可能与现实人物或已有作品角色重名，请自行核对。
           </div>
-          <el-link
-            type="primary"
-            href="https://jiuci.top/wiki/cardplus/pr_new_namelist/"
-            target="_blank"
-            style="font-size: 12px; margin-top: 8px;"
-          >
+          <el-link type="primary" href="https://jiuci.top/wiki/cardplus/pr_new_namelist/" target="_blank"
+            style="font-size: 12px; margin-top: 8px">
             如何贡献名称预设数据？
           </el-link>
         </template>
       </el-alert>
 
       <div>
-        <div style="font-weight: bold; margin-bottom: 8px;">注册表 URLs</div>
-        <div style="font-size: 12px; color: var(--el-text-color-secondary); margin-bottom: 8px;">提供包含多个名称预设的 JSON 列表文件地址。</div>
-        <div v-for="(url, idx) in namePresetSettings.registries" :key="'reg-'+idx" style="display: flex; gap: 8px; margin-bottom: 8px;">
+        <div style="font-weight: bold; margin-bottom: 8px">注册表 URLs</div>
+        <div style="
+            font-size: 12px;
+            color: var(--el-text-color-secondary);
+            margin-bottom: 8px;
+          ">
+          提供包含多个名称预设的 JSON 列表文件地址。
+        </div>
+        <div v-for="(_, idx) in namePresetSettings.registries" :key="'reg-' + idx"
+          style="display: flex; gap: 8px; margin-bottom: 8px">
           <el-input v-model="namePresetSettings.registries[idx]" placeholder="输入 URL" />
           <el-button type="danger" plain @click="namePresetSettings.registries.splice(idx, 1)">
             <Icon icon="ph:trash-duotone" />
           </el-button>
         </div>
-        <el-button type="primary" plain size="small" @click="namePresetSettings.registries.push('')">添加注册表 URL</el-button>
+        <el-button type="primary" plain size="small" @click="namePresetSettings.registries.push('')">添加注册表
+          URL</el-button>
       </div>
 
-      <el-divider style="margin: 0;" />
+      <el-divider style="margin: 0" />
 
       <div>
-        <div style="font-weight: bold; margin-bottom: 8px;">手动添加的预设</div>
-        <div style="font-size: 12px; color: var(--el-text-color-secondary); margin-bottom: 8px;">直接添加单个名称预设 JSON 文件的地址。</div>
-        <div v-for="(preset, idx) in namePresetSettings.manualPresets" :key="'man-'+idx" style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; border: 1px solid var(--el-border-color); padding: 8px; border-radius: 4px;">
+        <div style="font-weight: bold; margin-bottom: 8px">手动添加的预设</div>
+        <div style="
+            font-size: 12px;
+            color: var(--el-text-color-secondary);
+            margin-bottom: 8px;
+          ">
+          直接添加单个名称预设 JSON 文件的地址。
+        </div>
+        <div v-for="(preset, idx) in namePresetSettings.manualPresets" :key="'man-' + idx" style="
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-bottom: 12px;
+            border: 1px solid var(--el-border-color);
+            padding: 8px;
+            border-radius: 4px;
+          ">
           <el-input v-model="preset.label" placeholder="预设名称（例如：科幻风格）" size="small" />
           <el-input v-model="preset.url" placeholder="JSON 文件 URL" size="small" />
-          <el-button type="danger" plain size="small" style="align-self: flex-end;" @click="namePresetSettings.manualPresets.splice(idx, 1)">删除</el-button>
+          <el-button type="danger" plain size="small" style="align-self: flex-end"
+            @click="namePresetSettings.manualPresets.splice(idx, 1)">删除</el-button>
         </div>
-        <el-button type="primary" plain size="small" @click="namePresetSettings.manualPresets.push({ label: '', url: '' })">添加单个预设</el-button>
+        <el-button type="primary" plain size="small"
+          @click="namePresetSettings.manualPresets.push({ label: '', url: '' })">添加单个预设</el-button>
       </div>
     </div>
   </el-drawer>
 </template>
 
 <script setup lang="ts">
-import { Icon } from '@iconify/vue';
+import { Icon } from "@iconify/vue";
 import {
   ElButton,
   ElForm,
@@ -232,35 +289,36 @@ import {
   ElSelect,
   ElTabPane,
   ElTabs,
-} from 'element-plus';
-import { nextTick, onMounted, ref, watch } from 'vue';
-import { useCardDataHandler } from '../composables/characterInfo/useCardDataHandler';
-import { useCardSections } from '../composables/characterInfo/useCardSections';
-import { useCharacterCardLifecycle } from '../composables/characterInfo/useCharacterCardLifecycle';
+} from "element-plus";
+import { nextTick, onMounted, ref, watch } from "vue";
+import { useCardDataHandler } from "../composables/characterInfo/useCardDataHandler";
+import { useCardSections } from "../composables/characterInfo/useCardSections";
+import { useCharacterCardLifecycle } from "../composables/characterInfo/useCharacterCardLifecycle";
 import {
   CharacterNamePresetLoadError,
   useCharacterNamePresets,
-} from '@/composables/characterInfo/useCharacterNamePresets';
-import type { CharacterCard } from '@/types/character/character';
-import type { CharacterNamePreset } from '@/utils/characterNamePresets';
-import CharacterCardButtons from './charcard/CharacterCardButtons.vue';
-import AppearanceAndAttireTab from './charcard/tabs/AppearanceAndAttireTab.vue';
-import DailyAndNotesTab from './charcard/tabs/DailyAndNotesTab.vue';
-import TraitsTab from './charcard/tabs/TraitsTab.vue';
+} from "@/composables/characterInfo/useCharacterNamePresets";
+import type { CharacterCard } from "@/types/character/character";
+import type { CharacterNamePreset } from "@/utils/characterNamePresets";
+import CharacterCardButtons from "./charcard/CharacterCardButtons.vue";
+import AppearanceAndAttireTab from "./charcard/tabs/AppearanceAndAttireTab.vue";
+import DailyAndNotesTab from "./charcard/tabs/DailyAndNotesTab.vue";
+import TraitsTab from "./charcard/tabs/TraitsTab.vue";
 
 const props = defineProps<{
   character: CharacterCard;
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:character', character: CharacterCard): void;
+  (e: "update:character", character: CharacterCard): void;
 }>();
 
-const activeTab = ref('appearance');
-const cloneCharacter = (character: CharacterCard): CharacterCard => JSON.parse(JSON.stringify(character));
+const activeTab = ref("appearance");
+const cloneCharacter = (character: CharacterCard): CharacterCard =>
+  JSON.parse(JSON.stringify(character));
 const form = ref(cloneCharacter(props.character));
-type NameRollGender = 'auto' | 'male' | 'female' | 'random';
-const nameRollGender = ref<NameRollGender>('auto');
+type NameRollGender = "auto" | "male" | "female" | "random";
+const nameRollGender = ref<NameRollGender>("auto");
 const customAgeMin = ref<number | undefined>(undefined);
 const customAgeMax = ref<number | undefined>(undefined);
 const {
@@ -276,24 +334,29 @@ const {
 const isPresetSettingsVisible = ref(false);
 const handleSavePresetSettings = async () => {
   // 过滤掉空的项
-  namePresetSettings.value.registries = namePresetSettings.value.registries.filter(url => url.trim() !== '');
-  namePresetSettings.value.manualPresets = namePresetSettings.value.manualPresets.filter(p => p.label.trim() !== '' && p.url.trim() !== '');
+  namePresetSettings.value.registries =
+    namePresetSettings.value.registries.filter((url) => url.trim() !== "");
+  namePresetSettings.value.manualPresets =
+    namePresetSettings.value.manualPresets.filter(
+      (p) => p.label.trim() !== "" && p.url.trim() !== "",
+    );
   await loadPresetList();
   isPresetSettingsVisible.value = false;
 };
 
 const namePresetErrorMessage = (error: unknown): string => {
-  if (!(error instanceof CharacterNamePresetLoadError)) return '名称预设操作失败';
+  if (!(error instanceof CharacterNamePresetLoadError))
+    return "名称预设操作失败";
 
   switch (error.code) {
-    case 'list_fetch_failed':
-      return '名称预设列表加载失败，请重试';
-    case 'table_fetch_failed':
-      return '名称表加载失败，请重试';
-    case 'invalid_table':
-      return '名称表格式无效';
-    case 'roll_in_progress':
-      return '正在生成名称，请稍候';
+    case "list_fetch_failed":
+      return "名称预设列表加载失败，请重试";
+    case "table_fetch_failed":
+      return "名称表加载失败，请重试";
+    case "invalid_table":
+      return "名称表格式无效";
+    case "roll_in_progress":
+      return "正在生成名称，请稍候";
   }
 };
 
@@ -307,7 +370,10 @@ const handleLoadNamePresets = async (): Promise<void> => {
 
 const handleRollName = async (preset: CharacterNamePreset): Promise<void> => {
   try {
-    const gender = nameRollGender.value === 'auto' ? form.value.data.gender : nameRollGender.value;
+    const gender =
+      nameRollGender.value === "auto"
+        ? form.value.data.gender
+        : nameRollGender.value;
     form.value.data.chineseName = await rollFromPreset(preset, gender);
   } catch (error) {
     ElMessage.error(namePresetErrorMessage(error));
@@ -322,7 +388,7 @@ const rollCustomAge = () => {
   const min = customAgeMin.value ?? 0;
   const max = customAgeMax.value ?? 100;
   if (min > max) {
-    ElMessage.warning('最小值不能大于最大值');
+    ElMessage.warning("最小值不能大于最大值");
     return;
   }
   rollAge(min, max);
@@ -348,7 +414,9 @@ const normalizeMeta = (updatedCharacter: CharacterCard) => {
     id: updatedCharacter.meta?.id ?? fallbackMeta.id,
     order: updatedCharacter.meta?.order ?? fallbackMeta.order,
     starred:
-      typeof updatedCharacter.meta?.starred === 'boolean' ? updatedCharacter.meta.starred : (fallbackMeta.starred ?? false),
+      typeof updatedCharacter.meta?.starred === "boolean"
+        ? updatedCharacter.meta.starred
+        : (fallbackMeta.starred ?? false),
     projectId: updatedCharacter.meta?.projectId ?? fallbackMeta.projectId,
   };
 
@@ -371,7 +439,7 @@ watch(
     if (JSON.stringify(form.value) === JSON.stringify(newCharacter)) return;
     syncFormFromProps(newCharacter);
   },
-  { deep: true, immediate: true }
+  { deep: true, immediate: true },
 );
 
 watch(
@@ -379,13 +447,19 @@ watch(
   (updatedCharacter) => {
     if (isUpdatingFromProps) return;
     if (normalizeMeta(updatedCharacter)) return;
-    emit('update:character', cloneCharacter(updatedCharacter));
+    emit("update:character", cloneCharacter(updatedCharacter));
   },
-  { deep: true }
+  { deep: true },
 );
 
-const { saveCharacterCard, loadCharacterCard, resetForm, copyToClipboard, importFromClipboard, processLoadedData } =
-  useCardDataHandler(form);
+const {
+  saveCharacterCard,
+  loadCharacterCard,
+  resetForm,
+  copyToClipboard,
+  importFromClipboard,
+  processLoadedData,
+} = useCardDataHandler(form);
 
 const {
   exportBasicInfo,
@@ -407,7 +481,7 @@ const {
 useCharacterCardLifecycle(form, processLoadedData);
 
 const isValidMBTI = (mbti: string) => {
-  return mbti.toLowerCase() === 'none' || /^[EI][SN][TF][JP]$/i.test(mbti);
+  return mbti.toLowerCase() === "none" || /^[EI][SN][TF][JP]$/i.test(mbti);
 };
 
 interface MBTIDescriptions {
@@ -415,36 +489,76 @@ interface MBTIDescriptions {
 }
 
 const mbtiDescriptions: MBTIDescriptions = {
-  INTP: '逻辑学家',
-  INTJ: '建筑师',
-  ENTP: '辩论家',
-  ENTJ: '指挥官',
-  INFP: '调停者',
-  INFJ: '提倡者',
-  ENFJ: '主人公',
-  ENFP: '竞选者',
-  ISTJ: '物流师',
-  ISFJ: '守卫者',
-  ESTJ: '总经理',
-  ESFJ: '执政官',
-  ISTP: '鉴赏家',
-  ISFP: '探险家',
-  ESTP: '企业家',
-  ESFP: '表演者',
-  none: '未指定',
+  INTP: "逻辑学家",
+  INTJ: "建筑师",
+  ENTP: "辩论家",
+  ENTJ: "指挥官",
+  INFP: "调停者",
+  INFJ: "提倡者",
+  ENFJ: "主人公",
+  ENFP: "竞选者",
+  ISTJ: "物流师",
+  ISFJ: "守卫者",
+  ESTJ: "总经理",
+  ESFJ: "执政官",
+  ISTP: "鉴赏家",
+  ISFP: "探险家",
+  ESTP: "企业家",
+  ESFP: "表演者",
+  none: "未指定",
+};
+
+const mbtiDetails: Record<string, string> = {
+  INTP: "富有创造力的发明家，对知识有着永不满足的渴望。",
+  INTJ: "富有想象力和战略性的思考者，一切皆在计划之中。",
+  ENTP: "聪明好奇的思考者，热衷于智力上的挑战。",
+  ENTJ: "大胆、富有想象力且意志强大的领导者，总能找到解决方法。",
+  INFP: "诗意、善良、利他，总是致力于帮助正当事业。",
+  INFJ: "安静而神秘，同时鼓舞人心且不知疲倦的理想主义者。",
+  ENFJ: "富有魅力、鼓舞人心的领导者，能够让听众为之倾倒。",
+  ENFP: "热情、有创造力且爱好社交的自由精神者，总能找到理由微笑。",
+  ISTJ: "注重实用和逻辑，事实大于一切，可靠性毋庸置疑。",
+  ISFJ: "非常专注和温暖的守护者，时刻准备着保护爱的人。",
+  ESTJ: "出色的管理者，在管理事物或人方面无与伦比。",
+  ESFJ: "极度关心他人、喜欢社交，总是乐于助人。",
+  ISTP: "大胆而实际的实验者，精通各种工具的使用。",
+  ISFP: "灵活且有魅力的艺术家，随时准备探索和体验新事物。",
+  ESTP: "聪明、精力充沛的感知者，非常享受充满冒险的生活。",
+  ESFP: "自发的、充满活力的热心人，生活在他们周围绝不会无聊。",
+  none: "暂不指定或不适用 MBTI 性格类型。",
+};
+
+const mbtiOptions = Object.entries(mbtiDescriptions).map(([type, desc]) => ({
+  value: type,
+  desc,
+  detail: mbtiDetails[type],
+}));
+
+const querySearchMBTI = (queryString: string, cb: (arg: any) => void) => {
+  const results = queryString
+    ? mbtiOptions.filter(
+      (item) =>
+        item.value.toLowerCase().includes(queryString.toLowerCase()) ||
+        item.desc.includes(queryString),
+    )
+    : mbtiOptions;
+  cb(results);
 };
 
 const validateMBTI = () => {
   if (!form.value.data.mbti) {
-    ElMessageBox.alert('请输入MBTI类型', '警告');
+    ElMessageBox.alert("请输入MBTI类型", "警告");
     return;
   }
   const type = form.value.data.mbti.toUpperCase();
   if (isValidMBTI(form.value.data.mbti)) {
-    const description = mbtiDescriptions[type] || mbtiDescriptions['none'];
-    ElMessageBox.alert(`MBTI格式正确，类型：${type} - ${description}`, '正确');
+    const description = mbtiDescriptions[type] || mbtiDescriptions["none"];
+    ElMessageBox.alert(`MBTI格式正确，类型：${type} - ${description}`, "正确");
   } else {
-    ElMessageBox.alert(`MBTI格式无效：${type}，请输入4个字母的组合或"none"`, '不合规');
+    ElMessageBox.alert(
+      `MBTI格式无效：${type}，请输入4个字母的组合或"none"`,
+      "不合规",
+    );
   }
 };
 
