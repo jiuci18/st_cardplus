@@ -15,9 +15,6 @@ export interface Appearance {
   waist: string; // 腰围
   hips: string; // 臀围
   breasts: string; // 胸部
-  genitals: string; // 生殖器
-  anus: string; // 肛门
-  pubes: string; // 阴毛
   thighs: string; // 大腿
   butt: string; // 臀部
   feet: string; // 脚
