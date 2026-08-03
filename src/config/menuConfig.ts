@@ -1,16 +1,3 @@
-import {
-  Briefcase,
-  Collection,
-  DataLine,
-  EditPen,
-  House,
-  Location,
-  Postcard,
-  Tickets,
-  Tools,
-} from '@element-plus/icons-vue';
-import { markRaw } from 'vue';
-
 // 菜单项类型
 export type MenuItemType = 'main' | 'tool';
 
@@ -28,19 +15,6 @@ export interface MenuItemConfig {
   fixed?: boolean;
   showInTabBar?: boolean;
 }
-
-// Element Plus 图标映射
-const iconMap = {
-  House: markRaw(House),
-  EditPen: markRaw(EditPen),
-  Location: markRaw(Location),
-  Postcard: markRaw(Postcard),
-  Tools: markRaw(Tools),
-  DataLine: markRaw(DataLine),
-  Collection: markRaw(Collection),
-  Tickets: markRaw(Tickets),
-  Briefcase: markRaw(Briefcase),
-};
 
 // Iconify 图标映射
 const iconifyIconMap: Record<string, string> = {
@@ -243,11 +217,6 @@ const toolboxToolItems: MenuItemConfig[] = [
 // 获取所有默认菜单项配置
 const getAllDefaultMenuItems = (): MenuItemConfig[] => {
   return [...mainMenuItems, ...toolboxToolItems];
-};
-
-// 获取图标组件
-export const getIconComponent = (iconName: string) => {
-  return iconMap[iconName as keyof typeof iconMap] || markRaw(Tools);
 };
 
 // 获取 Iconify 图标名称
