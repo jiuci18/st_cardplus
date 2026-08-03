@@ -1,6 +1,6 @@
 [package]
 name = "st_cardplus"
-version = "0.1.23"
+version = "0.1.24"
 description = "SillyTavern CardPlus desktop app"
 authors = ["awaae001"]
 license = "MIT"
