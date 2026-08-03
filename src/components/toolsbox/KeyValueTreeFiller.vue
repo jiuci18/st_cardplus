@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import KeyValueTreeNode from '@/components/toolsbox/KeyValueTreeNode.vue';
 import type { KeyValueNode } from '@/types/key-value-tree';
+import { copyToClipboard } from '@/utils/clipboard';
 import { readLocalStorageJSON, localStorageStore, writeLocalStorageJSON } from '@/utils/localStorageUtils';
 import { saveFile } from '@/utils/system/fileSave';
 import { Icon } from '@iconify/vue';
@@ -167,11 +168,20 @@ function serializeTree(format: ExportFormat): string {
     : dumpYaml(data, { indent: 2, lineWidth: -1, noRefs: true, sortKeys: false });
 }
 
+function ensureCanExport(): boolean {
+  if (canExport.value) return true;
+  ElMessage.warning(nodes.value.length === 0 ? '请先添加节点' : '请先修正无效的键');
+  return false;
+}
+
+async function copyContent(format: ExportFormat): Promise<void> {
+  if (!ensureCanExport()) return;
+  const label = format === 'json' ? 'JSON' : 'YAML';
+  await copyToClipboard(serializeTree(format), `${label} 已复制到剪贴板`, `${label} 复制失败`);
+}
+
 async function exportFile(format: ExportFormat): Promise<void> {
-  if (!canExport.value) {
-    ElMessage.warning(nodes.value.length === 0 ? '请先添加节点' : '请先修正无效的键');
-    return;
-  }
+  if (!ensureCanExport()) return;
 
   const extension = format === 'json' ? 'json' : 'yml';
   const content = serializeTree(format);
@@ -226,14 +236,40 @@ async function clearDraft(): Promise<void> {
 
     <div class="export-bar">
       <el-input v-model="fileName" class="file-name" placeholder="文件名" aria-label="导出文件名" />
-      <el-button type="primary" :disabled="!canExport" @click="exportFile('json')">
+      <el-dropdown split-button type="primary" :disabled="!canExport" trigger="click" placement="bottom-end"
+        popper-class="kvt-export-dropdown" @click="copyContent('json')" @command="copyContent">
+        <Icon icon="material-symbols:content-copy" />
+        复制 JSON
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="json">
+              <Icon icon="material-symbols:content-copy" class="dropdown-item-icon" />
+              复制 JSON
+            </el-dropdown-item>
+            <el-dropdown-item command="yaml">
+              <Icon icon="material-symbols:content-copy" class="dropdown-item-icon" />
+              复制 YAML
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+      <el-dropdown split-button type="success" :disabled="!canExport" trigger="click" placement="bottom-end"
+        popper-class="kvt-export-dropdown" @click="exportFile('json')" @command="exportFile">
         <Icon icon="material-symbols:download" />
         下载 JSON
-      </el-button>
-      <el-button type="success" :disabled="!canExport" @click="exportFile('yaml')">
-        <Icon icon="material-symbols:download" />
-        下载 YAML
-      </el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="json">
+              <Icon icon="material-symbols:download" class="dropdown-item-icon" />
+              下载 JSON
+            </el-dropdown-item>
+            <el-dropdown-item command="yaml">
+              <Icon icon="material-symbols:download" class="dropdown-item-icon" />
+              下载 YAML
+            </el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
       <el-button type="danger" plain @click="clearDraft">清空</el-button>
     </div>
 
@@ -334,6 +370,7 @@ async function clearDraft(): Promise<void> {
   width: 260px;
   margin-right: auto;
 }
+
 
 .workspace {
   display: grid;
@@ -436,9 +473,27 @@ async function clearDraft(): Promise<void> {
     margin-right: 0;
   }
 
-  .export-bar :deep(.el-button) {
+  .export-bar :deep(.el-button),
+  .export-bar :deep(.el-dropdown) {
     flex: 1;
     margin-left: 0;
   }
+
+  .export-bar :deep(.el-dropdown .el-button-group) {
+    display: flex;
+    width: 100%;
+  }
+
+  .export-bar :deep(.el-dropdown .el-button-group .el-button:first-child) {
+    flex: 1;
+  }
+}
+</style>
+
+<style>
+/* 下拉菜单被 teleport 到 body，需要非 scoped 样式 */
+.kvt-export-dropdown .dropdown-item-icon {
+  margin-right: 6px;
+  vertical-align: -2px;
 }
 </style>
