@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import KeyValueTreeNode from '@/components/toolsbox/KeyValueTreeNode.vue';
+import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
 import type { KeyValueNode } from '@/types/key-value-tree';
 import { copyToClipboard } from '@/utils/clipboard';
 import { readLocalStorageJSON, localStorageStore, writeLocalStorageJSON } from '@/utils/localStorageUtils';
 import { saveFile } from '@/utils/system/fileSave';
 import { Icon } from '@iconify/vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
-import { dump as dumpYaml } from 'js-yaml';
+import { dump as dumpYaml, load as loadYaml } from 'js-yaml';
 import { computed, ref, watch } from 'vue';
 
 type ExportFormat = 'json' | 'yaml';
@@ -168,6 +169,106 @@ function serializeTree(format: ExportFormat): string {
     : dumpYaml(data, { indent: 2, lineWidth: -1, noRefs: true, sortKeys: false });
 }
 
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function parseImportContent(text: string): { data: unknown; format: ExportFormat } {
+  try {
+    return { data: JSON.parse(text), format: 'json' };
+  } catch {
+    // 非严格 JSON（YAML、尾逗号等），回退到 YAML 解析
+    return { data: loadYaml(text), format: 'yaml' };
+  }
+}
+
+function buildTreeFromData(data: unknown, fallbackKey: string): KeyValueNode[] {
+  const toNode = (key: string, value: unknown): KeyValueNode => {
+    const node: KeyValueNode = { id: createNodeId(), key, value: '' };
+    if (Array.isArray(value)) {
+      node.children = value.map((item) => toNode('', item));
+    } else if (isPlainObject(value)) {
+      node.children = Object.entries(value).map(([childKey, childValue]) => toNode(String(childKey), childValue));
+    } else {
+      node.value = value === null || value === undefined ? '' : String(value);
+    }
+    return node;
+  };
+
+  if (isPlainObject(data)) {
+    return Object.entries(data).map(([key, value]) => toNode(String(key), value));
+  }
+  // 根级数组或标量：包一层节点，键名可由用户修改
+  return [toNode(fallbackKey, data)];
+}
+
+async function applyImportedData(data: unknown, baseName: string, format: ExportFormat): Promise<void> {
+  if (data === undefined || data === null) {
+    ElMessage.warning('内容为空，未导入');
+    return;
+  }
+
+  if (nodes.value.length > 0) {
+    try {
+      await ElMessageBox.confirm('导入将替换当前的节点树，是否继续？', '确认导入', {
+        type: 'warning',
+        confirmButtonText: '导入并替换',
+        cancelButtonText: '取消',
+      });
+    } catch {
+      return;
+    }
+  }
+
+  nodes.value = buildTreeFromData(data, baseName);
+  fileName.value = baseName;
+  previewFormat.value = format;
+  ElMessage.success('导入成功');
+}
+
+async function importFile(file: File): Promise<void> {
+  let parsed: { data: unknown; format: ExportFormat };
+  try {
+    const text = await file.text();
+    parsed = parseImportContent(text);
+  } catch (error) {
+    ElMessage.error(`解析失败：${error instanceof Error ? error.message : String(error)}`);
+    return;
+  }
+
+  const baseName = file.name.replace(/\.[^.]+$/, '').trim() || 'worldbuilding';
+  const format = /\.ya?ml$/i.test(file.name) ? 'yaml' : parsed.format;
+  await applyImportedData(parsed.data, baseName, format);
+}
+
+async function showPasteImportDialog(): Promise<void> {
+  let value: string;
+  try {
+    const result = await ElMessageBox.prompt('请粘贴要导入的 JSON 或 YAML 数据', '从剪贴板导入', {
+      confirmButtonText: '导入',
+      cancelButtonText: '取消',
+      type: 'info',
+      inputType: 'textarea',
+      inputPlaceholder: '在此粘贴或输入 JSON / YAML 数据',
+      inputValidator: (input) => {
+        if (!input?.trim()) return '请输入要导入的数据';
+        try {
+          parseImportContent(input);
+          return true;
+        } catch {
+          return '请输入有效的 JSON 或 YAML 数据';
+        }
+      },
+    });
+    value = result.value as string;
+  } catch {
+    return; // 用户取消
+  }
+
+  const parsed = parseImportContent(value);
+  await applyImportedData(parsed.data, fileName.value.trim() || 'worldbuilding', parsed.format);
+}
+
 function ensureCanExport(): boolean {
   if (canExport.value) return true;
   ElMessage.warning(nodes.value.length === 0 ? '请先添加节点' : '请先修正无效的键');
@@ -232,10 +333,21 @@ async function clearDraft(): Promise<void> {
       </div>
     </header>
 
-    <el-alert class="description" type="info" :closable="false" title="叶节点值始终按字符串导出；同一级子节点的键全部留空时，会导出为数组。" />
+    <el-alert class="description" type="info" :closable="false"
+      title="叶节点值始终按字符串导出；同一级子节点的键全部留空时，会导出为数组。支持导入 .json / .yml / .yaml 文件，导入的数值与布尔值会转为字符串。" />
 
     <div class="export-bar">
       <el-input v-model="fileName" class="file-name" placeholder="文件名" aria-label="导出文件名" />
+      <BrowserFilePicker accept=".json,.yml,.yaml" @select-first="importFile">
+        <el-button type="info" plain>
+          <Icon icon="material-symbols:upload" />
+          导入 JSON / YAML
+        </el-button>
+      </BrowserFilePicker>
+      <el-button type="warning" plain @click="showPasteImportDialog">
+        <Icon icon="material-symbols:content-paste-go-rounded" />
+        粘贴导入
+      </el-button>
       <el-dropdown split-button type="primary" :disabled="!canExport" trigger="click" placement="bottom-end"
         popper-class="kvt-export-dropdown" @click="copyContent('json')" @command="copyContent">
         <Icon icon="material-symbols:content-copy" />
