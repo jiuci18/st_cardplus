@@ -15,6 +15,7 @@ interface KeyValueTreeDraft {
   nodes: KeyValueNode[];
   fileName: string;
   previewFormat: ExportFormat;
+  showPreview?: boolean;
 }
 
 const DRAFT_STORAGE_KEY = 'toolbox.keyValueTreeFiller.draft';
@@ -47,6 +48,7 @@ function readDraft(): KeyValueTreeDraft | null {
   if (candidate.version !== 1 || !Array.isArray(candidate.nodes)) return null;
   if (typeof candidate.fileName !== 'string') return null;
   if (candidate.previewFormat !== 'json' && candidate.previewFormat !== 'yaml') return null;
+  if (candidate.showPreview !== undefined && typeof candidate.showPreview !== 'boolean') return null;
   if (!candidate.nodes.every(isKeyValueNode)) return null;
   return candidate as KeyValueTreeDraft;
 }
@@ -55,22 +57,34 @@ const restoredDraft = readDraft();
 const nodes = ref<KeyValueNode[]>(restoredDraft?.nodes ?? []);
 const fileName = ref(restoredDraft?.fileName ?? 'worldbuilding');
 const previewFormat = ref<ExportFormat>(restoredDraft?.previewFormat ?? 'json');
+const showPreview = ref(restoredDraft?.showPreview ?? true);
 
 const errors = computed(() => {
   const result: Record<string, string> = {};
-  const visit = (siblings: readonly KeyValueNode[]): void => {
+  const visit = (siblings: readonly KeyValueNode[], isRoot = false): void => {
     const byKey = new Map<string, KeyValueNode[]>();
+    const blankNodes = siblings.filter((node) => !node.key.trim());
+    const namedNodes = siblings.filter((node) => node.key.trim());
+
+    if (isRoot) {
+      blankNodes.forEach((node) => (result[node.id] = '根节点的键不能为空'));
+    } else if (blankNodes.length > 0 && namedNodes.length > 0) {
+      siblings.forEach((node) => (result[node.id] = '数组项不能与命名键处于同一级'));
+    }
+
     for (const node of siblings) {
       const key = node.key.trim();
-      if (!key) result[node.id] = '键不能为空';
-      else byKey.set(key, [...(byKey.get(key) ?? []), node]);
+      if (key) byKey.set(key, [...(byKey.get(key) ?? []), node]);
       if (node.children) visit(node.children);
     }
-    for (const [key, matches] of byKey) {
-      if (matches.length > 1) matches.forEach((node) => (result[node.id] = `同级键“${key}”重复`));
+
+    if (blankNodes.length === 0) {
+      for (const [key, matches] of byKey) {
+        if (matches.length > 1) matches.forEach((node) => (result[node.id] = `同级键“${key}”重复`));
+      }
     }
   };
-  visit(nodes.value);
+  visit(nodes.value, true);
   return result;
 });
 const errorCount = computed(() => Object.keys(errors.value).length);
@@ -81,13 +95,14 @@ const preview = computed(() => {
 });
 
 watch(
-  [nodes, fileName, previewFormat],
+  [nodes, fileName, previewFormat, showPreview],
   () => {
     writeLocalStorageJSON(DRAFT_STORAGE_KEY, {
       version: 1,
       nodes: nodes.value,
       fileName: fileName.value,
       previewFormat: previewFormat.value,
+      showPreview: showPreview.value,
     } satisfies KeyValueTreeDraft);
   },
   { deep: true },
@@ -136,19 +151,17 @@ function removeNode(nodeId: string): void {
   nodes.value = remove(nodes.value);
 }
 
-function normalizedFileName(): string {
-  const withoutExtension = fileName.value.trim().replace(/\.(?:json|ya?ml)$/i, '');
-  return withoutExtension.replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_') || 'worldbuilding';
-}
-
-function treeToObject(items: readonly KeyValueNode[]): Record<string, unknown> {
-  return Object.fromEntries(
-    items.map((node) => [node.key.trim(), node.children ? treeToObject(node.children) : node.value]),
-  );
-}
-
 function serializeTree(format: ExportFormat): string {
-  const data = treeToObject(nodes.value);
+  const convertNodes = (items: readonly KeyValueNode[], isRoot = false): unknown => {
+    const convertNode = (node: KeyValueNode): unknown =>
+      node.children ? convertNodes(node.children) : node.value;
+    const isArray = !isRoot && items.length > 0 && items.every((node) => !node.key.trim());
+    return isArray
+      ? items.map(convertNode)
+      : Object.fromEntries(items.map((node) => [node.key.trim(), convertNode(node)]));
+  };
+
+  const data = convertNodes(nodes.value, true);
   return format === 'json'
     ? `${JSON.stringify(data, null, 2)}\n`
     : dumpYaml(data, { indent: 2, lineWidth: -1, noRefs: true, sortKeys: false });
@@ -162,9 +175,14 @@ async function exportFile(format: ExportFormat): Promise<void> {
 
   const extension = format === 'json' ? 'json' : 'yml';
   const content = serializeTree(format);
+  const exportName =
+    fileName.value
+      .trim()
+      .replace(/\.(?:json|ya?ml)$/i, '')
+      .replace(/[<>:"/\\|?*\u0000-\u001f]/g, '_') || 'worldbuilding';
   const result = await saveFile({
     data: new TextEncoder().encode(content),
-    fileName: `${normalizedFileName()}.${extension}`,
+    fileName: `${exportName}.${extension}`,
     mimeType: format === 'json' ? 'application/json' : 'application/yaml',
     rememberDirKey: 'save.keyValueTreeFillerDir',
   });
@@ -185,6 +203,7 @@ async function clearDraft(): Promise<void> {
   nodes.value = [];
   fileName.value = 'worldbuilding';
   previewFormat.value = 'json';
+  showPreview.value = true;
   localStorageStore.remove(DRAFT_STORAGE_KEY);
   ElMessage.success('已清空');
 }
@@ -203,7 +222,7 @@ async function clearDraft(): Promise<void> {
       </div>
     </header>
 
-    <el-alert class="description" type="info" :closable="false" title="用节点树整理嵌套键值；叶节点的值始终按字符串导出。给字段添加子节点会将它转换为对象。" />
+    <el-alert class="description" type="info" :closable="false" title="叶节点值始终按字符串导出；同一级子节点的键全部留空时，会导出为数组。" />
 
     <div class="export-bar">
       <el-input v-model="fileName" class="file-name" placeholder="文件名" aria-label="导出文件名" />
@@ -218,14 +237,20 @@ async function clearDraft(): Promise<void> {
       <el-button type="danger" plain @click="clearDraft">清空</el-button>
     </div>
 
-    <div class="workspace">
+    <div class="workspace" :class="{ 'preview-hidden': !showPreview }">
       <section class="tree-panel">
         <div class="panel-header tree-panel-header">
           <strong>节点树</strong>
-          <el-button type="primary" size="small" @click="addRootNode">
-            <Icon icon="material-symbols:add" />
-            添加根节点
-          </el-button>
+          <div class="tree-header-actions">
+            <el-button v-if="!showPreview" size="small" @click="showPreview = true">
+              <Icon icon="material-symbols:right-panel-open" />
+              打开预览
+            </el-button>
+            <el-button type="primary" size="small" @click="addRootNode">
+              <Icon icon="material-symbols:add" />
+              添加根节点
+            </el-button>
+          </div>
         </div>
 
         <div class="tree-content">
@@ -239,14 +264,21 @@ async function clearDraft(): Promise<void> {
         </div>
       </section>
 
-      <el-card class="preview-panel" shadow="never">
+      <el-card v-if="showPreview" class="preview-panel" shadow="never">
         <template #header>
           <div class="panel-header">
             <strong>实时预览</strong>
-            <el-radio-group v-model="previewFormat" size="small">
-              <el-radio-button value="json">JSON</el-radio-button>
-              <el-radio-button value="yaml">YAML</el-radio-button>
-            </el-radio-group>
+            <div class="preview-actions">
+              <el-radio-group v-model="previewFormat" size="small">
+                <el-radio-button value="json">JSON</el-radio-button>
+                <el-radio-button value="yaml">YAML</el-radio-button>
+              </el-radio-group>
+              <el-tooltip content="关闭预览" placement="top">
+                <el-button circle size="small" aria-label="关闭预览" @click="showPreview = false">
+                  <Icon icon="material-symbols:close" />
+                </el-button>
+              </el-tooltip>
+            </div>
           </div>
         </template>
 
@@ -310,6 +342,10 @@ async function clearDraft(): Promise<void> {
   align-items: stretch;
 }
 
+.workspace.preview-hidden {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .tree-panel,
 .preview-panel {
   min-width: 0;
@@ -328,6 +364,13 @@ async function clearDraft(): Promise<void> {
 .panel-header {
   justify-content: space-between;
   gap: 12px;
+}
+
+.tree-header-actions,
+.preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .empty-tree {

@@ -49,7 +49,7 @@ function addChild(): void {
       <Document v-else class="node-type-icon" />
 
       <div class="node-editor">
-        <el-input class="key-input" :model-value="node.key" placeholder="键" size="small" :validate-event="false"
+        <el-input class="key-input" :model-value="node.key" placeholder="键（留空表示数组项）" size="small" :validate-event="false"
           @update:model-value="emit('updateKey', node.id, $event)" />
 
         <span class="separator">:</span>
