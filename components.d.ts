@@ -85,6 +85,8 @@ declare module 'vue' {
     InfoDisplayPanel: typeof import('./src/components/cardManager/main/InfoDisplayPanel.vue')['default']
     IntegratedPanel: typeof import('./src/components/worldeditor/editorPacel/IntegratedPanel.vue')['default']
     JsonlNovelConverter: typeof import('./src/components/toolsbox/JsonlNovelConverter.vue')['default']
+    KeyValueTreeFiller: typeof import('./src/components/toolsbox/KeyValueTreeFiller.vue')['default']
+    KeyValueTreeNode: typeof import('./src/components/toolsbox/KeyValueTreeNode.vue')['default']
     LandmarkEditor: typeof import('./src/components/worldeditor/editorPacel/LandmarkEditor.vue')['default']
     LandmarkNode: typeof import('./src/components/worldeditor/graph/LandmarkNode.vue')['default']
     LocalDataCard: typeof import('./src/components/settingPage/datamanage/LocalDataCard.vue')['default']

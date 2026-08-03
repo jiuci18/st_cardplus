@@ -14,7 +14,7 @@ export const BARKEEP_SESSION_STORAGE_KEY = 'barkeepSession';
  * 这些键通常包含敏感信息或特定于设备的设置，不应在设备之间同步。
  */
 export const SYNC_EXCLUDED_KEYS: string[] = [
-  // WebDAV 和 Gist 的配置，包含凭据
+  // 旧版独立配置键；新版嵌套凭据由同步存储层过滤
   'webdavConfig',
   'gistConfig',
   BARKEEP_CONFIG_STORAGE_KEY,

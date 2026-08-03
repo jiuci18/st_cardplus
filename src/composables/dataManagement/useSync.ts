@@ -5,8 +5,6 @@ import {
   createBackupGist,
   downloadFromGistWithProgress,
   listUserGists,
-  loadGistConfig,
-  saveGistConfig,
   testGistConnection,
   uploadToGist,
 } from '@/utils/cloud/gist';
@@ -14,9 +12,8 @@ import { SYNC_EXCLUDED_KEYS, SYNC_SNAPSHOT_SESSION_KEY } from '@/config/dataSync
 import {
   getSessionStorageItem,
   getSetting,
-  readLocalStorageJSON,
   removeSessionStorageItem,
-  writeLocalStorageJSON,
+  setSetting,
 } from '@/utils/localStorageUtils';
 import { formatDateTime, formatRelative, now, nowIso } from '@/utils/datetime';
 import type { GistConfig } from '@/types/gist';
@@ -43,8 +40,8 @@ export function useSync() {
   const providerOptions = SYNC_PROVIDER_OPTIONS;
 
   const persistSyncConfigs = () => {
-    writeLocalStorageJSON('webdavConfig', webdavConfig.value);
-    saveGistConfig(gistConfig.value);
+    setSetting('webdavConfig', webdavConfig.value);
+    setSetting('gistConfig', gistConfig.value);
   };
 
   const canPush = computed(() => {
@@ -60,7 +57,7 @@ export function useSync() {
   watch(
     webdavConfig,
     (nextValue) => {
-      writeLocalStorageJSON('webdavConfig', nextValue);
+      setSetting('webdavConfig', nextValue);
     },
     { deep: true }
   );
@@ -68,7 +65,7 @@ export function useSync() {
   watch(
     gistConfig,
     (nextValue) => {
-      saveGistConfig(nextValue);
+      setSetting('gistConfig', nextValue);
     },
     { deep: true }
   );
@@ -84,9 +81,8 @@ export function useSync() {
   };
 
   const initialize = () => {
-    webdavConfig.value = readLocalStorageJSON<WebDAVConfig>('webdavConfig') ?? webdavConfig.value;
-
-    gistConfig.value = loadGistConfig() ?? gistConfig.value;
+    webdavConfig.value = getSetting('webdavConfig');
+    gistConfig.value = getSetting('gistConfig');
     snapshotAvailable.value = !!getSessionStorageItem(SYNC_SNAPSHOT_SESSION_KEY);
     if (!snapshotAvailable.value) {
       removeSessionStorageItem(SYNC_SNAPSHOT_SESSION_KEY);
@@ -304,7 +300,7 @@ export function useSync() {
       (onProgress) => downloadFromGistWithProgress(gistConfig.value.token, gistConfig.value.gistId, onProgress),
       () => {
         gistConfig.value.lastSyncTime = nowIso();
-        saveGistConfig(gistConfig.value);
+        setSetting('gistConfig', gistConfig.value);
       }
     );
   };

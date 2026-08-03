@@ -8,6 +8,7 @@ import {
   removeSessionStorageItem,
 } from '@/utils/localStorageUtils';
 import { nowIso } from '@/utils/datetime';
+import { preserveLocalSyncConfigs, redactSyncConfigs } from '@/utils/syncConfigSettings';
 
 export type SyncSnapshot = Record<string, string | null>;
 
@@ -15,7 +16,7 @@ export async function buildBackupData(
   excludedKeys: string[],
   onProgress?: (text: string) => void
 ): Promise<BackupData> {
-  const localStorageData = getLocalStorageSnapshot({ excludeKeys: excludedKeys });
+  const localStorageData = redactSyncConfigs(getLocalStorageSnapshot({ excludeKeys: excludedKeys }));
   onProgress?.('正在整理本地数据...');
   const databases = await exportAllDatabases();
   onProgress?.('本地数据准备完成');
@@ -49,11 +50,12 @@ export function readSnapshot(snapshotKey: string): SyncSnapshot | null {
 
 export async function applyBackupData(
   backupData: BackupData,
-  preservedLocalStorageKeys: string[] = ['webdavConfig', 'gistConfig']
 ): Promise<void> {
-  const flatData = { ...backupData.localStorage, ...backupData.databases };
+  const currentLocalStorage = getLocalStorageSnapshot();
+  const incomingLocalStorage = preserveLocalSyncConfigs(backupData.localStorage, currentLocalStorage);
+  const flatData = { ...incomingLocalStorage, ...backupData.databases };
   await importAllDatabases(flatData);
-  restoreLocalStorageSnapshot(backupData.localStorage, { preserveKeys: preservedLocalStorageKeys });
+  restoreLocalStorageSnapshot(incomingLocalStorage);
 }
 
 export async function restoreFromSnapshot(snapshot: SyncSnapshot): Promise<void> {

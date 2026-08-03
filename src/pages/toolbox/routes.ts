@@ -50,4 +50,10 @@ export const toolboxRoutes = [
     component: () => import('@/components/toolsbox/ImageGenerator.vue'),
     meta: { title: '图片生成' },
   },
+  {
+    path: '/toolbox/key-value-filler',
+    name: 'keyValueTreeFiller',
+    component: () => import('@/components/toolsbox/KeyValueTreeFiller.vue'),
+    meta: { title: '树状键值填写器' },
+  },
 ] satisfies RouteRecordRaw[];
