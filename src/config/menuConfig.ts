@@ -227,6 +227,17 @@ const toolboxToolItems: MenuItemConfig[] = [
     route: '/toolbox/image-generator',
     description: '通过 OpenAI 兼容 ChatAPI 生成图片，支持参考图与批量请求',
   },
+  {
+    id: 'key-value-tree-filler',
+    type: 'tool',
+    visible: false,
+    order: 109,
+    title: '树状键值填写器',
+    icon: 'material-symbols:account-tree-outline',
+    route: '/toolbox/key-value-filler',
+    beta: true,
+    description: '用节点树填写嵌套键值，并导出为 JSON 或 YAML',
+  },
 ];
 
 // 获取所有默认菜单项配置

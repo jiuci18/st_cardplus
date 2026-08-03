@@ -10,6 +10,7 @@ interface ToolboxDisplayItem {
   icon: string;
   description: string;
   route: string;
+  beta?: boolean;
 }
 
 // 隐藏的菜单项
@@ -24,6 +25,7 @@ const toolboxTools = computed((): ToolboxDisplayItem[] => {
       icon: getIconifyIconName(item.icon),
       description: item.description || '工具箱条目',
       route: item.route,
+      beta: item.beta,
     }));
 });
 
@@ -87,6 +89,7 @@ onUnmounted(() => {
                 height="48"
               />
               <h3>{{ tool.title }}</h3>
+              <el-tag v-if="tool.beta" class="beta-tag" type="warning" effect="dark" size="small">Beta</el-tag>
               <p>{{ tool.description }}</p>
             </div>
           </el-card>
@@ -148,6 +151,10 @@ onUnmounted(() => {
 .toolbox-container {
   width: 100%;
   max-width: 72rem;
+}
+
+.beta-tag {
+  margin-top: -4px;
 }
 
 .section {
