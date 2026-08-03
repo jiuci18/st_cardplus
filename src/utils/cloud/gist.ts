@@ -4,9 +4,8 @@
  */
 
 import { Octokit } from '@octokit/rest';
-import type { GistConfig, BackupData, GistResponse, GistInfo } from '@/types/gist';
+import type { BackupData, GistResponse, GistInfo } from '@/types/gist';
 import { fetchJsonResource } from '@/utils/fetchResource';
-import { readLocalStorageJSON, writeLocalStorageJSON } from '@/utils/localStorageUtils';
 
 const BACKUP_FILENAME = 'st-cardplus-backup.json';
 const GIST_DESCRIPTION = 'SillyTavern Card Plus 数据备份';
@@ -372,29 +371,5 @@ export async function listUserGists(token: string): Promise<GistResponse> {
       success: false,
       message: `获取列表失败: ${error.message || '未知错误'}`,
     };
-  }
-}
-
-/**
- * 从 localStorage 加载 Gist 配置
- */
-export function loadGistConfig(): GistConfig | null {
-  try {
-    return readLocalStorageJSON<GistConfig>('gistConfig');
-  } catch (error) {
-    console.error('加载 Gist 配置失败:', error);
-    return null;
-  }
-}
-
-/**
- * 保存 Gist 配置到 localStorage
- */
-export function saveGistConfig(config: GistConfig): void {
-  try {
-    writeLocalStorageJSON('gistConfig', config);
-  } catch (error) {
-    console.error('保存 Gist 配置失败:', error);
-    throw new Error('保存配置失败');
   }
 }

@@ -7,8 +7,16 @@ import {
   validateMenuConfig,
 } from "@/config/menuConfig";
 import { trackStorageEdit } from "@/utils/editSessionTracker";
+import type { WebDAVConfig } from "@/types/dataSync";
+import type { GistConfig } from "@/types/gist";
+import {
+  createDefaultSyncConfigSettings,
+  LEGACY_SYNC_CONFIG_KEYS,
+  resolveSyncConfigSettings,
+  SETTINGS_STORAGE_KEY,
+} from "@/utils/syncConfigSettings";
 
-const SETTINGS_KEY = "settings";
+const SETTINGS_KEY = SETTINGS_STORAGE_KEY;
 
 // 重新导出类型供其他模块使用
 export type { MenuItemConfig, MenuItemType, SidebarConfig };
@@ -27,6 +35,8 @@ interface AppSettings {
   mobileDominantHand: "left" | "right";
   pngImportUploadBehavior: "ask" | "upload" | "skip";
   sidebarConfig: SidebarConfig;
+  webdavConfig: WebDAVConfig;
+  gistConfig: GistConfig;
 }
 
 type LocalStorageSnapshot = Record<string, string | null>;
@@ -185,6 +195,7 @@ const defaultSettings: AppSettings = {
   mobileDominantHand: "right",
   pngImportUploadBehavior: "ask",
   sidebarConfig: createDefaultSidebarConfig(),
+  ...createDefaultSyncConfigSettings(),
 };
 
 const normalizeSettingValue = <K extends AppSettingsKey>(
@@ -226,6 +237,16 @@ const normalizeSettingValue = <K extends AppSettingsKey>(
       .toLowerCase();
     return (v === "upload" || v === "skip" ? v : "ask") as AppSettings[K];
   }
+  if (key === "webdavConfig" || key === "gistConfig") {
+    const normalized = resolveSyncConfigSettings(
+      { [key]: value },
+      undefined,
+      undefined,
+    );
+    return (key === "webdavConfig"
+      ? normalized.webdavConfig
+      : normalized.gistConfig) as AppSettings[K];
+  }
   return value;
 };
 
@@ -235,32 +256,39 @@ const normalizeSettingValue = <K extends AppSettingsKey>(
  */
 const getSettings = (): AppSettings => {
   try {
+    const legacyWebDAV = readLocalStorageJSON<unknown>(LEGACY_SYNC_CONFIG_KEYS[0]);
+    const legacyGist = readLocalStorageJSON<unknown>(LEGACY_SYNC_CONFIG_KEYS[1]);
     const savedSettings = localStorageStore.get(SETTINGS_KEY);
     if (savedSettings) {
-      const parsed = JSON.parse(savedSettings);
+      const rawParsed: unknown = JSON.parse(savedSettings);
+      const parsed = rawParsed && typeof rawParsed === "object"
+        ? (rawParsed as Record<string, unknown>)
+        : {};
       const currentImgbbApiKey =
         typeof parsed.imgbbApiKey === "string" ? parsed.imgbbApiKey.trim() : "";
       const legacyImgbbApiKey = currentImgbbApiKey
         ? ""
         : (localStorageStore.get("imgbb-api-key")?.trim() ?? "");
 
-      let sidebarConfig = parsed.sidebarConfig;
+      let sidebarConfig = parsed.sidebarConfig as SidebarConfig | undefined;
       if (!sidebarConfig || !validateMenuConfig(sidebarConfig)) {
         console.log("导航栏配置无效或不存在，使用默认配置");
         sidebarConfig = createDefaultSidebarConfig();
       } else {
         sidebarConfig = migrateMenuConfig(sidebarConfig);
       }
-      const mergedSettings = {
+      const mergedSettings: AppSettings = {
         ...defaultSettings,
         ...parsed,
         ...(legacyImgbbApiKey ? { imgbbApiKey: legacyImgbbApiKey } : {}),
         sidebarConfig,
+        ...resolveSyncConfigSettings(parsed, legacyWebDAV, legacyGist),
       };
 
-      if (legacyImgbbApiKey) {
+      if (legacyImgbbApiKey || legacyWebDAV || legacyGist) {
         localStorageStore.set(SETTINGS_KEY, JSON.stringify(mergedSettings));
         localStorageStore.remove("imgbb-api-key");
+        for (const key of LEGACY_SYNC_CONFIG_KEYS) localStorageStore.remove(key);
       }
 
       return mergedSettings;
@@ -268,13 +296,15 @@ const getSettings = (): AppSettings => {
 
     const legacyImgbbApiKey =
       localStorageStore.get("imgbb-api-key")?.trim() ?? "";
-    if (legacyImgbbApiKey) {
+    if (legacyImgbbApiKey || legacyWebDAV || legacyGist) {
       const migratedSettings = {
         ...defaultSettings,
         imgbbApiKey: legacyImgbbApiKey,
+        ...resolveSyncConfigSettings({}, legacyWebDAV, legacyGist),
       };
       localStorageStore.set(SETTINGS_KEY, JSON.stringify(migratedSettings));
       localStorageStore.remove("imgbb-api-key");
+      for (const key of LEGACY_SYNC_CONFIG_KEYS) localStorageStore.remove(key);
       return migratedSettings;
     }
   } catch (error) {
