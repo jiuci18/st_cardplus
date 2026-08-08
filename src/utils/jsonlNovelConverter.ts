@@ -6,6 +6,10 @@ export interface JsonlConversionOptions {
   includeThinking: boolean;
   includeSummary: boolean;
   cleanMode: boolean;
+  /** 1-based message index (metadata line excluded): discard all messages before this index. 0 disables. */
+  startFrom: number;
+  /** 1-based message index (metadata line excluded): remove this and all later messages. 0 disables. */
+  stopAt: number;
 }
 
 export interface JsonlConversionResult {
@@ -40,6 +44,8 @@ const DEFAULT_OPTIONS: JsonlConversionOptions = {
   includeThinking: false,
   includeSummary: false,
   cleanMode: false,
+  startFrom: 0,
+  stopAt: 0,
 };
 
 const normalizeNewlines = (text: string): string => text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
@@ -149,6 +155,13 @@ export function convertJsonlToMarkdown(
   let chapterCount = 0;
 
   lines.slice(1).forEach((line, index) => {
+    const messageIndex = index + 1;
+    if (resolvedOptions.startFrom > 0 && messageIndex < resolvedOptions.startFrom) {
+      return;
+    }
+    if (resolvedOptions.stopAt > 0 && messageIndex >= resolvedOptions.stopAt) {
+      return;
+    }
     const lineNumber = index + 2;
     const data = parseJsonLine<JsonlMessageLine>(line, lineNumber);
     const message = (data.mes || '').trim();

@@ -24,12 +24,26 @@ const options = ref<JsonlConversionOptions>({
   includeThinking: false,
   includeSummary: false,
   cleanMode: false,
+  startFrom: 0,
+  stopAt: 0,
 });
+
+const startFromEnabled = ref(false);
+const startFromValue = ref(1);
+const stopAtEnabled = ref(false);
+const stopAtValue = ref(1);
 
 const hasSource = computed(() => sourceText.value.length > 0);
 const hasOutput = computed(() => outputMarkdown.value.length > 0);
 const sourceLineCount = computed(() => (sourceText.value ? sourceText.value.split(/\r?\n/).length : 0));
 const outputLineCount = computed(() => (outputMarkdown.value ? outputMarkdown.value.split(/\r?\n/).length : 0));
+const messageLayerCount = computed(() => Math.max(0, sourceLineCount.value - 1));
+
+const conversionOptions = computed<JsonlConversionOptions>(() => ({
+  ...options.value,
+  startFrom: startFromEnabled.value ? startFromValue.value : 0,
+  stopAt: stopAtEnabled.value ? stopAtValue.value : 0,
+}));
 
 const applyConversionResult = (result: JsonlConversionResult) => {
   outputMarkdown.value = result.markdown;
@@ -45,7 +59,7 @@ const runConversion = () => {
   }
 
   try {
-    const result = convertJsonlToMarkdown(sourceText.value, sourceFileName.value, options.value);
+    const result = convertJsonlToMarkdown(sourceText.value, sourceFileName.value, conversionOptions.value);
     applyConversionResult(result);
     ElMessage.success(`转换完成，共生成 ${result.chapterCount} 章`);
   } catch (error) {
@@ -136,6 +150,7 @@ const downloadResult = async () => {
       <p>将 SillyTavern 导出的聊天记录 JSONL 转换为 Markdown 小说文本。</p>
       <p>支持直接拖入 `.jsonl` 文件，导入后会自动解析并生成 Markdown。</p>
       <p>开启“完全干净模式”后，将移除标题、角色信息、章节标题、模型信息，只用 `---` 分隔正文。</p>
+      <p>高级选项可按“层”（消息序号，从 1 开始，不含元数据行）截取内容：可抛弃前几层，或从某层起截断。</p>
     </el-alert>
 
     <el-card shadow="hover" class="control-card">
@@ -171,6 +186,36 @@ const downloadResult = async () => {
           <el-checkbox v-model="options.includeThinking">保留 &lt;thinking&gt;</el-checkbox>
           <el-checkbox v-model="options.includeSummary">保留 &lt;details&gt;/摘要</el-checkbox>
           <el-checkbox v-model="options.cleanMode">完全干净模式</el-checkbox>
+
+          <div class="advanced-section">
+            <div class="advanced-title">高级（共 {{ messageLayerCount }} 层）</div>
+            <div class="advanced-row">
+              <el-checkbox v-model="startFromEnabled" class="advanced-checkbox">抛弃第</el-checkbox>
+              <el-input-number
+                v-model="startFromValue"
+                :min="1"
+                :max="Math.max(1, messageLayerCount)"
+                size="small"
+                controls-position="right"
+                :disabled="!startFromEnabled"
+                class="advanced-number"
+              />
+              <span class="advanced-suffix">层之前的内容</span>
+            </div>
+            <div class="advanced-row">
+              <el-checkbox v-model="stopAtEnabled" class="advanced-checkbox">从第</el-checkbox>
+              <el-input-number
+                v-model="stopAtValue"
+                :min="1"
+                :max="Math.max(1, messageLayerCount)"
+                size="small"
+                controls-position="right"
+                :disabled="!stopAtEnabled"
+                class="advanced-number"
+              />
+              <span class="advanced-suffix">层开始移除内容</span>
+            </div>
+          </div>
         </div>
 
         <div class="control-block summary-block">
@@ -301,6 +346,42 @@ const downloadResult = async () => {
   font-size: 15px;
   font-weight: 600;
   color: var(--el-text-color-primary);
+}
+
+.advanced-section {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--el-border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.advanced-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-secondary);
+}
+
+.advanced-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.advanced-checkbox {
+  margin-right: 0;
+  flex-shrink: 0;
+}
+
+.advanced-number {
+  width: 90px;
+}
+
+.advanced-suffix {
+  font-size: 14px;
+  color: var(--el-text-color-regular);
+  white-space: nowrap;
 }
 
 .upload-area :deep(.el-upload-dragger) {
