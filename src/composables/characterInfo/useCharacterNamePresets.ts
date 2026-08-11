@@ -21,7 +21,8 @@ export type CharacterNamePresetLoadErrorCode =
   | "list_fetch_failed"
   | "table_fetch_failed"
   | "invalid_table"
-  | "roll_in_progress";
+  | "roll_in_progress"
+  | "no_available_names";
 
 /** Reports a typed failure from the name-preset loader. */
 export class CharacterNamePresetLoadError extends Error {
@@ -149,7 +150,14 @@ export const useCharacterNamePresets = (): CharacterNamePresetController => {
     mutableRollingPresetLabel.value = preset.label;
     try {
       const table = await loadNameTable(preset);
-      return rollCharacterName(table, gender);
+      const name = rollCharacterName(table, gender);
+      if (name === null) {
+        throw new CharacterNamePresetLoadError(
+          "no_available_names",
+          `Name preset "${preset.label}" has no candidates outside its blacklist.`,
+        );
+      }
+      return name;
     } finally {
       mutableRollingPresetLabel.value = null;
     }

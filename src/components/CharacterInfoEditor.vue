@@ -357,6 +357,8 @@ const namePresetErrorMessage = (error: unknown): string => {
       return "名称表格式无效";
     case "roll_in_progress":
       return "正在生成名称，请稍候";
+    case "no_available_names":
+      return "该预设的可用名称均已被加入黑名单";
   }
 };
 

@@ -16,6 +16,7 @@ export interface CharacterNameTable {
   readonly surnames: readonly string[];
   readonly maleGivenNames: readonly string[];
   readonly femaleGivenNames: readonly string[];
+  readonly blacklist: readonly string[];
   readonly nameOrder: CharacterNameOrder;
   readonly separator: string;
   readonly [VALIDATED_NAME_TABLE]: true;
@@ -109,6 +110,7 @@ export const parseCharacterNameTable = (
     document.nameOrder === "given-first" ? "given-first" : "surname-first";
   const separator =
     typeof document.separator === "string" ? document.separator : "";
+  const blacklist = normalizeStringArray(document.blacklist);
 
   return {
     ok: true,
@@ -116,6 +118,7 @@ export const parseCharacterNameTable = (
       surnames,
       maleGivenNames,
       femaleGivenNames,
+      blacklist,
       nameOrder,
       separator,
       [VALIDATED_NAME_TABLE]: true as const,
@@ -123,22 +126,38 @@ export const parseCharacterNameTable = (
   };
 };
 
-const randomItem = <T>(items: readonly T[], random: () => number): T => {
+const randomIndex = (length: number, random: () => number): number => {
   const sample = random();
   const finiteSample = Number.isFinite(sample) ? sample : 0;
-  const index = Math.min(
-    items.length - 1,
-    Math.max(0, Math.floor(finiteSample * items.length)),
+  return Math.min(
+    length - 1,
+    Math.max(0, Math.floor(finiteSample * length)),
   );
-  return items[index] as T;
 };
 
-/** Rolls one complete name, using both gender lists for an unrecognized gender. */
+const randomItem = <T>(items: readonly T[], random: () => number): T =>
+  items[randomIndex(items.length, random)] as T;
+
+const composeName = (
+  table: CharacterNameTable,
+  surname: string,
+  givenName: string,
+): string =>
+  table.nameOrder === "given-first"
+    ? `${givenName}${table.separator}${surname}`
+    : `${surname}${table.separator}${givenName}`;
+
+/**
+ * Rolls one complete name, using both gender lists for an unrecognized gender.
+ *
+ * Returns `null` when the preset blacklist excludes every candidate for the
+ * selected gender.
+ */
 export const rollCharacterName = (
   table: CharacterNameTable,
   gender: string,
   random: () => number = Math.random,
-): string => {
+): string | null => {
   const givenNames =
     gender === "male"
       ? table.maleGivenNames
@@ -146,10 +165,34 @@ export const rollCharacterName = (
         ? table.femaleGivenNames
         : [...table.maleGivenNames, ...table.femaleGivenNames];
 
+  if (table.blacklist.length > 0) {
+    const blacklist = new Set(table.blacklist);
+    let availableCount = 0;
+    for (const surname of table.surnames) {
+      for (const givenName of givenNames) {
+        if (!blacklist.has(composeName(table, surname, givenName))) {
+          availableCount += 1;
+        }
+      }
+    }
+
+    if (availableCount === 0) return null;
+
+    let selectedIndex = randomIndex(availableCount, random);
+    for (const surname of table.surnames) {
+      for (const givenName of givenNames) {
+        const name = composeName(table, surname, givenName);
+        if (blacklist.has(name)) continue;
+        if (selectedIndex === 0) return name;
+        selectedIndex -= 1;
+      }
+    }
+
+    return null;
+  }
+
   const surname = randomItem(table.surnames, random);
   const givenName = randomItem(givenNames, random);
 
-  return table.nameOrder === "given-first"
-    ? `${givenName}${table.separator}${surname}`
-    : `${surname}${table.separator}${givenName}`;
+  return composeName(table, surname, givenName);
 };
