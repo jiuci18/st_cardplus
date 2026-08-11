@@ -1,4 +1,14 @@
 {
+  "blacklist": [
+    "Arthur Blackwell",
+    "Lucian Hawthorne",
+    "Dorian Sterling",
+    "Tristan Winterbourne",
+    "Sebastian Kingsley",
+    "Freya Blackwell",
+    "Eleanor Hawthorne",
+    "Isolde Sterling"
+  ],
   "nameOrder": "given-first",
   "separator": " ",
   "surnames": [

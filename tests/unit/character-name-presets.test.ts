@@ -305,6 +305,36 @@ test("production_manifest_references_valid_unique_name_tables", async () => {
     );
     if (!result.ok) continue;
 
+    assert.ok(
+      result.value.blacklist.length > 0,
+      `${preset.label} should contain common protagonist names in its blacklist`,
+    );
+    assert.equal(
+      new Set(result.value.blacklist).size,
+      result.value.blacklist.length,
+      `${preset.label} should not contain duplicate blacklist entries`,
+    );
+
+    const generatedNames = new Set(
+      result.value.surnames.flatMap((surname) =>
+        [
+          ...result.value.maleGivenNames,
+          ...result.value.femaleGivenNames,
+        ].map((givenName) =>
+          result.value.nameOrder === "given-first"
+            ? `${givenName}${result.value.separator}${surname}`
+            : `${surname}${result.value.separator}${givenName}`,
+        ),
+      ),
+    );
+    for (const blacklistedName of result.value.blacklist) {
+      assert.equal(
+        generatedNames.has(blacklistedName),
+        true,
+        `${preset.label} blacklist entry ${blacklistedName} should be generatable`,
+      );
+    }
+
     for (const entries of [
       result.value.surnames,
       result.value.maleGivenNames,
