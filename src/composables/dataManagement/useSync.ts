@@ -20,6 +20,7 @@ import type { GistConfig } from '@/types/gist';
 import { DEFAULT_SYNC_PROVIDER, SYNC_PROVIDER_OPTIONS, WEB_DAV_BACKUP_FILE_NAME } from './sync/constants';
 import { confirmLargeRevert, confirmPull, confirmPush, selectGist } from './sync/dialogs';
 import {
+  calculateDownloadedBackupSizeBytes,
   calculateJsonSizeBytes,
   formatDownloadProgressText,
   formatErrorMessage,
@@ -187,7 +188,8 @@ export function useSync() {
         snapshotAvailable.value = snapshotSaved;
       }
 
-      const confirmed = await confirmPull(backupData.timestamp, snapshotSaved);
+      const backupSizeBytes = calculateDownloadedBackupSizeBytes(provider, downloadResult);
+      const confirmed = await confirmPull(backupData.timestamp, backupSizeBytes, snapshotSaved);
       if (!confirmed) {
         clearSnapshot();
         progress.fail('已取消');

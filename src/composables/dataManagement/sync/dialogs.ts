@@ -1,5 +1,6 @@
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { formatDateTime } from '@/utils/datetime';
+import { formatBytes } from '@/utils/formatBytes';
 import type { GistInfo } from '@/types/gist';
 
 export async function confirmPush(): Promise<boolean> {
@@ -16,7 +17,11 @@ export async function confirmPush(): Promise<boolean> {
   }
 }
 
-export async function confirmPull(backupTimestamp: string, snapshotSaved?: boolean): Promise<boolean> {
+export async function confirmPull(
+  backupTimestamp: string,
+  backupSizeBytes: number,
+  snapshotSaved?: boolean
+): Promise<boolean> {
   const snapshotWarning = snapshotSaved === false
     ? '<br/><span style="color: var(--el-color-danger);">缓存区域超限，无法保存撤销快照，本次无法撤销。</span>'
     : '';
@@ -25,6 +30,7 @@ export async function confirmPull(backupTimestamp: string, snapshotSaved?: boole
     await ElMessageBox.confirm(
       `这将用服务器上的备份覆盖所有现有本地数据<br/>
       <strong>备份时间:</strong> ${formatDateTime(backupTimestamp)}<br/>
+      <strong>备份大小:</strong> ${formatBytes(backupSizeBytes)}<br/>
       此操作可能会丢失你没有保存的更改 您确定要继续吗？${snapshotWarning}`,
       '警告',
       {

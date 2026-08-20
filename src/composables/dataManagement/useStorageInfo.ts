@@ -3,6 +3,7 @@ import { worldBookService, type WorldBookStats } from '@/database/appdb/worldBoo
 import { characterCardService, type CharacterCardStats } from '@/database/appdb/characterCardService';
 import { worldEditorService, type WorldEditorStats } from '@/database/appdb/worldEditorService';
 import { getLocalStorageSnapshot } from '@/utils/localStorageUtils';
+import { formatBytes } from '@/utils/formatBytes';
 
 export function useStorageInfo() {
   const indexedDBUsage = ref({
@@ -18,16 +19,6 @@ export function useStorageInfo() {
   const worldBookStats = ref<WorldBookStats | null>(null);
   const characterCardStats = ref<CharacterCardStats | null>(null);
   const worldEditorStats = ref<WorldEditorStats | null>(null);
-
-  // 格式化字节大小
-  const formatBytes = (bytes: number, decimals = 2) => {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-  };
 
   // 获取存储信息
   const getStorageEstimate = async () => {

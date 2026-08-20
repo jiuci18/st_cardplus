@@ -14,6 +14,23 @@ export function parseBackupData(provider: SyncProvider, payload: unknown): Backu
   return result.success ? (result.data ?? null) : null;
 }
 
+export function calculateDownloadedBackupSizeBytes(provider: SyncProvider, payload: unknown): number {
+  if (provider === 'webdav') {
+    return new TextEncoder().encode(String(payload)).length;
+  }
+
+  const result = payload as { backupSizeBytes?: unknown; data?: BackupData };
+  if (
+    typeof result.backupSizeBytes === 'number'
+    && Number.isFinite(result.backupSizeBytes)
+    && result.backupSizeBytes >= 0
+  ) {
+    return result.backupSizeBytes;
+  }
+
+  return calculateJsonSizeBytes(result.data);
+}
+
 function formatSpeedValue(bytesPerSecond: number | null): string {
   if (!bytesPerSecond || !Number.isFinite(bytesPerSecond) || bytesPerSecond <= 0) return '--';
   return (bytesPerSecond / 1024).toFixed(1);
@@ -30,5 +47,5 @@ export function formatDownloadProgressText(provider: SyncProvider, speed: number
 }
 
 export function calculateJsonSizeBytes(data: unknown): number {
-  return JSON.stringify(data).length;
+  return new TextEncoder().encode(JSON.stringify(data, null, 2)).length;
 }
