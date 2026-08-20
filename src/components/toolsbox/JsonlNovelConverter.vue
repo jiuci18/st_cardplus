@@ -5,7 +5,7 @@ import {
   convertJsonlToMarkdown,
   type JsonlConversionOptions,
   type JsonlConversionResult,
-} from '@/utils/jsonlNovelConverter';
+} from './jsonlNovelConversion';
 import { Icon } from '@iconify/vue';
 import type { UploadFile } from 'element-plus';
 import { ElMessage } from 'element-plus';

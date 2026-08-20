@@ -97,7 +97,7 @@ function encode(chunks: Chunk[]): Uint8Array {
     output[idx++] = nameChars[2];
     output[idx++] = nameChars[3];
 
-    for (let j = 0; j < size; ) {
+    for (let j = 0; j < size;) {
       output[idx++] = data[j++];
     }
     const crc = crc32Png(new Uint8Array(nameChars), data);

@@ -6,7 +6,7 @@ import {
   parseCharacterNameTable,
   rollCharacterName,
   type CharacterNameTable,
-} from "../../src/utils/characterNamePresets.ts";
+} from "../../src/composables/characterInfo/characterNamePresets.ts";
 
 const validDocument = {
   surnames: ["顾", "沈"],

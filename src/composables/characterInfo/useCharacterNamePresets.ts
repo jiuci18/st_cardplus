@@ -9,7 +9,7 @@ import {
   rollCharacterName,
   type CharacterNamePreset,
   type CharacterNameTable,
-} from "@/utils/characterNamePresets";
+} from "./characterNamePresets";
 
 export interface NamePresetSettings {
   registries: string[];

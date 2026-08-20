@@ -299,7 +299,7 @@ import {
   useCharacterNamePresets,
 } from "@/composables/characterInfo/useCharacterNamePresets";
 import type { CharacterCard } from "@/types/character/character";
-import type { CharacterNamePreset } from "@/utils/characterNamePresets";
+import type { CharacterNamePreset } from "@/composables/characterInfo/characterNamePresets";
 import CharacterCardButtons from "./charcard/CharacterCardButtons.vue";
 import AppearanceAndAttireTab from "./charcard/tabs/AppearanceAndAttireTab.vue";
 import DailyAndNotesTab from "./charcard/tabs/DailyAndNotesTab.vue";

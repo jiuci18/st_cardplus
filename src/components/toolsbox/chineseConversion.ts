@@ -3,8 +3,8 @@
  * 使用 opencc-js 进行角色卡文本的简繁体转换
  */
 
-import { read, write } from './pngCardMetadata';
-import { saveFile } from './system/fileSave';
+import { read, write } from '@/utils/pngCardMetadata';
+import { saveFile } from '@/utils/system/fileSave';
 
 /**
  * 支持的转换配置
