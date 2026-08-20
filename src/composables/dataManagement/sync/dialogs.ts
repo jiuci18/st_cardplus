@@ -2,6 +2,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { formatDateTime } from '@/utils/datetime';
 import { formatBytes } from '@/utils/formatBytes';
 import type { GistInfo } from '@/types/gist';
+import { isRemoteBackupSmaller } from './helpers';
 
 export async function confirmPush(): Promise<boolean> {
   try {
@@ -19,9 +20,13 @@ export async function confirmPush(): Promise<boolean> {
 
 export async function confirmPull(
   backupTimestamp: string,
-  backupSizeBytes: number,
+  remoteSizeBytes: number,
+  localSizeBytes: number,
   snapshotSaved?: boolean
 ): Promise<boolean> {
+  const sizeWarning = isRemoteBackupSmaller(remoteSizeBytes, localSizeBytes)
+    ? `<br/><span style="color: var(--el-color-danger); font-weight: 600;">警告：远端备份小于本地数据，覆盖后可能丢失本地内容。</span>`
+    : '';
   const snapshotWarning = snapshotSaved === false
     ? '<br/><span style="color: var(--el-color-danger);">缓存区域超限，无法保存撤销快照，本次无法撤销。</span>'
     : '';
@@ -30,7 +35,8 @@ export async function confirmPull(
     await ElMessageBox.confirm(
       `这将用服务器上的备份覆盖所有现有本地数据<br/>
       <strong>备份时间:</strong> ${formatDateTime(backupTimestamp)}<br/>
-      <strong>备份大小:</strong> ${formatBytes(backupSizeBytes)}<br/>
+      <strong>远端大小:</strong> ${formatBytes(remoteSizeBytes)}<br/>
+      <strong>本地大小:</strong> ${formatBytes(localSizeBytes)}${sizeWarning}<br/>
       此操作可能会丢失你没有保存的更改 您确定要继续吗？${snapshotWarning}`,
       '警告',
       {

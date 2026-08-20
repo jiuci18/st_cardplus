@@ -179,17 +179,24 @@ export function useSync() {
         return;
       }
 
+      progress.update('正在比较远端备份与本地数据...');
+      const localBackupData = await buildBackupData(SYNC_EXCLUDED_KEYS);
+      const localSizeBytes = calculateJsonSizeBytes(localBackupData);
+      const remoteSizeBytes = calculateDownloadedBackupSizeBytes(provider, downloadResult);
       const snapshotRecoveryDisabled = getSetting('disableSyncSnapshotRecovery');
       let snapshotSaved: boolean | undefined;
 
       clearSnapshot();
       if (!snapshotRecoveryDisabled) {
-        snapshotSaved = await saveSnapshot(SYNC_SNAPSHOT_SESSION_KEY, SYNC_EXCLUDED_KEYS);
+        snapshotSaved = await saveSnapshot(
+          SYNC_SNAPSHOT_SESSION_KEY,
+          SYNC_EXCLUDED_KEYS,
+          localBackupData.databases as unknown as Record<string, string>,
+        );
         snapshotAvailable.value = snapshotSaved;
       }
 
-      const backupSizeBytes = calculateDownloadedBackupSizeBytes(provider, downloadResult);
-      const confirmed = await confirmPull(backupData.timestamp, backupSizeBytes, snapshotSaved);
+      const confirmed = await confirmPull(backupData.timestamp, remoteSizeBytes, localSizeBytes, snapshotSaved);
       if (!confirmed) {
         clearSnapshot();
         progress.fail('已取消');

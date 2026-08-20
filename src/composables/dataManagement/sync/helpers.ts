@@ -49,3 +49,11 @@ export function formatDownloadProgressText(provider: SyncProvider, speed: number
 export function calculateJsonSizeBytes(data: unknown): number {
   return new TextEncoder().encode(JSON.stringify(data, null, 2)).length;
 }
+
+export function isRemoteBackupSmaller(remoteSizeBytes: number, localSizeBytes: number): boolean {
+  return Number.isFinite(remoteSizeBytes)
+    && Number.isFinite(localSizeBytes)
+    && remoteSizeBytes >= 0
+    && localSizeBytes >= 0
+    && remoteSizeBytes < localSizeBytes;
+}
