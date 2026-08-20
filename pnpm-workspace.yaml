@@ -1,3 +1,14 @@
 allowBuilds:
   esbuild: true
   vue-demi: false
+minimumReleaseAgeExclude:
+  - '@typescript-native-bridge/darwin-arm64@6.0.3-bridge.13.tsgo.7.0.2'
+  - '@typescript-native-bridge/darwin-x64@6.0.3-bridge.13.tsgo.7.0.2'
+  - '@typescript-native-bridge/linux-arm64@6.0.3-bridge.13.tsgo.7.0.2'
+  - '@typescript-native-bridge/linux-arm@6.0.3-bridge.13.tsgo.7.0.2'
+  - '@typescript-native-bridge/linux-x64@6.0.3-bridge.13.tsgo.7.0.2'
+  - '@typescript-native-bridge/win32-arm64@6.0.3-bridge.13.tsgo.7.0.2'
+  - '@typescript-native-bridge/win32-x64@6.0.3-bridge.13.tsgo.7.0.2'
+  - typescript-native-bridge@6.0.3-bridge.13.tsgo.7.0.2
+overrides:
+  typescript: npm:typescript-native-bridge@6.0.3-bridge.13.tsgo.7.0.2
