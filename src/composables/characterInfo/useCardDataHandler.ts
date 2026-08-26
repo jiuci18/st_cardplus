@@ -2,7 +2,13 @@ import type { Ref } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { copyToClipboard as copyUtil } from '../../utils/clipboard';
 import { clearLocalStorage } from '../../utils/localStorageUtils';
-import { createDefaultCharacterCard } from './useCharacterCard';
+import {
+  createDefaultCharacterCard,
+  createEmptyAttire,
+  createEmptyRelationship,
+  createEmptySkill,
+  createEmptyTrait,
+} from './useCharacterCard';
 import type { CharacterCard, Attire, Appearance, Trait, Relationship, Skill, Note, CharacterData } from '@/types/character/character';
 import { cleanObject, removeEmptyFields } from '../../utils/objectUtils';
 import { saveFile } from '../../utils/system/fileSave';
@@ -69,50 +75,50 @@ export const processLoadedData = (parsedData: any): CharacterCard => {
 
   const appearance: Appearance = rawData.appearance || {};
 
-  const attires: Attire[] = Array.isArray(rawData.attires)
+  const attires: Attire[] = Array.isArray(rawData.attires) && rawData.attires.length > 0
     ? rawData.attires.map((attire: any) => ({
-        name: attire.name || '',
-        description: attire.description || '',
-        tops: attire.tops || '',
-        bottoms: attire.bottoms || '',
-        shoes: attire.shoes || '',
-        socks: attire.socks || '',
-        underwears: attire.underwears || '',
-        accessories: Array.isArray(attire.accessories)
-          ? attire.accessories.join('\n')
-          : typeof attire.accessories === 'string'
-            ? attire.accessories
-            : '',
-      }))
-    : [];
+      name: attire.name || '',
+      description: attire.description || '',
+      tops: attire.tops || '',
+      bottoms: attire.bottoms || '',
+      shoes: attire.shoes || '',
+      socks: attire.socks || '',
+      underwears: attire.underwears || '',
+      accessories: Array.isArray(attire.accessories)
+        ? attire.accessories.join('\n')
+        : typeof attire.accessories === 'string'
+          ? attire.accessories
+          : '',
+    }))
+    : [createEmptyAttire()];
 
-  const traits: Trait[] = Array.isArray(rawData.traits)
+  const traits: Trait[] = Array.isArray(rawData.traits) && rawData.traits.length > 0
     ? rawData.traits.map((trait: any) => ({
-        name: trait.name || '',
-        description: trait.description || '',
-        dialogueExamples: Array.isArray(trait.dialogueExamples) ? trait.dialogueExamples : [''],
-        behaviorExamples: Array.isArray(trait.behaviorExamples) ? trait.behaviorExamples : [''],
-      }))
-    : [];
+      name: trait.name || '',
+      description: trait.description || '',
+      dialogueExamples: Array.isArray(trait.dialogueExamples) ? trait.dialogueExamples : [''],
+      behaviorExamples: Array.isArray(trait.behaviorExamples) ? trait.behaviorExamples : [''],
+    }))
+    : [createEmptyTrait()];
 
-  const relationships: Relationship[] = Array.isArray(rawData.relationships)
+  const relationships: Relationship[] = Array.isArray(rawData.relationships) && rawData.relationships.length > 0
     ? rawData.relationships.map((rel: any) => ({
-        name: rel.name || '',
-        description: rel.description || '',
-        features: rel.features || '',
-        dialogueExamples: Array.isArray(rel.dialogueExamples) ? rel.dialogueExamples : [''],
-      }))
-    : [];
+      name: rel.name || '',
+      description: rel.description || '',
+      features: rel.features || '',
+      dialogueExamples: Array.isArray(rel.dialogueExamples) ? rel.dialogueExamples : [''],
+    }))
+    : [createEmptyRelationship()];
 
-  const skills: Skill[] = Array.isArray(rawData.skills)
+  const skills: Skill[] = Array.isArray(rawData.skills) && rawData.skills.length > 0
     ? rawData.skills.map((skill: any) => ({
-        name: skill.name || '',
-        type: skill.type || '',
-        description: skill.description || '',
-        dialogExample: skill.dialogExample || '',
-        behaviorExample: skill.behaviorExample || '',
-      }))
-    : [];
+      name: skill.name || '',
+      type: skill.type || '',
+      description: skill.description || '',
+      dialogExample: skill.dialogExample || '',
+      behaviorExample: skill.behaviorExample || '',
+    }))
+    : [createEmptySkill()];
 
   let notes: Note[] = [];
   const generateNoteId = (): number => {
