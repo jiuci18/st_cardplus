@@ -157,19 +157,6 @@
               <label class="form-label">身份</label>
               <el-input v-model="form.data.identity" type="textarea" :rows="5" placeholder="请输入身份 · 一行一条" />
             </div>
-          </div>
-        </section>
-
-        <section class="form-section">
-          <h3 class="form-section-title">
-            <Icon icon="ph:book-open-duotone" class="form-section-icon" />
-            背景故事
-          </h3>
-          <div class="form-section-content">
-            <div>
-              <label class="form-label">背景故事</label>
-              <el-input v-model="form.data.background" type="textarea" :rows="6" placeholder="请输入背景故事（每行一条）" />
-            </div>
             <div style="margin-top: 1rem">
               <div class="title-Btn" style="
                   display: flex;
@@ -212,6 +199,10 @@
                   </div>
                 </template>
               </el-autocomplete>
+            </div>
+            <div style="margin-top: 1rem">
+              <label class="form-label">背景故事</label>
+              <el-input v-model="form.data.background" type="textarea" :rows="6" placeholder="请输入背景故事（每行一条）" />
             </div>
           </div>
         </section>
