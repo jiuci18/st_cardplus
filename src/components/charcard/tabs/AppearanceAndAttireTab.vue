@@ -24,8 +24,13 @@
           <div class="custom-field-container">
             <el-input type="textarea" :autosize="{ minRows: 1, maxRows: 8 }" v-model="field.value"
               :placeholder="`请输入 ${field.label} 特征`" @input="updateFormField(field.key, field.value)" />
-            <el-button text size="small" @click="removeField(index)" class="remove-btn" title="删除该字段">
-              <Icon icon="material-symbols:delete-outline" width="18" height="18" />
+            <el-button text size="small" class="remove-btn"
+              :class="{ 'is-confirming': pendingDeleteKey === field.key }"
+              :title="pendingDeleteKey === field.key ? '再次点击确认删除' : '删除该字段'"
+              @click="handleRemoveField(index)">
+              <Icon
+                :icon="pendingDeleteKey === field.key ? 'material-symbols:delete-forever-outline' : 'material-symbols:delete-outline'"
+                width="18" height="18" />
             </el-button>
           </div>
         </div>
@@ -112,7 +117,7 @@ import {
   ElMessageBox,
 } from 'element-plus';
 import { useBatchCustomFieldPrompt } from '@/composables/characterInfo/useBatchCustomFieldPrompt';
-import { computed, onMounted, ref, toRefs, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, toRefs, watch } from 'vue';
 import draggable from 'vuedraggable';
 
 const props = defineProps({
@@ -137,6 +142,8 @@ interface AppearanceField {
   value: string;
 }
 const displayFields = ref<AppearanceField[]>([]);
+const pendingDeleteKey = ref<string | null>(null);
+let deleteConfirmationTimer: ReturnType<typeof setTimeout> | undefined;
 const standardFieldsMap: { [key: string]: string } = {
   hairColor: '发色',
   hairstyle: '发型',
@@ -227,6 +234,31 @@ const removeField = (index: number) => {
     displayFields.value.splice(index, 1);
   }
 };
+
+const clearDeleteConfirmation = () => {
+  pendingDeleteKey.value = null;
+  if (deleteConfirmationTimer) {
+    clearTimeout(deleteConfirmationTimer);
+    deleteConfirmationTimer = undefined;
+  }
+};
+
+const handleRemoveField = (index: number) => {
+  const field = displayFields.value[index];
+  if (!field) return;
+
+  if (pendingDeleteKey.value === field.key) {
+    clearDeleteConfirmation();
+    removeField(index);
+    return;
+  }
+
+  clearDeleteConfirmation();
+  pendingDeleteKey.value = field.key;
+  deleteConfirmationTimer = setTimeout(clearDeleteConfirmation, 3000);
+};
+
+onBeforeUnmount(clearDeleteConfirmation);
 
 onMounted(() => {
   syncFields();
@@ -378,6 +410,12 @@ watch(
 
 .remove-btn:hover {
   color: var(--el-color-danger);
+}
+
+.remove-btn.is-confirming {
+  color: var(--el-color-danger);
+  opacity: 1;
+  background: var(--el-color-danger-light-9);
 }
 
 /* 触屏设备无 hover，常显删除按钮 */

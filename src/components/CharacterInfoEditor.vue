@@ -82,7 +82,7 @@
               <div class="form-group-responsive">
                 <label class="form-label">年龄</label>
                 <div style="display: flex; gap: 8px; align-items: center">
-                  <el-input-number v-model="form.data.age" controls-position="right" :min="-Infinity" :max="Infinity"
+                  <el-input-number v-model="form.data.age" :controls="false" :min="-Infinity" :max="Infinity"
                     :precision="0" class="form-full-width" style="flex: 1" />
                   <el-popover placement="bottom" title="随机生成年龄" :width="200" trigger="click">
                     <template #reference>
@@ -121,7 +121,36 @@
               </div>
               <div class="form-group-responsive">
                 <label class="form-label">身高</label>
-                <el-input v-model="form.data.appearance.height" placeholder="请输入身高特征" />
+                <div style="display: flex; gap: 8px; align-items: center">
+                  <el-input v-model="form.data.height" placeholder="请输入身高，如 168cm" />
+                  <el-popover placement="bottom" title="随机生成身高" :width="200" trigger="click">
+                    <template #reference>
+                      <el-button plain title="随机生成身高">
+                        <Icon icon="ph:dice-five-duotone" width="20" height="20" />
+                      </el-button>
+                    </template>
+                    <div style="display: flex; flex-direction: column; gap: 8px">
+                      <el-button size="small" style="margin: 0" @click="rollHeight(140, 155)">娇小 (140-155cm)</el-button>
+                      <el-button size="small" style="margin: 0" @click="rollHeight(156, 165)">偏矮 (156-165cm)</el-button>
+                      <el-button size="small" style="margin: 0" @click="rollHeight(166, 175)">中等 (166-175cm)</el-button>
+                      <el-button size="small" style="margin: 0" @click="rollHeight(176, 190)">高挑 (176-190cm)</el-button>
+                      <el-button size="small" style="margin: 0" @click="rollHeight(191, 220)">超高 (191-220cm)</el-button>
+                      <div style="font-size: 12px; color: var(--el-text-color-secondary); margin-top: 4px">
+                        自定义范围（cm）：
+                      </div>
+                      <div style="display: flex; gap: 4px; align-items: center">
+                        <el-input-number v-model="customHeightMin" size="small" :controls="false" placeholder="最小"
+                          style="width: 100%" />
+                        <span>-</span>
+                        <el-input-number v-model="customHeightMax" size="small" :controls="false" placeholder="最大"
+                          style="width: 100%" />
+                        <el-button size="small" type="primary" plain style="margin: 0" @click="rollCustomHeight">
+                          <Icon icon="ph:dice-five-duotone" width="16" height="16" />
+                        </el-button>
+                      </div>
+                    </div>
+                  </el-popover>
+                </div>
               </div>
             </div>
             <div>
@@ -325,6 +354,8 @@ type NameRollGender = "auto" | "male" | "female" | "random";
 const nameRollGender = ref<NameRollGender>("auto");
 const customAgeMin = ref<number | undefined>(undefined);
 const customAgeMax = ref<number | undefined>(undefined);
+const customHeightMin = ref<number | undefined>(undefined);
+const customHeightMax = ref<number | undefined>(undefined);
 const {
   presets: namePresets,
   isPresetListLoading,
@@ -402,6 +433,21 @@ const rollCustomAge = () => {
 
 const rollAge = (min: number, max: number) => {
   form.value.data.age = Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+const rollCustomHeight = () => {
+  const min = customHeightMin.value ?? 140;
+  const max = customHeightMax.value ?? 220;
+  if (min > max) {
+    ElMessage.warning("最小值不能大于最大值");
+    return;
+  }
+  rollHeight(min, max);
+};
+
+const rollHeight = (min: number, max: number) => {
+  const height = Math.floor(Math.random() * (max - min + 1)) + min;
+  form.value.data.height = `${height}cm`;
 };
 let isUpdatingFromProps = false;
 

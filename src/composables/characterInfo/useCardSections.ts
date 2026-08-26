@@ -10,6 +10,7 @@ export function useCardSections(form: Ref<CharacterCard>) {
         gender: form.value.data.gender,
         customGender: form.value.data.customGender,
         age: form.value.data.age,
+        height: form.value.data.height,
         identity: form.value.data.identity,
       },
       '基本信息'

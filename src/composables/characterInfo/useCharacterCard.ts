@@ -17,10 +17,10 @@ export const createDefaultCharacterCard = (id?: string): CharacterCard => {
       gender: '',
       customGender: '',
       age: 0,
+      height: '',
       identity: '',
       background: '',
       appearance: {
-        height: '',
         hairColor: '',
         hairstyle: '',
         eyes: '',

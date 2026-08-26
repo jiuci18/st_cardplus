@@ -149,6 +149,7 @@ export const processLoadedData = (parsedData: any): CharacterCard => {
     gender: rawData.gender || '',
     customGender: rawData.customGender || '',
     age: Number(rawData.age) || 0,
+    height: typeof rawData.height === 'string' ? rawData.height : '',
     identity: Array.isArray(rawData.identity) ? arrayToText(rawData.identity) : rawData.identity || '',
     background: Array.isArray(rawData.background) ? arrayToText(rawData.background) : rawData.background || '',
     appearance,
@@ -275,7 +276,6 @@ export function useCardDataHandler(form: Ref<CharacterCard>) {
           ...currentMeta,
         };
         const standardFields = {
-          height: '',
           hairColor: '',
           hairstyle: '',
           eyes: '',
