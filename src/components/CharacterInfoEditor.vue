@@ -119,6 +119,10 @@
                 </div>
                 <p class="form-help-text">限制为数字，请勿输入其他字段</p>
               </div>
+              <div class="form-group-responsive">
+                <label class="form-label">身高</label>
+                <el-input v-model="form.data.appearance.height" placeholder="请输入身高特征" />
+              </div>
             </div>
             <div>
               <label class="form-label">身份</label>

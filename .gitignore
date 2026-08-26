@@ -23,7 +23,7 @@ scripts/__pycache__/*
 *.njsproj
 *.sln
 *.sw?
-src-tauri/target/
+src-tauri/target
 src-tauri/gen/
 .vscode/
 generated/

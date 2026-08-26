@@ -138,7 +138,6 @@ interface AppearanceField {
 }
 const displayFields = ref<AppearanceField[]>([]);
 const standardFieldsMap: { [key: string]: string } = {
-  height: '身高',
   hairColor: '发色',
   hairstyle: '发型',
   eyes: '眼睛',
@@ -200,7 +199,6 @@ const handleAddField = async (command: string) => {
     }
     return;
   }
-  // 标准字段：补一个空值 key
   if (!form.value.appearance) form.value.appearance = {};
   form.value.appearance[command] = '';
 };
