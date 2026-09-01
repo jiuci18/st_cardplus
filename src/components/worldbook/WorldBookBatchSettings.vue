@@ -89,9 +89,18 @@ import { createDefaultEntryData } from '@/composables/worldbook/entry/useWorldBo
 import WorldBookEditor from './WorldBookEditor.vue';
 
 type BatchField = {
-  key: keyof WorldBookEntry;
+  key: keyof WorldBookEntry | 'scanScope';
   label: string;
 };
+
+const SCAN_SCOPE_FIELDS = [
+  'matchPersonaDescription',
+  'matchCharacterDescription',
+  'matchCharacterPersonality',
+  'matchCharacterDepthPrompt',
+  'matchScenario',
+  'matchCreatorNotes',
+] as const satisfies ReadonlyArray<keyof WorldBookEntry>;
 
 const props = defineProps<{
   book: WorldBook | null;
@@ -141,18 +150,7 @@ const fieldSections: Array<{ title: string; icon: string; fields: BatchField[] }
       { key: 'keysecondary', label: '次要关键词' },
       { key: 'selectiveLogic', label: '次要关键词逻辑' },
       { key: 'selective', label: '启用次要逻辑' },
-    ],
-  },
-  {
-    title: '扫描范围',
-    icon: 'ph:crosshair-duotone',
-    fields: [
-      { key: 'matchPersonaDescription', label: '用户人设' },
-      { key: 'matchCharacterDescription', label: '角色描述' },
-      { key: 'matchCharacterPersonality', label: '角色性格' },
-      { key: 'matchCharacterDepthPrompt', label: '角色笔记' },
-      { key: 'matchScenario', label: '场景设定' },
-      { key: 'matchCreatorNotes', label: '创作者备注' },
+      { key: 'scanScope', label: '扫描配置' },
     ],
   },
   {
@@ -212,7 +210,9 @@ const entryTreeData = computed(() => {
   ];
 });
 
-const enabledFieldKeys = computed(() => fields.map((field) => field.key).filter((key) => enabledFields.value[key]));
+const enabledFieldKeys = computed(
+  () => fields.map((field) => field.key).filter((key) => enabledFields.value[key]) as Array<keyof WorldBookEntry | 'scanScope'>
+);
 const canApply = computed(() => enabledFieldKeys.value.length > 0 && checkedEntryKeys.value.length > 0);
 
 const syncCheckedEntries = () => {
@@ -250,6 +250,12 @@ const applyBatchSettings = () => {
 
     const nextEntry = { ...entry } as WorldBookEntry;
     enabledFieldKeys.value.forEach((fieldKey) => {
+      if (fieldKey === 'scanScope') {
+        SCAN_SCOPE_FIELDS.forEach((scopeKey) => {
+          (nextEntry as any)[scopeKey] = draftEntry.value[scopeKey];
+        });
+        return;
+      }
       (nextEntry as any)[fieldKey] = copyFieldValue(fieldKey);
       if (fieldKey === 'position' && draftEntry.value.position === 4) {
         nextEntry.role = draftEntry.value.role;
