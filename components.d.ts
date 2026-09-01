@@ -13,6 +13,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AdvancedInfoPanel: typeof import('./src/components/cardManager/main/AdvancedInfoPanel.vue')['default']
     AppearanceAndAttireTab: typeof import('./src/components/charcard/tabs/AppearanceAndAttireTab.vue')['default']
+    AppearanceFieldEditorPanel: typeof import('./src/components/charcard/tabs/AppearanceFieldEditorPanel.vue')['default']
     AppSettings: typeof import('./src/components/settingPage/AppSettings.vue')['default']
     AppSidebar: typeof import('./src/components/ui/layout/AppSidebar.vue')['default']
     BarkeepConnectionDrawer: typeof import('./src/components/home/BarkeepConnectionDrawer.vue')['default']

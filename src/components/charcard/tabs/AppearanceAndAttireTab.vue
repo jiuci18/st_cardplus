@@ -17,48 +17,61 @@
         <span style="margin-left: 4px"></span>
         当你在输入框留空时留空的位置不会被导出，即："不用全部填写"
       </p>
-      <div id="appearance-form">
-        <div v-for="(field, index) in displayFields" :key="field.key" class="field-cell"
-          :class="{ 'is-empty': !field.value }">
-          <label class="form-label">{{ field.label }}</label>
-          <div class="custom-field-container">
-            <el-input type="textarea" :autosize="{ minRows: 1, maxRows: 8 }" v-model="field.value"
-              :placeholder="`请输入 ${field.label} 特征`" @input="updateFormField(field.key, field.value)" />
-            <el-button text size="small" class="remove-btn"
-              :class="{ 'is-confirming': pendingDeleteKey === field.key }"
-              :title="pendingDeleteKey === field.key ? '再次点击确认删除' : '删除该字段'"
-              @click="handleRemoveField(index)">
-              <Icon
-                :icon="pendingDeleteKey === field.key ? 'material-symbols:delete-forever-outline' : 'material-symbols:delete-outline'"
-                width="18" height="18" />
-            </el-button>
+      <div class="appearance-workspace">
+        <div class="appearance-fields-column">
+          <div id="appearance-form">
+            <div v-for="(field, index) in displayFields" :key="field.key" class="field-cell"
+              :class="{ 'is-empty': !field.value, 'is-active': field.key === selectedKey }">
+              <button type="button" class="field-trigger" :aria-pressed="field.key === selectedKey"
+                :title="field.value?.trim() ? `${field.label}：${field.value}` : `编辑 ${field.label}`"
+                @click="selectField(field.key)">
+                <span class="field-trigger-status" aria-hidden="true">
+                  <Icon v-if="field.value?.trim()" icon="material-symbols:check-circle-rounded" width="16"
+                    height="16" />
+                </span>
+                <span class="field-trigger-label">{{ field.label }}</span>
+                <span class="sr-only">{{ field.value?.trim() ? '已填写' : '未填写' }}</span>
+              </button>
+              <el-button text size="small" class="remove-btn"
+                :class="{ 'is-confirming': pendingDeleteKey === field.key }"
+                :title="pendingDeleteKey === field.key ? '再次点击确认删除' : '删除该字段'"
+                @click="handleRemoveField(index)">
+                <Icon
+                  :icon="pendingDeleteKey === field.key ? 'material-symbols:delete-forever-outline' : 'material-symbols:delete-outline'"
+                  width="18" height="18" />
+              </el-button>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 1rem">
+            <el-dropdown trigger="click" @command="handleAddField">
+              <el-button type="primary" size="small">
+                <Icon icon="material-symbols:add" width="20" height="20" />
+                添加字段
+                <Icon icon="material-symbols:arrow-drop-down" width="18" height="18" />
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item v-for="key in missingStandardFields" :key="key" :command="key">
+                    {{ standardFieldsMap[key] }}
+                  </el-dropdown-item>
+                  <el-dropdown-item v-if="missingStandardFields.length === 0" disabled>
+                    标准字段已全部添加
+                  </el-dropdown-item>
+                  <el-dropdown-item command="__custom__" divided>
+                    自定义字段…
+                  </el-dropdown-item>
+                  <el-dropdown-item command="__batch__">
+                    批量添加…
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
         </div>
-      </div>
-      <div style="display: flex; gap: 8px; margin-top: 1rem">
-        <el-dropdown trigger="click" @command="handleAddField">
-          <el-button type="primary" size="small">
-            <Icon icon="material-symbols:add" width="20" height="20" />
-            添加字段
-            <Icon icon="material-symbols:arrow-drop-down" width="18" height="18" />
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item v-for="key in missingStandardFields" :key="key" :command="key">
-                {{ standardFieldsMap[key] }}
-              </el-dropdown-item>
-              <el-dropdown-item v-if="missingStandardFields.length === 0" disabled>
-                标准字段已全部添加
-              </el-dropdown-item>
-              <el-dropdown-item command="__custom__" divided>
-                自定义字段…
-              </el-dropdown-item>
-              <el-dropdown-item command="__batch__">
-                批量添加…
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <div class="appearance-panel-column">
+          <AppearanceFieldEditorPanel :field-key="selectedKey" :label="selectedField?.label ?? ''"
+            :model-value="selectedField?.value ?? ''" @update:model-value="updateSelectedValue" />
+        </div>
       </div>
     </div>
   </section>
@@ -119,6 +132,7 @@ import {
 import { useBatchCustomFieldPrompt } from '@/composables/characterInfo/useBatchCustomFieldPrompt';
 import { computed, onBeforeUnmount, onMounted, ref, toRefs, watch } from 'vue';
 import draggable from 'vuedraggable';
+import AppearanceFieldEditorPanel from './AppearanceFieldEditorPanel.vue';
 
 const props = defineProps({
   form: {
@@ -142,6 +156,7 @@ interface AppearanceField {
   value: string;
 }
 const displayFields = ref<AppearanceField[]>([]);
+const selectedKey = ref<string | null>(null);
 const pendingDeleteKey = ref<string | null>(null);
 let deleteConfirmationTimer: ReturnType<typeof setTimeout> | undefined;
 const standardFieldsMap: { [key: string]: string } = {
@@ -172,9 +187,23 @@ const syncFields = () => {
     }
   }
   displayFields.value = newFields;
+  if (!newFields.some((field) => field.key === selectedKey.value)) {
+    selectedKey.value = newFields[0]?.key ?? null;
+  }
 };
 
-const updateFormField = (key: string, value: string) => {
+const selectedField = computed(
+  () => displayFields.value.find((field) => field.key === selectedKey.value) ?? null,
+);
+
+const selectField = (key: string) => {
+  selectedKey.value = key;
+};
+
+const updateSelectedValue = (value: string) => {
+  const key = selectedKey.value;
+  if (!key) return;
+  if (!form.value.appearance) form.value.appearance = {};
   form.value.appearance[key] = value;
 };
 
@@ -201,6 +230,7 @@ const handleAddField = async (command: string) => {
         return;
       }
       form.value.appearance[name] = '';
+      selectedKey.value = name;
     } catch {
       // 用户取消
     }
@@ -208,6 +238,7 @@ const handleAddField = async (command: string) => {
   }
   if (!form.value.appearance) form.value.appearance = {};
   form.value.appearance[command] = '';
+  selectedKey.value = command;
 };
 
 const addCustomField = async () => {
@@ -229,9 +260,14 @@ const addCustomField = async () => {
 
 const removeField = (index: number) => {
   const fieldToRemove = displayFields.value[index];
-  if (fieldToRemove) {
-    delete form.value.appearance[fieldToRemove.key];
-    displayFields.value.splice(index, 1);
+  if (!fieldToRemove) return;
+
+  delete form.value.appearance[fieldToRemove.key];
+  displayFields.value.splice(index, 1);
+
+  if (selectedKey.value === fieldToRemove.key) {
+    const neighbor = displayFields.value[index] ?? displayFields.value[index - 1];
+    selectedKey.value = neighbor?.key ?? null;
   }
 };
 
@@ -358,15 +394,122 @@ watch(
   border: 1px solid var(--el-color-primary-light-7);
 }
 
+/* 外貌特征：左侧字段列表 + 右侧编辑面板 */
+.appearance-workspace {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.appearance-fields-column {
+  flex: 1;
+  min-width: 0;
+}
+
+.appearance-panel-column {
+  width: 460px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 8px;
+}
+
+@media (min-width: 1600px) {
+  .appearance-panel-column {
+    width: 560px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .appearance-workspace {
+    flex-direction: column;
+  }
+
+  .appearance-panel-column {
+    order: -1;
+    width: 100%;
+    position: static;
+  }
+}
+
 /* 外貌字段：瀑布流（多列布局，按列填充） */
 #appearance-form {
-  column-width: 260px;
-  column-gap: 16px;
+  column-width: 200px;
+  column-gap: 12px;
 }
 
 #appearance-form .field-cell {
   break-inside: avoid;
-  margin-bottom: 16px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.field-trigger {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 4px;
+  background: var(--el-bg-color);
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
+}
+
+.field-trigger:hover {
+  border-color: var(--el-color-primary-light-5);
+}
+
+.field-trigger:focus-visible {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: 1px;
+}
+
+.field-trigger-status {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--el-color-success);
+}
+
+.field-trigger-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.field-cell.is-active .field-trigger {
+  border-color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+}
+
+.field-cell.is-empty .field-trigger-label {
+  color: var(--el-text-color-secondary);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* 其他表单仍用网格 */
@@ -382,16 +525,10 @@ watch(
   }
 }
 
-.custom-field-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .remove-btn {
   flex-shrink: 0;
   width: 28px;
-  height: 28px;
+  height: auto;
   padding: 0;
   display: flex;
   align-items: center;
@@ -428,10 +565,6 @@ watch(
 /* 空值字段淡化提示 */
 .field-cell.is-empty .form-label {
   color: var(--el-text-color-secondary);
-}
-
-.field-cell.is-empty :deep(.el-textarea__inner::placeholder) {
-  font-style: italic;
 }
 
 .title-Btn-add {
@@ -513,7 +646,7 @@ watch(
   }
 
   #appearance-form {
-    column-width: 300px;
+    column-width: 220px;
   }
 
   #routine-form {
