@@ -209,7 +209,7 @@
 
         <el-tabs v-model="activeTab" class="settings-tabs">
           <el-tab-pane label="外观与服装" name="appearance">
-            <AppearanceAndAttireTab :form="form.data" @addAttire="addAttire" @removeAttire="removeAttire"
+            <AppearanceAndAttireTab :active="activeTab === 'appearance'" :form="form.data" @addAttire="addAttire" @removeAttire="removeAttire"
               @exportAppearance="exportAppearance" @exportAttires="exportAttires" v-model:attires="form.data.attires" />
           </el-tab-pane>
           <el-tab-pane label="角色特质" name="traits">

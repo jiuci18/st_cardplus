@@ -2,7 +2,7 @@
   <div class="card-page-container">
     <div
       class="card-page-mobile-layout"
-      v-if="useNewEditor"
+      v-if="useNewEditor && isMobile"
     >
       <div class="editor-area">
         <component
@@ -46,7 +46,7 @@
 
     <div
       class="card-page-desktop-layout"
-      v-if="useNewEditor"
+      v-if="useNewEditor && !isMobile"
     >
       <Splitpanes
         class="default-theme"

@@ -24,7 +24,7 @@
               :class="{ 'is-empty': !field.value, 'is-active': field.key === selectedKey }">
               <button type="button" class="field-trigger" :aria-pressed="field.key === selectedKey"
                 :title="field.value?.trim() ? `${field.label}：${field.value}` : `编辑 ${field.label}`"
-                @click="selectField(field.key)">
+                @click="toggleField(field.key)">
                 <span class="field-trigger-status" aria-hidden="true">
                   <Icon v-if="field.value?.trim()" icon="material-symbols:check-circle-rounded" width="16"
                     height="16" />
@@ -68,10 +68,10 @@
             </el-dropdown>
           </div>
         </div>
-        <div class="appearance-panel-column">
+        <AppearanceFloatingPanel v-if="selectedField" :visible="active" :field-key="selectedKey" :open-signal="panelOpenSignal" :toggle-signal="panelToggleSignal">
           <AppearanceFieldEditorPanel :field-key="selectedKey" :label="selectedField?.label ?? ''"
             :model-value="selectedField?.value ?? ''" @update:model-value="updateSelectedValue" />
-        </div>
+        </AppearanceFloatingPanel>
       </div>
     </div>
   </section>
@@ -133,8 +133,10 @@ import { useBatchCustomFieldPrompt } from '@/composables/characterInfo/useBatchC
 import { computed, onBeforeUnmount, onMounted, ref, toRefs, watch } from 'vue';
 import draggable from 'vuedraggable';
 import AppearanceFieldEditorPanel from './AppearanceFieldEditorPanel.vue';
+import AppearanceFloatingPanel from './AppearanceFloatingPanel.vue';
 
 const props = defineProps({
+  active: { type: Boolean, default: true },
   form: {
     type: Object,
     required: true,
@@ -157,6 +159,8 @@ interface AppearanceField {
 }
 const displayFields = ref<AppearanceField[]>([]);
 const selectedKey = ref<string | null>(null);
+const panelOpenSignal = ref(0);
+const panelToggleSignal = ref(0);
 const pendingDeleteKey = ref<string | null>(null);
 let deleteConfirmationTimer: ReturnType<typeof setTimeout> | undefined;
 const standardFieldsMap: { [key: string]: string } = {
@@ -198,6 +202,15 @@ const selectedField = computed(
 
 const selectField = (key: string) => {
   selectedKey.value = key;
+  panelOpenSignal.value++;
+};
+
+const toggleField = (key: string) => {
+  if (selectedKey.value === key) {
+    panelToggleSignal.value++;
+  } else {
+    selectField(key);
+  }
 };
 
 const updateSelectedValue = (value: string) => {
@@ -230,7 +243,7 @@ const handleAddField = async (command: string) => {
         return;
       }
       form.value.appearance[name] = '';
-      selectedKey.value = name;
+      selectField(name);
     } catch {
       // 用户取消
     }
@@ -238,7 +251,7 @@ const handleAddField = async (command: string) => {
   }
   if (!form.value.appearance) form.value.appearance = {};
   form.value.appearance[command] = '';
-  selectedKey.value = command;
+  selectField(command);
 };
 
 const addCustomField = async () => {
@@ -394,41 +407,9 @@ watch(
   border: 1px solid var(--el-color-primary-light-7);
 }
 
-/* 外貌特征：左侧字段列表 + 右侧编辑面板 */
-.appearance-workspace {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-}
-
+/* 编辑器悬浮于视口，字段列表不再为侧栏预留空间。 */
 .appearance-fields-column {
-  flex: 1;
   min-width: 0;
-}
-
-.appearance-panel-column {
-  width: 460px;
-  flex-shrink: 0;
-  position: sticky;
-  top: 8px;
-}
-
-@media (min-width: 1600px) {
-  .appearance-panel-column {
-    width: 560px;
-  }
-}
-
-@media (max-width: 1023px) {
-  .appearance-workspace {
-    flex-direction: column;
-  }
-
-  .appearance-panel-column {
-    order: -1;
-    width: 100%;
-    position: static;
-  }
 }
 
 /* 外貌字段：瀑布流（多列布局，按列填充） */
