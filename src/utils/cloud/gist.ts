@@ -213,6 +213,7 @@ async function downloadFromGist(token: string, gistId: string): Promise<GistResp
       success: true,
       message: '成功从 Gist 下载备份数据',
       data: backupData,
+      backupSizeBytes: new TextEncoder().encode(content).length,
     };
   } catch (error: any) {
     console.error('[Gist API] 下载失败:', error);
@@ -309,6 +310,7 @@ export async function downloadFromGistWithProgress(
       success: true,
       message: '成功从 Gist 下载备份数据',
       data: backupData,
+      backupSizeBytes: new TextEncoder().encode(content).length,
     };
   } catch (error: any) {
     console.error('[Gist API] 下载失败:', error);

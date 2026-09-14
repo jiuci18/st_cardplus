@@ -1,4 +1,37 @@
-import type { CharacterCard } from '@/types/character/character';
+import type { Attire, CharacterCard, Relationship, Skill, Trait } from '@/types/character/character';
+
+export const createEmptyAttire = (): Attire => ({
+  name: '',
+  description: '',
+  tops: '',
+  bottoms: '',
+  shoes: '',
+  socks: '',
+  underwears: '',
+  accessories: '',
+});
+
+export const createEmptyTrait = (): Trait => ({
+  name: '',
+  description: '',
+  dialogueExamples: [''],
+  behaviorExamples: [''],
+});
+
+export const createEmptyRelationship = (): Relationship => ({
+  name: '',
+  description: '',
+  features: '',
+  dialogueExamples: [''],
+});
+
+export const createEmptySkill = (): Skill => ({
+  name: '',
+  type: '',
+  description: '',
+  dialogExample: '',
+  behaviorExample: '',
+});
 
 /**
  * 创建默认的角色卡数据
@@ -17,10 +50,10 @@ export const createDefaultCharacterCard = (id?: string): CharacterCard => {
       gender: '',
       customGender: '',
       age: 0,
+      height: '',
       identity: '',
       background: '',
       appearance: {
-        height: '',
         hairColor: '',
         hairstyle: '',
         eyes: '',
@@ -36,10 +69,10 @@ export const createDefaultCharacterCard = (id?: string): CharacterCard => {
         butt: '',
         feet: '',
       },
-      attires: [],
+      attires: [createEmptyAttire()],
       mbti: '',
-      traits: [],
-      relationships: [],
+      traits: [createEmptyTrait()],
+      relationships: [createEmptyRelationship()],
       likes: '',
       dislikes: '',
       dailyRoutine: {
@@ -50,7 +83,7 @@ export const createDefaultCharacterCard = (id?: string): CharacterCard => {
         night: '',
         lateNight: '',
       },
-      skills: [],
+      skills: [createEmptySkill()],
       notes: [],
     },
   };

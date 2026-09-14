@@ -17,7 +17,7 @@
           @click="handleMenuClick(item.index)"
         >
           <el-icon :size="20">
-            <component :is="item.icon" />
+            <Icon :icon="item.icon" />
           </el-icon>
           <span class="menu-text">{{ item.title }}</span>
           <span
@@ -65,6 +65,7 @@
 <script setup lang="ts">
 import { useNavigation } from '@/composables/useNavigation';
 import { InfoFilled, Moon, Setting, Sunny } from '@element-plus/icons-vue';
+import { Icon } from '@iconify/vue';
 import { ElDrawer, ElIcon } from 'element-plus';
 
 const visible = defineModel<boolean>({ default: false });

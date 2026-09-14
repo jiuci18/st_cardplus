@@ -1,6 +1,7 @@
 import type { Ref } from 'vue';
 import type { CharacterCard } from '@/types/character/character';
 import { addItem, removeItem, exportSection } from './sectionHelpers';
+import { createEmptyAttire, createEmptyRelationship, createEmptySkill, createEmptyTrait } from './useCharacterCard';
 
 export function useCardSections(form: Ref<CharacterCard>) {
   const exportBasicInfo = () =>
@@ -10,39 +11,21 @@ export function useCardSections(form: Ref<CharacterCard>) {
         gender: form.value.data.gender,
         customGender: form.value.data.customGender,
         age: form.value.data.age,
+        height: form.value.data.height,
         identity: form.value.data.identity,
       },
       '基本信息'
     );
 
-  const addTrait = () =>
-    addItem(form.value.data.traits, () => ({
-      name: '',
-      description: '',
-      dialogueExamples: [''],
-      behaviorExamples: [''],
-    }));
+  const addTrait = () => addItem(form.value.data.traits, createEmptyTrait);
 
   const removeTrait = (index: number) => removeItem(form.value.data.traits, index);
 
-  const addSkill = () =>
-    addItem(form.value.data.skills, () => ({
-      name: '',
-      type: '',
-      description: '',
-      dialogExample: '',
-      behaviorExample: '',
-    }));
+  const addSkill = () => addItem(form.value.data.skills, createEmptySkill);
 
   const removeSkill = (index: number) => removeItem(form.value.data.skills, index);
 
-  const addRelationship = () =>
-    addItem(form.value.data.relationships, () => ({
-      name: '',
-      description: '',
-      features: '',
-      dialogueExamples: [''],
-    }));
+  const addRelationship = () => addItem(form.value.data.relationships, createEmptyRelationship);
 
   const removeRelationship = (index: number) => removeItem(form.value.data.relationships, index);
 
@@ -68,17 +51,7 @@ export function useCardSections(form: Ref<CharacterCard>) {
     removeItem(form.value.data.notes, index);
   };
 
-  const addAttire = () =>
-    addItem(form.value.data.attires, () => ({
-      name: '',
-      description: '',
-      tops: '',
-      bottoms: '',
-      shoes: '',
-      socks: '',
-      underwears: '',
-      accessories: '',
-    }));
+  const addAttire = () => addItem(form.value.data.attires, createEmptyAttire);
 
   const removeAttire = (index: number) => removeItem(form.value.data.attires, index);
   const exportAttires = () => {

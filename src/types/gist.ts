@@ -41,6 +41,8 @@ export interface GistResponse {
   success: boolean;
   message: string;
   data?: any;
+  /** 原始备份文件的 UTF-8 字节数。 */
+  backupSizeBytes?: number;
 }
 
 /**

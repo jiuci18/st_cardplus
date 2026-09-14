@@ -29,9 +29,13 @@ export async function buildBackupData(
   };
 }
 
-export async function saveSnapshot(snapshotKey: string, excludedKeys: string[]): Promise<boolean> {
+export async function saveSnapshot(
+  snapshotKey: string,
+  excludedKeys: string[],
+  databaseSnapshot?: Record<string, string>,
+): Promise<boolean> {
   const localStorageData = getLocalStorageSnapshot({ excludeKeys: excludedKeys });
-  const dbSnapshot = await exportAllDatabases();
+  const dbSnapshot = databaseSnapshot ?? await exportAllDatabases();
   const snapshot = { ...localStorageData, ...dbSnapshot };
 
   try {

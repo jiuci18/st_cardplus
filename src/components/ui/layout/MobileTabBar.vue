@@ -31,7 +31,7 @@
         :class="{ active: isActive(item.index) }"
       >
         <el-icon :size="20">
-          <component :is="item.icon" />
+          <Icon :icon="item.icon" />
         </el-icon>
         <span class="tab-label">{{ item.title }}</span>
       </router-link>
@@ -53,6 +53,7 @@
 import { useNavigation } from '@/composables/useNavigation';
 import { useAppUpdate } from '@/composables/useAppUpdate';
 import { Menu } from '@element-plus/icons-vue';
+import { Icon } from '@iconify/vue';
 import { ElIcon } from 'element-plus';
 
 defineEmits<{

@@ -184,14 +184,6 @@
                     启用次要逻辑
                   </el-checkbox>
                 </div>
-              </div>
-            </section>
-            <section class="form-section">
-              <h3 class="form-section-title">
-                <Icon icon="ph:crosshair-duotone" class="form-section-icon" />
-                扫描范围
-              </h3>
-              <div class="form-grid-3-col-top-align">
                 <div class="form-grid-span-3">
                   <label class="form-label">扫描范围 (Scan Scope)</label>
                   <div class="form-grid-3-col">

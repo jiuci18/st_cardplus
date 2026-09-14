@@ -1,3 +1,5 @@
+import { now, nowIso } from "./datetime.ts";
+
 const EDIT_DIRECTORY_STORAGE_KEY = "ST_CARDPLUS_SESSION_EDIT_DIRECTORY";
 const MAX_EDIT_RECORDS = 500;
 
@@ -54,10 +56,8 @@ interface IndexedDbEditInput {
 
 const newId = (): string => {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `${now().getTime()}-${Math.random().toString(36).slice(2)}`;
 };
-
-const nowIso = (): string => new Date().toISOString();
 
 const canUseSessionStorage = (): boolean =>
   typeof window !== "undefined" && typeof window.sessionStorage !== "undefined";
@@ -121,21 +121,21 @@ const appendRecord = (record: Omit<EditSessionRecord, "id" | "updatedAt">): void
 
   directory.entries[targetKey] = current
     ? {
-        ...current,
-        operations: Array.from(new Set([...current.operations, record.operation])),
-        count: current.count + 1,
-        fields: mergeFields(current.fields, fields),
-        lastEditedAt: updatedAt,
-      }
+      ...current,
+      operations: Array.from(new Set([...current.operations, record.operation])),
+      count: current.count + 1,
+      fields: mergeFields(current.fields, fields),
+      lastEditedAt: updatedAt,
+    }
     : {
-        storage: record.storage,
-        target: record.target,
-        operations: [record.operation],
-        count: 1,
-        fields: fields.slice().sort(),
-        firstEditedAt: updatedAt,
-        lastEditedAt: updatedAt,
-      };
+      storage: record.storage,
+      target: record.target,
+      operations: [record.operation],
+      count: 1,
+      fields: fields.slice().sort(),
+      firstEditedAt: updatedAt,
+      lastEditedAt: updatedAt,
+    };
 
   directory.records = [...directory.records, nextRecord].slice(-MAX_EDIT_RECORDS);
   directory.updatedAt = updatedAt;

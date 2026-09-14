@@ -15,7 +15,7 @@
         placement="right" :show-after="200" :disabled="sidebarExpanded">
         <router-link :to="item.index" class="nav-item" :class="{ active: isActive(item.index) }">
           <el-icon :size="20">
-            <component :is="item.icon" />
+            <Icon :icon="item.icon" />
           </el-icon>
           <span class="nav-text">{{ item.title }}</span>
           <span v-if="item.beta && sidebarExpanded" class="beta-tag">
@@ -33,7 +33,7 @@
         :disabled="sidebarExpanded">
         <router-link :to="toolboxItem.index" class="nav-item" :class="{ active: isActive(toolboxItem.index) }">
           <el-icon :size="20">
-            <component :is="toolboxItem.icon" />
+            <Icon :icon="toolboxItem.icon" />
           </el-icon>
           <span class="nav-text">{{ toolboxItem.title }}</span>
         </router-link>
@@ -94,6 +94,7 @@ import { useNavigation } from '@/composables/useNavigation';
 import { useAppUpdate } from '@/composables/useAppUpdate';
 import { getSetting, setSetting } from '@/utils/localStorageUtils';
 import { DArrowLeft, DArrowRight, InfoFilled, Moon, Setting, Sunny } from '@element-plus/icons-vue';
+import { Icon } from '@iconify/vue';
 import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 

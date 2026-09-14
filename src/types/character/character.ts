@@ -3,7 +3,6 @@
  * 包含角色的所有外观相关属性
  */
 export interface Appearance {
-  height: string; // 身高
   hairColor: string; // 发色
   hairstyle: string; // 发型
   eyes: string; // 眼睛
@@ -106,6 +105,7 @@ export interface CharacterData {
   gender: string; // 性别
   customGender: string; // 自定义性别
   age: number; // 年龄
+  height: string; // 身高
   identity: string; // 身份
   background: string; // 背景故事
   appearance: Appearance; // 外观特征

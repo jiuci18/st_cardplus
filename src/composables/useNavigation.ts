@@ -1,16 +1,16 @@
-import type { Component, InjectionKey, Ref } from 'vue';
+import type { InjectionKey, Ref } from 'vue';
 import { computed, inject, provide } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 import type { MenuItemConfig } from '@/config/menuConfig';
-import { getIconComponent } from '@/config/menuConfig';
+import { getIconifyIconName } from '@/config/menuConfig';
 import { useDark, useToggle } from '@vueuse/core';
 import { useDevice } from './useDevice';
 
 export interface ProcessedMenuItem extends Omit<MenuItemConfig, 'icon'> {
   index: string;
-  icon: Component;
-  originalIcon: string;
+  /** Iconify 图标名称（如 'ep:house'、'material-symbols:account-tree-outline'） */
+  icon: string;
 }
 
 export interface NavigationContext {
@@ -62,8 +62,7 @@ export function provideNavigation(menuItems: Ref<MenuItemConfig[]>): NavigationC
   const processMenuItem = (item: MenuItemConfig): ProcessedMenuItem => ({
     ...item,
     index: item.route,
-    originalIcon: item.icon,
-    icon: getIconComponent(item.icon),
+    icon: getIconifyIconName(item.icon),
   });
 
   const allMenuItems = computed(() => menuItems.value.map(processMenuItem));

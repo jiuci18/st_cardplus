@@ -6,7 +6,7 @@ import {
   parseCharacterNameTable,
   rollCharacterName,
   type CharacterNameTable,
-} from "../../src/utils/characterNamePresets.ts";
+} from "../../src/composables/characterInfo/characterNamePresets.ts";
 
 const validDocument = {
   surnames: ["顾", "沈"],
@@ -50,8 +50,21 @@ test("normalizes_name_table_entries_and_defaults_to_chinese_name_order", () => {
   assert.deepEqual(result.value.surnames, ["顾"]);
   assert.deepEqual(result.value.maleGivenNames, ["云舟"]);
   assert.deepEqual(result.value.femaleGivenNames, ["清漪"]);
+  assert.deepEqual(result.value.blacklist, []);
   assert.equal(result.value.nameOrder, "surname-first");
   assert.equal(result.value.separator, "");
+});
+
+test("normalizes_blacklist_entries", () => {
+  const result = parseCharacterNameTable({
+    ...validDocument,
+    blacklist: [" 顾云舟 ", "", 42, "   ", "沈令仪"],
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok)
+    throw new Error("Expected the name table blacklist to be valid.");
+  assert.deepEqual(result.value.blacklist, ["顾云舟", "沈令仪"]);
 });
 
 test("rejects_name_table_without_surnames", () => {
@@ -147,6 +160,59 @@ test("clamps_out_of_range_random_samples", () => {
   assert.equal(name, "沈云舟");
 });
 
+test("rejects_exact_blacklisted_name", () => {
+  const result = parseCharacterNameTable({
+    surnames: ["张"],
+    maleGivenNames: ["三", "三丰"],
+    femaleGivenNames: ["五"],
+    blacklist: ["张三"],
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) throw new Error("Expected the name table to be valid.");
+  assert.equal(rollCharacterName(result.value, "male", () => 0), "张三丰");
+});
+
+test("matches_blacklist_after_applying_name_order_and_separator", () => {
+  const result = parseCharacterNameTable({
+    ...validDocument,
+    nameOrder: "given-first",
+    separator: "·",
+    blacklist: ["云舟·顾"],
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) throw new Error("Expected the name table to be valid.");
+  assert.equal(rollCharacterName(result.value, "male", () => 0), "怀瑾·顾");
+});
+
+test("returns_null_when_blacklist_exhausts_gender_candidates", () => {
+  const result = parseCharacterNameTable({
+    surnames: ["顾"],
+    maleGivenNames: ["云舟"],
+    femaleGivenNames: ["清漪"],
+    blacklist: ["顾云舟"],
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) throw new Error("Expected the name table to be valid.");
+  assert.equal(rollCharacterName(result.value, "male", () => 0), null);
+  assert.equal(rollCharacterName(result.value, "female", () => 0), "顾清漪");
+});
+
+test("excludes_blacklisted_names_for_combined_gender_rolls", () => {
+  const result = parseCharacterNameTable({
+    surnames: ["顾"],
+    maleGivenNames: ["云舟"],
+    femaleGivenNames: ["清漪"],
+    blacklist: ["顾云舟"],
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) throw new Error("Expected the name table to be valid.");
+  assert.equal(rollCharacterName(result.value, "random", () => 0), "顾清漪");
+});
+
 test("production_manifest_references_valid_unique_name_tables", async () => {
   const publicDirectory = new URL("../../public/", import.meta.url);
   const manifestDocument = JSON.parse(
@@ -238,6 +304,36 @@ test("production_manifest_references_valid_unique_name_tables", async () => {
       `${preset.label} should contain a valid table`,
     );
     if (!result.ok) continue;
+
+    assert.ok(
+      result.value.blacklist.length > 0,
+      `${preset.label} should contain common protagonist names in its blacklist`,
+    );
+    assert.equal(
+      new Set(result.value.blacklist).size,
+      result.value.blacklist.length,
+      `${preset.label} should not contain duplicate blacklist entries`,
+    );
+
+    const generatedNames = new Set(
+      result.value.surnames.flatMap((surname) =>
+        [
+          ...result.value.maleGivenNames,
+          ...result.value.femaleGivenNames,
+        ].map((givenName) =>
+          result.value.nameOrder === "given-first"
+            ? `${givenName}${result.value.separator}${surname}`
+            : `${surname}${result.value.separator}${givenName}`,
+        ),
+      ),
+    );
+    for (const blacklistedName of result.value.blacklist) {
+      assert.equal(
+        generatedNames.has(blacklistedName),
+        true,
+        `${preset.label} blacklist entry ${blacklistedName} should be generatable`,
+      );
+    }
 
     for (const entries of [
       result.value.surnames,

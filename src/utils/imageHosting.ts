@@ -79,29 +79,6 @@ export const sanitizeImageBytesForUpload = async (
   return stripCharacterCardMetadata(bytes);
 };
 
-const fileToBase64 = async (file: File): Promise<string> => {
-  const sanitizedBytes = await sanitizeImageBytesForUpload(file);
-  return bytesToBase64(sanitizedBytes);
-};
-
-const toHostingProvider = (value: string): HostingProvider => {
-  const normalized = value.trim().toLowerCase();
-  if (!isHostingProvider(normalized)) {
-    throw new Error(`Unsupported hosting provider: ${value}`);
-  }
-  return normalized;
-};
-
-const buildLocalAssetUrl = async (savedPath: string): Promise<string> => {
-  const normalizedPath = savedPath.trim();
-  if (!normalizedPath) {
-    throw new Error("本地图片保存成功，但未返回有效路径");
-  }
-
-  const { convertFileSrc } = await import("@tauri-apps/api/core");
-  return convertFileSrc(normalizedPath);
-};
-
 export const uploadImageToHostingViaTauri = async (
   file: File,
   provider: HostingProvider,
@@ -111,7 +88,8 @@ export const uploadImageToHostingViaTauri = async (
     throw new Error("该功能仅在桌面 APP 版本可用");
   }
 
-  const base64Data = await fileToBase64(file);
+  const sanitizedBytes = await sanitizeImageBytesForUpload(file);
+  const base64Data = bytesToBase64(sanitizedBytes);
   const { invoke } = await import("@tauri-apps/api/core");
 
   const result = await invoke<UploadImageCommandResult>(
@@ -125,14 +103,18 @@ export const uploadImageToHostingViaTauri = async (
     },
   );
 
-  const resolvedProvider = toHostingProvider(
-    String(result?.provider || provider),
-  );
+  const providerValue = String(result?.provider || provider);
+  const resolvedProvider = providerValue.trim().toLowerCase();
+  if (!isHostingProvider(resolvedProvider)) {
+    throw new Error(`Unsupported hosting provider: ${providerValue}`);
+  }
+
   const savedPath = String(result?.saved_path || "").trim() || undefined;
   let url = String(result?.url || "").trim();
 
   if (!url && resolvedProvider === "local" && savedPath) {
-    url = await buildLocalAssetUrl(savedPath);
+    const { convertFileSrc } = await import("@tauri-apps/api/core");
+    url = convertFileSrc(savedPath);
   }
 
   if (!url) {

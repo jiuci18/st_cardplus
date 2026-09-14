@@ -20,6 +20,7 @@ import type { GistConfig } from '@/types/gist';
 import { DEFAULT_SYNC_PROVIDER, SYNC_PROVIDER_OPTIONS, WEB_DAV_BACKUP_FILE_NAME } from './sync/constants';
 import { confirmLargeRevert, confirmPull, confirmPush, selectGist } from './sync/dialogs';
 import {
+  calculateDownloadedBackupSizeBytes,
   calculateJsonSizeBytes,
   formatDownloadProgressText,
   formatErrorMessage,
@@ -178,16 +179,24 @@ export function useSync() {
         return;
       }
 
+      progress.update('正在比较远端备份与本地数据...');
+      const localBackupData = await buildBackupData(SYNC_EXCLUDED_KEYS);
+      const localSizeBytes = calculateJsonSizeBytes(localBackupData);
+      const remoteSizeBytes = calculateDownloadedBackupSizeBytes(provider, downloadResult);
       const snapshotRecoveryDisabled = getSetting('disableSyncSnapshotRecovery');
       let snapshotSaved: boolean | undefined;
 
       clearSnapshot();
       if (!snapshotRecoveryDisabled) {
-        snapshotSaved = await saveSnapshot(SYNC_SNAPSHOT_SESSION_KEY, SYNC_EXCLUDED_KEYS);
+        snapshotSaved = await saveSnapshot(
+          SYNC_SNAPSHOT_SESSION_KEY,
+          SYNC_EXCLUDED_KEYS,
+          localBackupData.databases as unknown as Record<string, string>,
+        );
         snapshotAvailable.value = snapshotSaved;
       }
 
-      const confirmed = await confirmPull(backupData.timestamp, snapshotSaved);
+      const confirmed = await confirmPull(backupData.timestamp, remoteSizeBytes, localSizeBytes, snapshotSaved);
       if (!confirmed) {
         clearSnapshot();
         progress.fail('已取消');

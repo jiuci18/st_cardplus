@@ -10,7 +10,7 @@ import {
   type ConversionResult,
   convertPngCharacterCardBatch,
   downloadConvertedPngBatch,
-} from '@/utils/chineseConverter';
+} from './chineseConversion';
 
 // 文件列表项接口
 interface FileItem {

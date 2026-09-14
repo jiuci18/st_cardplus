@@ -1,6 +1,7 @@
 import { createClient } from "webdav";
 import type { WebDAVClientOptions } from "webdav";
 import { isTauriApp } from "@/utils/system/tauri";
+import { buildWebDAVResourceUrl } from "@/utils/cloud/webdavUrl";
 
 export interface WebDAVConnectionOptions extends WebDAVClientOptions {
   url: string;
@@ -56,11 +57,6 @@ function createWebDAVClient(options: WebDAVConnectionOptions) {
   });
 }
 
-function buildWebDAVUrl(baseUrl: string, remotePath: string) {
-  const normalizedBase = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
-  return new URL(remotePath, normalizedBase).toString();
-}
-
 function buildAuthHeader(options: WebDAVConnectionOptions) {
   if (!options.username && !options.password) return null;
   const token = btoa(`${options.username ?? ""}:${options.password ?? ""}`);
@@ -79,7 +75,7 @@ export async function uploadToWebDAVWithProgress(
     return;
   }
 
-  const url = buildWebDAVUrl(options.url, remotePath);
+  const url = buildWebDAVResourceUrl(options.url, remotePath);
   const authHeader = buildAuthHeader(options);
 
   await new Promise<void>((resolve, reject) => {
@@ -127,7 +123,9 @@ export async function downloadFromWebDAVWithProgress(
     return content;
   }
 
-  const url = buildWebDAVUrl(options.url, remotePath);
+  // The resource URL is stable across backups. A nonce prevents browsers from
+  // reusing a stale authenticated GET after a successful PUT.
+  const url = buildWebDAVResourceUrl(options.url, remotePath, Date.now());
   const authHeader = buildAuthHeader(options);
 
   return await new Promise<string>((resolve, reject) => {
