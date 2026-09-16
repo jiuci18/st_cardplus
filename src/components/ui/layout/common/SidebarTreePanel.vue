@@ -21,7 +21,9 @@
             <button v-if="draggable" class="sidebar-tree-node-drag-handle" type="button" aria-label="拖拽排序" @click.stop>
               <Icon icon="ph:dots-six-vertical-bold" class="sidebar-tree-node-drag-handle-icon" />
             </button>
-            <slot name="node" :node="node" :data="data" />
+            <TreeNodeMenu :items="nodeMenuItems?.(data, node) ?? []" @select="emit('node-menu-select', $event, data, node)">
+              <slot name="node" :node="node" :data="data" />
+            </TreeNodeMenu>
           </div>
         </template>
       </el-tree>
@@ -35,6 +37,8 @@
 
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
+import TreeNodeMenu from './TreeNodeMenu.vue';
+import type { TreeMenuItem } from './treeMenu';
 import { ElScrollbar, ElTree } from 'element-plus';
 import { ref, watch } from 'vue';
 import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
@@ -43,6 +47,7 @@ type ActualNodeDropType = Exclude<NodeDropType, 'none'>;
 
 interface Props {
   title: string;
+  nodeMenuItems?: (data: any, node: any) => TreeMenuItem[];
   treeData: any[];
   treeProps?: Record<string, any>;
   nodeKey?: string;
@@ -71,6 +76,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
+  (e: 'node-menu-select', key: string, data: any, node: any): void;
   (e: 'node-click', data: any, context?: { node: any; component: any; event: MouseEvent | undefined }): void;
   (e: 'node-dblclick', data: any, context?: { node: any; event: MouseEvent | undefined }): void;
 }>();

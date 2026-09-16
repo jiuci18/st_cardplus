@@ -4,10 +4,7 @@
       <div class="worldbook-mobile-panel">
         <div class="content-panel-header">
           <h2 class="content-panel-title">
-            <Icon
-              icon="ph:note-pencil-duotone"
-              class="content-panel-icon"
-            />
+            <Icon icon="ph:note-pencil-duotone" class="content-panel-icon" />
             编辑:
             <span class="content-panel-text-highlight">
               {{ editorTitle }}
@@ -15,145 +12,65 @@
           </h2>
           <div class="worldbook-editor-header-actions">
             <span class="worldbook-import-notice">导入须知：请使用从酒馆导出的世界书进行导入</span>
-            <WorldBookActions
-              context="editor"
-              :has-selection="activeView === 'entry' && !!selectedEntry"
-              :save-status="saveStatus"
-              :auto-save-mode="autoSaveMode"
-              @toggle-mode="toggleAutoSaveMode"
-              @copy-entry="copySelectedEntry"
-              @save-entry="saveCurrentEntry"
-              @delete-entry="deleteSelectedEntry"
-            />
+            <WorldBookActions context="editor" :has-selection="activeView === 'entry' && !!selectedEntry"
+              :save-status="saveStatus" :auto-save-mode="autoSaveMode" @toggle-mode="toggleAutoSaveMode"
+              @copy-entry="copySelectedEntry" @save-entry="saveCurrentEntry" @delete-entry="deleteSelectedEntry" />
           </div>
         </div>
-        <WorldBookBatchSettings
-          v-if="activeView === 'batch'"
-          :book="activeBook"
-          :all-keywords="allKeywords"
-          @apply="applyBatchSettings"
-        />
-        <WorldBookEditor
-          v-else
-          :entry="selectedEntry"
-          v-model="editableEntry"
-          :all-keywords="allKeywords"
-          :current-entry-index="currentEntryIndex"
-          :total-entries="totalEntries"
-          @go-to-previous="goToPreviousEntry"
-          @go-to-next="goToNextEntry"
-          :is-next-entry-in-different-book="isNextEntryInDifferentBook"
-          :is-previous-entry-in-different-book="isPreviousEntryInDifferentBook"
-          :save-status="saveStatus"
-        />
+        <WorldBookBatchSettings v-if="activeView === 'batch'" :book="activeBook" :all-keywords="allKeywords"
+          @apply="applyBatchSettings" />
+        <WorldBookEditor v-else :entry="selectedEntry" v-model="editableEntry" :all-keywords="allKeywords"
+          :current-entry-index="currentEntryIndex" :total-entries="totalEntries" @go-to-previous="goToPreviousEntry"
+          @go-to-next="goToNextEntry" :is-next-entry-in-different-book="isNextEntryInDifferentBook"
+          :is-previous-entry-in-different-book="isPreviousEntryInDifferentBook" :save-status="saveStatus" />
       </div>
 
-      <MobileBookmarkDrawer
-        v-model:visible="mobileDrawerVisible"
-        v-model:active-tab="mobilePanelTab"
-        :items="mobileBookmarkItems"
-        drawer-size="88%"
-      >
+      <MobileBookmarkDrawer v-model:visible="mobileDrawerVisible" v-model:active-tab="mobilePanelTab"
+        :items="mobileBookmarkItems" drawer-size="88%">
         <template #pane-list>
           <div class="worldbook-mobile-drawer-pane">
             <div class="content-panel-header">
               <h2 class="content-panel-title">
-                <Icon
-                  icon="ph:list-bullets-duotone"
-                  class="content-panel-icon"
-                />
+                <Icon icon="ph:list-bullets-duotone" class="content-panel-icon" />
                 <span class="content-panel-text">世界书条目</span>
               </h2>
-              <el-tooltip
-                content="新增条目"
-                placement="top"
-                :show-arrow="false"
-                :offset="8"
-                :hide-after="0"
-              >
-                <button
-                  @click="() => addNewEntry()"
-                  class="btn-adv btn-primary-adv worldbook-add-button"
-                  aria-label="新增条目"
-                  :disabled="!activeBook"
-                >
-                  <Icon
-                    icon="ph:plus-circle-duotone"
-                    class="worldbook-add-icon"
-                  />
+              <el-tooltip content="新增条目" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
+                <button @click="() => addNewEntry()" class="btn-adv btn-primary-adv worldbook-add-button"
+                  aria-label="新增条目" :disabled="!activeBook">
+                  <Icon icon="ph:plus-circle-duotone" class="worldbook-add-icon" />
                 </button>
               </el-tooltip>
             </div>
-            <WorldBookList
-              :collection="worldBookCollection"
-              :active-book-id="activeBookId"
-              @select-book="handleSelectBook"
-              @create-book="handleCreateBook"
-              @rename-book="handleRenameBook"
-              @delete-book="handleDeleteBook"
-              @select-batch-settings="handleSelectBatchSettings"
-              @select-entry="handleSelectEntry"
-              @add-entry="addNewEntry"
-              @duplicate-entry="handleDuplicateEntry"
-              @delete-entry="handleDeleteEntryFromList"
-              :selected-entry="selectedEntry"
-              :is-batch-settings-active="activeView === 'batch'"
-              @copy-book="copyWorldBookToClipboard"
-              @export-json="exportToJson"
-              @import-book-file="handleImportBookFile"
-              @clear-all="clearAllEntries"
-              :drag-drop-handlers="dragDropHandlers"
-            />
+            <WorldBookList :collection="worldBookCollection" :active-book-id="activeBookId"
+              @select-book="handleSelectBook" @create-book="handleCreateBook" @rename-book="handleRenameBook"
+              @reorder-books="updateBookOrder" @delete-book="handleDeleteBook"
+              @select-batch-settings="handleSelectBatchSettings" @select-entry="handleSelectEntry"
+              @add-entry="addNewEntry" @duplicate-entry="handleDuplicateEntry" @delete-entry="handleDeleteEntryFromList"
+              :selected-entry="selectedEntry" :is-batch-settings-active="activeView === 'batch'"
+              @copy-book="copyWorldBookToClipboard" @export-json="exportToJson" @import-book-file="handleImportBookFile"
+              @clear-all="clearAllEntries" :drag-drop-handlers="dragDropHandlers" />
           </div>
         </template>
       </MobileBookmarkDrawer>
     </div>
 
     <div class="worldbook-desktop-layout">
-      <Splitpanes
-        class="default-theme"
-        push-other-panes
-        style="height: 100%"
-      >
-        <Pane
-          size="15"
-          min-size="15"
-          max-size="35"
-          ref="sidebarPaneRef"
-        >
-          <WorldBookList
-            :collection="worldBookCollection"
-            :active-book-id="activeBookId"
-            @select-book="handleSelectBook"
-            @create-book="handleCreateBook"
-            @rename-book="handleRenameBook"
-            @delete-book="handleDeleteBook"
-            @select-batch-settings="handleSelectBatchSettings"
-            @select-entry="handleSelectEntry"
-            @add-entry="addNewEntry"
-            @duplicate-entry="handleDuplicateEntry"
-            @delete-entry="handleDeleteEntryFromList"
-            :selected-entry="selectedEntry"
-            :is-batch-settings-active="activeView === 'batch'"
-            @copy-book="copyWorldBookToClipboard"
-            @export-json="exportToJson"
-            @import-book-file="handleImportBookFile"
-            @clear-all="clearAllEntries"
-            :drag-drop-handlers="dragDropHandlers"
-            :sidebar-width="sidebarWidth"
-          />
+      <Splitpanes class="default-theme" push-other-panes style="height: 100%">
+        <Pane size="15" min-size="15" max-size="35" ref="sidebarPaneRef">
+          <WorldBookList :collection="worldBookCollection" :active-book-id="activeBookId"
+            @select-book="handleSelectBook" @create-book="handleCreateBook" @rename-book="handleRenameBook"
+            @reorder-books="updateBookOrder" @delete-book="handleDeleteBook"
+            @select-batch-settings="handleSelectBatchSettings" @select-entry="handleSelectEntry"
+            @add-entry="addNewEntry" @duplicate-entry="handleDuplicateEntry" @delete-entry="handleDeleteEntryFromList"
+            :selected-entry="selectedEntry" :is-batch-settings-active="activeView === 'batch'"
+            @copy-book="copyWorldBookToClipboard" @export-json="exportToJson" @import-book-file="handleImportBookFile"
+            @clear-all="clearAllEntries" :drag-drop-handlers="dragDropHandlers" :sidebar-width="sidebarWidth" />
         </Pane>
-        <Pane
-          size="85"
-          min-size="40"
-        >
+        <Pane size="85" min-size="40">
           <div class="worldbook-desktop-panel-right">
             <div class="content-panel-header">
               <h2 class="content-panel-title">
-                <Icon
-                  icon="ph:note-pencil-duotone"
-                  class="content-panel-icon"
-                />
+                <Icon icon="ph:note-pencil-duotone" class="content-panel-icon" />
                 编辑:
                 <span class="content-panel-text-highlight">
                   {{ editorTitle }}
@@ -161,37 +78,17 @@
               </h2>
               <div class="worldbook-editor-header-actions">
                 <span class="worldbook-import-notice">导入须知：请使用从酒馆导出的世界书进行导入</span>
-                <WorldBookActions
-                  context="editor"
-                  :has-selection="activeView === 'entry' && !!selectedEntry"
-                  :save-status="saveStatus"
-                  :auto-save-mode="autoSaveMode"
-                  @toggle-mode="toggleAutoSaveMode"
-                  @copy-entry="copySelectedEntry"
-                  @save-entry="saveCurrentEntry"
-                  @delete-entry="deleteSelectedEntry"
-                />
+                <WorldBookActions context="editor" :has-selection="activeView === 'entry' && !!selectedEntry"
+                  :save-status="saveStatus" :auto-save-mode="autoSaveMode" @toggle-mode="toggleAutoSaveMode"
+                  @copy-entry="copySelectedEntry" @save-entry="saveCurrentEntry" @delete-entry="deleteSelectedEntry" />
               </div>
             </div>
-            <WorldBookBatchSettings
-              v-if="activeView === 'batch'"
-              :book="activeBook"
-              :all-keywords="allKeywords"
-              @apply="applyBatchSettings"
-            />
-            <WorldBookEditor
-              v-else
-              :entry="selectedEntry"
-              v-model="editableEntry"
-              :all-keywords="allKeywords"
-              :current-entry-index="currentEntryIndex"
-              :total-entries="totalEntries"
-              @go-to-previous="goToPreviousEntry"
-              @go-to-next="goToNextEntry"
-              :is-next-entry-in-different-book="isNextEntryInDifferentBook"
-              :is-previous-entry-in-different-book="isPreviousEntryInDifferentBook"
-              :save-status="saveStatus"
-            />
+            <WorldBookBatchSettings v-if="activeView === 'batch'" :book="activeBook" :all-keywords="allKeywords"
+              @apply="applyBatchSettings" />
+            <WorldBookEditor v-else :entry="selectedEntry" v-model="editableEntry" :all-keywords="allKeywords"
+              :current-entry-index="currentEntryIndex" :total-entries="totalEntries" @go-to-previous="goToPreviousEntry"
+              @go-to-next="goToNextEntry" :is-next-entry-in-different-book="isNextEntryInDifferentBook"
+              :is-previous-entry-in-different-book="isPreviousEntryInDifferentBook" :save-status="saveStatus" />
           </div>
         </Pane>
       </Splitpanes>

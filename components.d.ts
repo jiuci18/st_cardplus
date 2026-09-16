@@ -133,6 +133,7 @@ declare module 'vue' {
     TemplateEditor: typeof import('./src/components/ejseditor/TemplateEditor.vue')['default']
     TokenSelector: typeof import('./src/components/regex/Selector/TokenSelector.vue')['default']
     TraitsTab: typeof import('./src/components/charcard/tabs/TraitsTab.vue')['default']
+    TreeNodeMenu: typeof import('./src/components/ui/layout/common/TreeNodeMenu.vue')['default']
     VariablePanel: typeof import('./src/components/ejseditor/VariablePanel.vue')['default']
     VariableTreeNode: typeof import('./src/components/ejseditor/VariableTreeNode.vue')['default']
     WelcomeOverlay: typeof import('./src/components/home/WelcomeOverlay.vue')['default']

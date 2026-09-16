@@ -8,6 +8,8 @@
     :allow-drag="allowDrag"
     :allow-drop="allowDrop"
     :handle-node-drop="props.dragDropHandlers.handleNodeDrop"
+    :node-menu-items="getBookMenuItems"
+    @node-menu-select="handleBookMenuSelect"
     @node-click="handleNodeClick"
   >
     <template #header-actions>
@@ -55,53 +57,6 @@
               icon="ph:user-circle-duotone"
               class="sidebar-tree-node-source-icon"
             />
-          </el-tooltip>
-        </div>
-        <div
-          class="sidebar-tree-node-actions"
-          v-if="!data.isEntry && !data.isUtility"
-        >
-          <el-tooltip
-            content="新增条目"
-            placement="top"
-            :show-arrow="false"
-            :offset="8"
-            :hide-after="0"
-          >
-            <button
-              @click.stop="emit('add-entry', data.id)"
-              class="sidebar-tree-node-action-button"
-            >
-              <Icon icon="ph:plus-circle-duotone" />
-            </button>
-          </el-tooltip>
-          <el-tooltip
-            content="重命名"
-            placement="top"
-            :show-arrow="false"
-            :offset="8"
-            :hide-after="0"
-          >
-            <button
-              @click.stop="emit('rename-book', data.id)"
-              class="sidebar-tree-node-action-button"
-            >
-              <Icon icon="ph:pencil-simple-duotone" />
-            </button>
-          </el-tooltip>
-          <el-tooltip
-            content="删除"
-            placement="top"
-            :show-arrow="false"
-            :offset="8"
-            :hide-after="0"
-          >
-            <button
-              @click.stop="emit('delete-book', data.id)"
-              class="sidebar-tree-node-action-button is-danger"
-            >
-              <Icon icon="ph:trash-duotone" />
-            </button>
           </el-tooltip>
         </div>
         <div
@@ -161,6 +116,7 @@ import { Icon } from '@iconify/vue';
 import SidebarTreePanel from '@/components/ui/layout/common/SidebarTreePanel.vue';
 import WorldBookActions from './WorldBookActions.vue';
 import type { WorldBookCollection, WorldBookEntry } from '@/types/worldbook';
+import type { TreeMenuItem } from '@/components/ui/layout/common/treeMenu';
 
 interface Props {
   collection: WorldBookCollection;
@@ -194,6 +150,7 @@ const emit = defineEmits<{
   (e: 'export-json'): void;
   (e: 'import-book-file', file: File): void;
   (e: 'clear-all'): void;
+  (e: 'reorder-books', ids: string[]): void;
 }>();
 
 const treeProps = {
@@ -232,6 +189,36 @@ const treeData = computed(() => {
       ],
     }));
 });
+
+const getBookMenuItems = (data: any): TreeMenuItem[] => {
+  if (data.isEntry || data.isUtility) return [];
+  const index = treeData.value.findIndex(book => book.id === data.id);
+  const first = index <= 0;
+  const last = index < 0 || index === treeData.value.length - 1;
+  return [
+    { key: 'add-entry', label: '新增条目', icon: 'ph:plus-circle-duotone' },
+    { key: 'rename-book', label: '重命名', icon: 'ph:pencil-simple-duotone' },
+    { key: 'up', label: '上移', divided: true, disabled: first },
+    { key: 'down', label: '下移', disabled: last },
+    { key: 'top', label: '移至顶端', disabled: first },
+    { key: 'bottom', label: '移至末尾', disabled: last },
+    { key: 'delete-book', label: '删除', icon: 'ph:trash-duotone', divided: true, danger: true },
+  ];
+};
+
+const handleBookMenuSelect = (key: string, data: any) => {
+  const item = getBookMenuItems(data).find(item => item.key === key);
+  if (!item || item.disabled) return;
+  if (key === 'add-entry') return emit('add-entry', data.id);
+  if (key === 'rename-book') return emit('rename-book', data.id);
+  if (key === 'delete-book') return emit('delete-book', data.id);
+  const ids = treeData.value.map(book => book.id);
+  const index = ids.indexOf(data.id);
+  const target = key === 'top' ? 0 : key === 'bottom' ? ids.length - 1 : index + (key === 'up' ? -1 : 1);
+  ids.splice(index, 1);
+  ids.splice(target, 0, data.id);
+  emit('reorder-books', ids);
+};
 
 const currentNodeKey = computed(() => {
   if (props.isBatchSettingsActive) {
