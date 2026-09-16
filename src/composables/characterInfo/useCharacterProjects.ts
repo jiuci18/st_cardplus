@@ -1,9 +1,10 @@
 import { computed, type Ref } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { v4 as uuidv4 } from 'uuid';
-import type { CharacterProject } from '@/types/character/character';
+import type { CharacterCard, CharacterProject } from '@/types/character/character';
 
 interface ProjectState {
+  characters: Record<string, CharacterCard>;
   projects: Record<string, CharacterProject>;
 }
 
@@ -140,7 +141,41 @@ export function useCharacterProjects<T extends ProjectState>(characterCollection
     }
   };
 
+  const handleDeleteProject = async (projectId: string) => {
+    const project = characterCollection.value.projects[projectId];
+    if (!project) return;
+    const hasCharacters = () => Object.values(characterCollection.value.characters)
+      .some(character => character.meta.projectId === projectId);
+    if (hasCharacters()) {
+      ElMessage.warning('文件夹内还有角色，无法删除，请先移出或删除角色');
+      return;
+    }
+    try {
+      await ElMessageBox.confirm(`确定删除文件夹「${project.name}」吗？`, '删除文件夹', {
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+      });
+    } catch {
+      return;
+    }
+    // 确认期间集合可能发生变化，删除前再次检查。
+    if (hasCharacters()) {
+      ElMessage.warning('文件夹内还有角色，无法删除，请先移出或删除角色');
+      return;
+    }
+    if (!characterCollection.value.projects[projectId]) return;
+    const nextProjects = { ...characterCollection.value.projects };
+    delete nextProjects[projectId];
+    characterCollection.value = {
+      ...characterCollection.value,
+      projects: nextProjects,
+    } as T;
+    ElMessage.success(`文件夹「${project.name}」已删除`);
+  };
+
   return {
+    handleDeleteProject,
     projects,
     ensureProjects,
     handleCreateProject,
