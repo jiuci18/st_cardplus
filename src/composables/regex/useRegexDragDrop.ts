@@ -60,7 +60,8 @@ export function useRegexDragDrop(
 
       // 移动类别
       const [movedCategory] = allCategories.splice(oldIndex, 1);
-      allCategories.splice(newIndex, 0, movedCategory);
+      const adjustedInsertIndex = oldIndex < newIndex ? newIndex - 1 : newIndex;
+      allCategories.splice(adjustedInsertIndex, 0, movedCategory);
 
       // 更新所有类别的 order
       allCategories.forEach((category, index) => {

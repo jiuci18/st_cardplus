@@ -157,18 +157,29 @@ export function useRegexCollection() {
     const category = regexCollection.value.categories[categoryId];
     if (!category) return;
 
-    if (Object.keys(regexCollection.value.categories).length <= 1) {
-      ElMessage.warning('不能删除最后一个类别');
-      return;
-    }
+    const canDelete = () => {
+      const current = regexCollection.value.categories[categoryId];
+      if (!current) return false;
+      if (current.scripts.length > 0) {
+        ElMessage.warning('类别内还有脚本，无法删除，请先移出或删除脚本');
+        return false;
+      }
+      if (Object.keys(regexCollection.value.categories).length <= 1) {
+        ElMessage.warning('不能删除最后一个类别');
+        return false;
+      }
+      return true;
+    };
+    if (!canDelete()) return;
 
     try {
-      await ElMessageBox.confirm(`确定要删除类别 "${category.name}" 吗？此类别下的所有脚本也会被删除！`, '删除类别', {
+      await ElMessageBox.confirm(`确定要删除空类别 "${category.name}" 吗？`, '删除类别', {
         confirmButtonText: '确认删除',
         cancelButtonText: '取消',
         type: 'warning',
       });
 
+      if (!canDelete()) return;
       delete regexCollection.value.categories[categoryId];
 
       if (regexCollection.value.activeCategoryId === categoryId) {

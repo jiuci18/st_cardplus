@@ -3,6 +3,7 @@
     :current-node-key="currentNodeKey" :draggable="true"
     :allow-drag="node => !node.data?.isBatchSettings && props.dragDropHandlers.allowDrag(node)" :allow-drop="allowDrop"
     :handle-node-drop="props.dragDropHandlers.handleNodeDrop" @node-click="handleNodeClick"
+    :node-menu-items="getNodeMenuItems" @node-menu-select="handleNodeMenuSelect"
     @node-dblclick="handleNodeDblClick">
     <template #header-actions>
       <div class="split-create-actions">
@@ -24,53 +25,6 @@
         <div class="sidebar-tree-node-main">
           <Icon :icon="data.icon" class="sidebar-tree-node-icon" />
           <span class="sidebar-tree-node-label">{{ node.label }}</span>
-        </div>
-        <div class="sidebar-tree-node-actions" v-if="data.isPreset">
-          <el-tooltip content="新增条目" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
-            <button @click.stop="$emit('add-prompt', data.id)" class="sidebar-tree-node-action-button">
-              <Icon icon="ph:plus-circle-duotone" />
-            </button>
-          </el-tooltip>
-          <el-tooltip content="重命名" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
-            <button @click.stop="$emit('rename-preset', data.id)" class="sidebar-tree-node-action-button">
-              <Icon icon="ph:pencil-simple-duotone" />
-            </button>
-          </el-tooltip>
-          <el-tooltip content="删除" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
-            <button @click.stop="$emit('delete-preset', data.id)" class="sidebar-tree-node-action-button is-danger">
-              <Icon icon="ph:trash-duotone" />
-            </button>
-          </el-tooltip>
-        </div>
-        <div class="sidebar-tree-node-actions" v-if="data.isPrompt">
-          <el-tooltip content="复制条目" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
-            <button @click.stop="$emit('duplicate-prompt', data.presetId, data.promptIndex)"
-              class="sidebar-tree-node-action-button">
-              <Icon icon="ph:copy-duotone" />
-            </button>
-          </el-tooltip>
-          <el-tooltip v-if="data.raw?.system_prompt !== true" content="删除条目" placement="top" :show-arrow="false" :offset="8"
-            :hide-after="0">
-            <button @click.stop="$emit('delete-prompt', data.presetId, data.promptIndex)"
-              class="sidebar-tree-node-action-button is-danger">
-              <Icon icon="ph:trash-duotone" />
-            </button>
-          </el-tooltip>
-        </div>
-        <div class="sidebar-tree-node-actions" v-if="data.isRegexFolder">
-          <el-tooltip content="新增正则脚本" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
-            <button @click.stop="$emit('add-regex', data.presetId)" class="sidebar-tree-node-action-button">
-              <Icon icon="ph:plus-circle-duotone" />
-            </button>
-          </el-tooltip>
-        </div>
-        <div class="sidebar-tree-node-actions" v-if="data.isRegexScript">
-          <el-tooltip content="删除正则脚本" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
-            <button @click.stop="$emit('delete-regex', data.presetId, data.regexIndex)"
-              class="sidebar-tree-node-action-button is-danger">
-              <Icon icon="ph:trash-duotone" />
-            </button>
-          </el-tooltip>
         </div>
       </div>
     </template>
@@ -106,6 +60,7 @@ import { Icon } from '@iconify/vue';
 import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
 import SidebarTreePanel from '@/components/ui/layout/common/SidebarTreePanel.vue';
 import type { StoredPresetFile } from '@/database/db';
+import type { TreeMenuItem } from '@/components/ui/layout/common/treeMenu';
 import {
   buildPresetTreeData,
   getBatchSettingsNodeKey,
@@ -162,6 +117,76 @@ const treeProps = {
 };
 
 const treeData = computed(() => buildPresetTreeData(props.presets));
+
+const getSortableSiblings = (data: any): any[] => {
+  if (data.isPreset) return treeData.value;
+  if (data.isPrompt) {
+    // 仅在已插入条目中排序，避免排序操作改变条目的插入状态。
+    const preset = treeData.value.find(preset => preset.id === data.presetId);
+    return preset?.children.filter(node => 'isPrompt' in node && node.isPrompt) ?? [];
+  }
+  return [];
+};
+
+const getSortMenuItems = (data: any): TreeMenuItem[] => {
+  const siblings = getSortableSiblings(data);
+  const index = siblings.findIndex(node => node.nodeKey === data.nodeKey);
+  if (index < 0) return [];
+  const first = index === 0;
+  const last = index === siblings.length - 1;
+  return [
+    { key: 'up', label: '上移', divided: true, disabled: first },
+    { key: 'down', label: '下移', disabled: last },
+    { key: 'top', label: '移至顶端', disabled: first },
+    { key: 'bottom', label: '移至末尾', disabled: last },
+  ];
+};
+
+const getNodeMenuItems = (data: any): TreeMenuItem[] => {
+  if (data.isPreset) {
+    return [
+      { key: 'add-prompt', label: '新增条目', icon: 'ph:plus-circle-duotone' },
+      { key: 'rename-preset', label: '重命名', icon: 'ph:pencil-simple-duotone' },
+      ...getSortMenuItems(data),
+      { key: 'delete-preset', label: '删除预设', icon: 'ph:trash-duotone', divided: true, danger: true },
+    ];
+  }
+  if (data.isPrompt) {
+    return [
+      { key: 'duplicate-prompt', label: '复制条目', icon: 'ph:copy-duotone' },
+      ...getSortMenuItems(data),
+      ...(data.raw?.system_prompt !== true
+        ? [{ key: 'delete-prompt', label: '删除条目', icon: 'ph:trash-duotone', divided: true, danger: true }]
+        : []),
+    ];
+  }
+  if (data.isRegexFolder) {
+    return [{ key: 'add-regex', label: '新增正则脚本', icon: 'ph:plus-circle-duotone' }];
+  }
+  if (data.isRegexScript) {
+    return [{ key: 'delete-regex', label: '删除正则脚本', icon: 'ph:trash-duotone', danger: true }];
+  }
+  return [];
+};
+
+const handleNodeMenuSelect = (key: string, data: any) => {
+  const item = getNodeMenuItems(data).find(item => item.key === key);
+  if (!item || item.disabled) return;
+  if (key === 'add-prompt') return emit('add-prompt', data.id);
+  if (key === 'rename-preset') return emit('rename-preset', data.id);
+  if (key === 'delete-preset') return emit('delete-preset', data.id);
+  if (key === 'duplicate-prompt') return emit('duplicate-prompt', data.presetId, data.promptIndex);
+  if (key === 'delete-prompt') return emit('delete-prompt', data.presetId, data.promptIndex);
+  if (key === 'add-regex') return emit('add-regex', data.presetId);
+  if (key === 'delete-regex') return emit('delete-regex', data.presetId, data.regexIndex);
+  const siblings = getSortableSiblings(data);
+  const index = siblings.findIndex(node => node.nodeKey === data.nodeKey);
+  const target = key === 'top' ? 0 : key === 'bottom' ? siblings.length - 1 : index + (key === 'up' ? -1 : 1);
+  if (index < 0 || !siblings[target]) return;
+  // 菜单排序只移动当前节点，不沿用拖拽的多选集合。
+  emit('toggle-node-selection', data, false);
+  props.dragDropHandlers.handleNodeDrop({ data }, { data: siblings[target] }, target < index ? 'before' : 'after');
+};
 
 const currentNodeKey = computed(() => {
   if (!props.activePresetId) return undefined;
