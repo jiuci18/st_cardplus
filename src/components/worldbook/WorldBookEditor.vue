@@ -1,5 +1,5 @@
 <template>
-  <el-scrollbar class="worldbook-editor-scrollbar">
+  <el-scrollbar ref="editorScrollbarRef" class="worldbook-editor-scrollbar">
     <div class="content-panel-body">
       <div v-if="!entry" class="worldbook-editor-empty-state">
         <el-empty description="请先选择或新增一个条目进行编辑" :image-size="80"></el-empty>
@@ -44,7 +44,7 @@
             </div>
             <div v-if="!props.hideContent">
               <label class="form-label">条目内容 (Content)</label>
-              <div class="content-textarea-wrapper">
+              <div class="content-textarea-wrapper" @pointerdown.capture="handleContentResizeStart">
                 <el-input v-model="localModel.content" type="textarea" :rows="8"
                   placeholder="当条目激活时，这段文本会被插入到AI的提示中..." />
                 <span class="content-char-count">{{ contentCharCount }} 字符</span>
@@ -127,7 +127,7 @@
           </div>
         </section>
 
-        <div class="form-section-title advanced-options-toggle"
+        <div ref="advancedOptionsToggleRef" class="form-section-title advanced-options-toggle"
           @click="advancedOptionsVisible = !advancedOptionsVisible">
           <Icon :icon="advancedOptionsVisible ? 'ph:caret-down-duotone' : 'ph:caret-right-duotone'"
             class="form-section-icon" />
@@ -309,7 +309,12 @@ const emit = defineEmits<{
 }>();
 
 const entryFormRef = ref<InstanceType<typeof ElForm> | null>(null);
+const editorScrollbarRef = ref<InstanceType<typeof ElScrollbar> | null>(null);
+const advancedOptionsToggleRef = ref<HTMLElement | null>(null);
 const advancedOptionsVisible = ref(false);
+const contentManuallyResized = ref(false);
+let editorResizeObserver: ResizeObserver | null = null;
+let autoHeightFrame: number | null = null;
 type SelectComponentInstance = ComponentPublicInstance & { $el: HTMLElement };
 const primaryKeywordSelectRef = ref<SelectComponentInstance | null>(null);
 const secondaryKeywordSelectRef = ref<SelectComponentInstance | null>(null);
@@ -362,6 +367,48 @@ const bindKeywordPasteHandlers = async () => {
 
 const contentCharCount = computed(() => (localModel.value.content ?? '').length);
 
+/**
+ * 将“高级选项”的下边线对齐到左侧底部工具栏的上边线，并把中间所有
+ * 可用高度交给条目内容。独立/移动布局没有侧栏工具栏时，则对齐编辑器底部。
+ */
+const updateAutomaticContentHeight = () => {
+  if (contentManuallyResized.value || autoHeightFrame !== null) return;
+
+  autoHeightFrame = requestAnimationFrame(() => {
+    autoHeightFrame = null;
+    if (contentManuallyResized.value) return;
+
+    const scrollbarRoot = (editorScrollbarRef.value as any)?.$el as HTMLElement | undefined;
+    const scrollViewport = scrollbarRoot?.querySelector<HTMLElement>('.el-scrollbar__wrap');
+    const textarea = scrollbarRoot?.querySelector<HTMLTextAreaElement>('.content-textarea-wrapper textarea');
+    const advancedToggle = advancedOptionsToggleRef.value;
+    if (!scrollbarRoot || !scrollViewport || !textarea || !advancedToggle) return;
+
+    const splitpanes = scrollbarRoot.closest('.splitpanes');
+    const sidebarFooter = splitpanes?.querySelector<HTMLElement>('.sidebar-panel-footer');
+    const viewportBottom = scrollViewport.getBoundingClientRect().bottom;
+    const targetLineY = sidebarFooter?.getBoundingClientRect().top ?? viewportBottom - 16;
+    const currentLineY = advancedToggle.getBoundingClientRect().bottom;
+    const targetHeight = Math.max(180, textarea.getBoundingClientRect().height + targetLineY - currentLineY);
+
+    if (Math.abs(textarea.getBoundingClientRect().height - targetHeight) > 1) {
+      textarea.style.height = `${Math.round(targetHeight)}px`;
+    }
+  });
+};
+
+/** 用户开始拖动原生 resize 手柄后，保留其高度并永久退出本次编辑器的自动补偿。 */
+const handleContentResizeStart = (event: PointerEvent) => {
+  const textarea = event.target;
+  if (!(textarea instanceof HTMLTextAreaElement) || contentManuallyResized.value) return;
+
+  const resizeHandleSize = 24;
+  const isOnResizeHandle =
+    event.offsetX >= textarea.clientWidth - resizeHandleSize &&
+    event.offsetY >= textarea.clientHeight - resizeHandleSize;
+  if (isOnResizeHandle) contentManuallyResized.value = true;
+};
+
 const combinedPosition = computed({
   get: () => {
     if (localModel.value.position === 4) {
@@ -387,19 +434,35 @@ watch(
   () => {
     entryFormRef.value?.clearValidate();
     void bindKeywordPasteHandlers();
+    nextTick(updateAutomaticContentHeight);
   }
 );
 
 watch(advancedOptionsVisible, () => {
   void bindKeywordPasteHandlers();
+  nextTick(updateAutomaticContentHeight);
 });
 
-onMounted(() => {
+onMounted(async () => {
   void bindKeywordPasteHandlers();
+  await nextTick();
+  updateAutomaticContentHeight();
+
+  const scrollbarRoot = (editorScrollbarRef.value as any)?.$el as HTMLElement | undefined;
+  if (scrollbarRoot) {
+    editorResizeObserver = new ResizeObserver(updateAutomaticContentHeight);
+    editorResizeObserver.observe(scrollbarRoot);
+    const form = (entryFormRef.value as any)?.$el as HTMLElement | undefined;
+    if (form) editorResizeObserver.observe(form);
+    const sidebarFooter = scrollbarRoot.closest('.splitpanes')?.querySelector<HTMLElement>('.sidebar-panel-footer');
+    if (sidebarFooter) editorResizeObserver.observe(sidebarFooter);
+  }
 });
 
 onBeforeUnmount(() => {
   clearKeywordPasteHandlers();
+  editorResizeObserver?.disconnect();
+  if (autoHeightFrame !== null) cancelAnimationFrame(autoHeightFrame);
 });
 </script>
 
@@ -409,7 +472,9 @@ onBeforeUnmount(() => {
 }
 
 .content-textarea-wrapper :deep(.el-textarea__inner) {
+  min-height: 180px;
   padding-bottom: 24px;
+  resize: vertical;
 }
 
 .content-char-count {

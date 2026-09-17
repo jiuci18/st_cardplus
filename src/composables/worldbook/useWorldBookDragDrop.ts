@@ -28,7 +28,6 @@ export function useWorldBookDragDrop(
       const { source, target, sourceKeys, targetKeys, sameBucket } = move;
       if (!source.context) {
         await updateBookOrder(targetKeys);
-        ElMessage.success('世界书顺序已更新');
       } else if (sameBucket) {
         const byId = new Map(source.context.entries.map((entry) => [entryKey(source.context!.id, entry), entry]));
         const entries = targetKeys.map((id, order) => ({ ...byId.get(id)!, order }));
