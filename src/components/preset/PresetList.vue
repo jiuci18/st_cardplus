@@ -1,15 +1,29 @@
 <template>
-  <SidebarTreePanel ref="sidebarRef" :expand-on-click-node="true" title="预设列表" :tree-data="treeData" :tree-props="treeProps" node-key="nodeKey"
-    :current-node-key="currentNodeKey" :draggable="true"
-    :allow-drag="node => !node.data?.isBatchSettings && props.dragDropHandlers.allowDrag(node)" :allow-drop="allowDrop"
-    :handle-node-drop="props.dragDropHandlers.handleNodeDrop" @node-click="handleNodeClick"
-    :node-menu-items="getNodeMenuItems" @node-menu-select="handleNodeMenuSelect"
-    @node-dblclick="handleNodeDblClick">
+  <SidebarTreePanel
+    ref="sidebarRef"
+    :expand-on-click-node="true"
+    title="预设列表"
+    :tree-data="treeData"
+    :tree-props="treeProps"
+    node-key="nodeKey"
+    :current-node-key="currentNodeKey"
+    :draggable="true"
+    :allow-drag="(node) => !node.data?.isBatchSettings && props.dragDropHandlers.allowDrag(node)"
+    :allow-drop="allowDrop"
+    :handle-node-drop="props.dragDropHandlers.handleNodeDrop"
+    @node-click="handleNodeClick"
+    :node-menu-items="getNodeMenuItems"
+    @node-menu-select="handleNodeMenuSelect"
+    @node-dblclick="handleNodeDblClick"
+  >
     <template #header-actions>
       <div class="split-create-actions">
         <el-tooltip content="创建新预设" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
-          <button @click="$emit('create-preset')"
-            class="btn-adv btn-primary-adv sidebar-header-button split-create-main" aria-label="创建新预设">
+          <button
+            @click="$emit('create-preset')"
+            class="btn-adv btn-primary-adv sidebar-header-button split-create-main"
+            aria-label="创建新预设"
+          >
             <Icon icon="ph:plus-bold" />
           </button>
         </el-tooltip>
@@ -17,11 +31,14 @@
     </template>
 
     <template #node="{ node, data }">
-      <div class="sidebar-tree-node" :class="{
-        'is-header': data.isHeader,
-        'is-disabled': data.isPrompt && data.enabled === false,
-        'is-multi-selected': data?.nodeKey && props.multiSelectedNodeKeys.includes(data.nodeKey),
-      }">
+      <div
+        class="sidebar-tree-node"
+        :class="{
+          'is-header': data.isHeader,
+          'is-disabled': data.isPrompt && data.enabled === false,
+          'is-multi-selected': data?.nodeKey && props.multiSelectedNodeKeys.includes(data.nodeKey),
+        }"
+      >
         <div class="sidebar-tree-node-main">
           <Icon :icon="data.icon" class="sidebar-tree-node-icon" />
           <span class="sidebar-tree-node-label">{{ node.label }}</span>
@@ -55,7 +72,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { ElTooltip } from 'element-plus';
-import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
+import type { AllowDropType } from 'element-plus/es/components/tree/src/tree.type';
+import type { TreeMoveHandlers } from '@/utils/treeMove';
 import { Icon } from '@iconify/vue';
 import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
 import SidebarTreePanel from '@/components/ui/layout/common/SidebarTreePanel.vue';
@@ -79,11 +97,7 @@ interface Props {
   selectedIsHeader: boolean;
   isBatchSettingsActive?: boolean;
   multiSelectedNodeKeys?: string[];
-  dragDropHandlers: {
-    allowDrag: (draggingNode: any) => boolean;
-    allowDrop: (draggingNode: any, dropNode: any, type: AllowDropType) => boolean;
-    handleNodeDrop: (draggingNode: any, dropNode: any, type: Exclude<NodeDropType, 'none'>) => boolean;
-  };
+  dragDropHandlers: TreeMoveHandlers;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -124,15 +138,15 @@ const getSortableSiblings = (data: any): any[] => {
   if (data.isPreset) return treeData.value;
   if (data.isPrompt) {
     // 仅在已插入条目中排序，避免排序操作改变条目的插入状态。
-    const preset = treeData.value.find(preset => preset.id === data.presetId);
-    return preset?.children.filter(node => 'isPrompt' in node && node.isPrompt) ?? [];
+    const preset = treeData.value.find((preset) => preset.id === data.presetId);
+    return preset?.children.filter((node) => 'isPrompt' in node && node.isPrompt) ?? [];
   }
   return [];
 };
 
 const getSortMenuItems = (data: any): TreeMenuItem[] => {
   const siblings = getSortableSiblings(data);
-  const index = siblings.findIndex(node => node.nodeKey === data.nodeKey);
+  const index = siblings.findIndex((node) => node.nodeKey === data.nodeKey);
   if (index < 0) return [];
   const first = index === 0;
   const last = index === siblings.length - 1;
@@ -172,7 +186,7 @@ const getNodeMenuItems = (data: any): TreeMenuItem[] => {
 };
 
 const handleNodeMenuSelect = (key: string, data: any) => {
-  const item = getNodeMenuItems(data).find(item => item.key === key);
+  const item = getNodeMenuItems(data).find((item) => item.key === key);
   if (!item || item.disabled) return;
   if (key === 'add-prompt') return emit('add-prompt', data.id);
   if (key === 'rename-preset') return emit('rename-preset', data.id);
@@ -182,7 +196,7 @@ const handleNodeMenuSelect = (key: string, data: any) => {
   if (key === 'add-regex') return emit('add-regex', data.presetId);
   if (key === 'delete-regex') return emit('delete-regex', data.presetId, data.regexIndex);
   const siblings = getSortableSiblings(data);
-  const index = siblings.findIndex(node => node.nodeKey === data.nodeKey);
+  const index = siblings.findIndex((node) => node.nodeKey === data.nodeKey);
   const target = key === 'top' ? 0 : key === 'bottom' ? siblings.length - 1 : index + (key === 'up' ? -1 : 1);
   if (index < 0 || !siblings[target]) return;
   // 菜单排序只移动当前节点，不沿用拖拽的多选集合。

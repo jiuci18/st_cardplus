@@ -14,8 +14,11 @@ const { useDragAndDrop } = await import('../../src/composables/worldeditor/useDr
 hooks.deregister();
 
 function setup(type: 'landmark' | 'force' | 'region') {
-  const items = ['a', 'b', 'c', 'd'].map(id => ({
-    id, projectId: 'project', parentLandmarkIds: [], childLandmarkIds: [],
+  const items = ['a', 'b', 'c', 'd'].map((id) => ({
+    id,
+    projectId: 'project',
+    parentLandmarkIds: [],
+    childLandmarkIds: [],
     ...(type === 'landmark' ? { importance: 1 } : type === 'force' ? { power: 1 } : {}),
   }));
   const list = { value: items };
@@ -26,7 +29,7 @@ function setup(type: 'landmark' | 'force' | 'region') {
     (type === 'region' ? list : empty()) as any,
   );
   const parent = { data: { id: 'category', isEntry: false } };
-  const nodes = items.map(raw => ({ data: { id: raw.id, type, isEntry: true, raw }, parent }));
+  const nodes = items.map((raw) => ({ data: { id: raw.id, type, isEntry: true, raw }, parent }));
   return { list, handlers, nodes };
 }
 
@@ -40,9 +43,53 @@ for (const type of ['landmark', 'force', 'region'] as const) {
     test(`${type} ${label} preserves sibling order`, () => {
       const { list, handlers, nodes } = setup(type);
       assert.equal(handlers.handleNodeDrop(nodes[source], nodes[target], drop), true);
-      assert.deepEqual(list.value.map(item => item.id), expected);
+      assert.deepEqual(
+        list.value.map((item) => item.id),
+        expected,
+      );
     });
   }
+}
+
+test('cross-project landmark moves carry descendants and keep the requested target position', () => {
+  const { list, handlers, nodes } = setup('landmark');
+  const [a, b, c, d] = nodes;
+  handlers.handleNodeDrop(b, a, 'inner');
+  c.data.raw.projectId = 'other';
+  d.data.raw.projectId = 'other';
+  assert.equal(handlers.handleNodeDrop(a, c, 'after'), true);
+  assert.equal(a.data.raw.projectId, 'other');
+  assert.equal(b.data.raw.projectId, 'other');
+  assert.deepEqual(b.data.raw.parentLandmarkIds, ['a']);
+  assert.deepEqual(a.data.raw.parentLandmarkIds, []);
+  assert.deepEqual(
+    list.value.filter((item) => !item.parentLandmarkIds.length).map((item) => item.id),
+    ['c', 'a', 'd'],
+  );
+});
+
+test('cannot move a landmark before, after or inside its descendant', () => {
+  const { list, handlers, nodes } = setup('landmark');
+  const [a, b] = nodes;
+  handlers.handleNodeDrop(b, a, 'inner');
+  const before = JSON.stringify(list.value);
+  for (const type of ['before', 'after', 'inner'] as const) {
+    assert.equal(handlers.handleNodeDrop(a, b, type), false);
+    assert.equal(JSON.stringify(list.value), before);
+  }
+});
+
+for (const type of ['force', 'region'] as const) {
+  test(`${type} cross-project drop inserts at the target rather than the global list head`, () => {
+    const { list, handlers, nodes } = setup(type);
+    nodes[2].data.raw.projectId = 'other';
+    nodes[3].data.raw.projectId = 'other';
+    assert.equal(handlers.handleNodeDrop(nodes[0], nodes[2], 'after'), true);
+    assert.deepEqual(
+      list.value.filter((item) => item.projectId === 'other').map((item) => item.id),
+      ['c', 'a', 'd'],
+    );
+  });
 }
 
 test('indent and outdent preserve descendants and update parent links', () => {
@@ -59,5 +106,8 @@ test('indent and outdent preserve descendants and update parent links', () => {
   assert.deepEqual(b.data.raw.parentLandmarkIds, []);
   assert.deepEqual(a.data.raw.childLandmarkIds, []);
   assert.deepEqual(c.data.raw.parentLandmarkIds, ['b']);
-  assert.deepEqual(list.value.map(item => item.id), ['a', 'b', 'c', 'd']);
+  assert.deepEqual(
+    list.value.map((item) => item.id),
+    ['a', 'b', 'c', 'd'],
+  );
 });

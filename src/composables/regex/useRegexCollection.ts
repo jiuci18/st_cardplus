@@ -280,10 +280,10 @@ export function useRegexCollection() {
   };
 
   const moveScriptBetweenCategories = (
-    scriptId: string,
     fromCategoryId: string,
+    fromScripts: SillyTavernRegexScript[],
     toCategoryId: string,
-    insertIndex: number
+    toScripts: SillyTavernRegexScript[]
   ) => {
     const fromCategory = regexCollection.value.categories[fromCategoryId];
     const toCategory = regexCollection.value.categories[toCategoryId];
@@ -293,17 +293,9 @@ export function useRegexCollection() {
       return false;
     }
 
-    const scriptIndex = fromCategory.scripts.findIndex((s) => s.id === scriptId);
-    if (scriptIndex === -1) {
-      ElMessage.error('移动脚本失败：在源类别中未找到该脚本');
-      return false;
-    }
-
-    const script = fromCategory.scripts[scriptIndex];
-    fromCategory.scripts.splice(scriptIndex, 1);
-
-    script.categoryId = toCategoryId;
-    toCategory.scripts.splice(insertIndex, 0, script);
+    fromCategory.scripts = fromScripts;
+    toCategory.scripts = toScripts;
+    toScripts.forEach(script => { script.categoryId = toCategoryId; });
 
     const now = nowIso();
     fromCategory.updatedAt = now;

@@ -211,12 +211,6 @@ export function useWorldBookEntryActions(state: EntryState, callbacks: EntryCall
     }
   };
 
-  const forceUpdateEntries = () => {
-    if (activeBook.value) {
-      activeBook.value.entries = [...activeBook.value.entries];
-    }
-  };
-
   return {
     addNewEntry,
     handleReorderEntries,
@@ -225,6 +219,5 @@ export function useWorldBookEntryActions(state: EntryState, callbacks: EntryCall
     copySelectedEntry,
     duplicateEntry,
     clearAllEntries,
-    forceUpdateEntries,
   };
 }

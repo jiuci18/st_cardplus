@@ -219,10 +219,10 @@ export function useWorldBookCollection() {
   };
 
   const moveEntryBetweenBooks = async (
-    entryToMove: WorldBookEntry,
     fromBookId: string,
+    newFromEntries: WorldBookEntry[],
     toBookId: string,
-    insertIndex: number
+    newToEntries: WorldBookEntry[]
   ) => {
     const fromBook = worldBookCollection.value.books[fromBookId];
     const toBook = worldBookCollection.value.books[toBookId];
@@ -232,17 +232,17 @@ export function useWorldBookCollection() {
       return false;
     }
 
-    const entryIndexInSource = fromBook.entries.findIndex((e) => e.uid === entryToMove.uid);
-    if (entryIndexInSource === -1) {
-      ElMessage.error('移动条目失败：在源世界书中未找到该条目');
-      return false;
-    }
-
-    const newFromEntries = [...fromBook.entries];
-    newFromEntries.splice(entryIndexInSource, 1);
-
-    const newToEntries = [...toBook.entries];
-    newToEntries.splice(insertIndex, 0, entryToMove);
+    // uid is book-local; importing an entry must not duplicate a destination tree key.
+    const moved = new Set(fromBook.entries.filter(entry => !newFromEntries.includes(entry)));
+    const usedUids = new Set(toBook.entries.map(entry => entry.uid));
+    let nextUid = Math.max(-1, ...toBook.entries.map(entry => entry.uid ?? -1)) + 1;
+    newToEntries = newToEntries.map(entry => {
+      if (!moved.has(entry)) return entry;
+      while (usedUids.has(nextUid)) nextUid++;
+      const uid = usedUids.has(entry.uid) ? nextUid++ : entry.uid;
+      usedUids.add(uid);
+      return { ...entry, uid };
+    });
 
     try {
       await Promise.all([

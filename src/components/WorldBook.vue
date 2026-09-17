@@ -163,7 +163,6 @@ const {
   activeTab,
   addNewEntry: addEntry,
   handleSelectEntry: selectEntry,
-  forceUpdateEntries,
   saveCurrentEntry,
   deleteSelectedEntry,
   duplicateEntry,
@@ -303,8 +302,7 @@ const dragDropHandlers = useWorldBookDragDrop(
   worldBookCollection,
   moveEntryBetweenBooks,
   updateBookEntries,
-  updateBookOrder,
-  forceUpdateEntries
+  updateBookOrder
 );
 
 const closeMobileDrawer = () => {
