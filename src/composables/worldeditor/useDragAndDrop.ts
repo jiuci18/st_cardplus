@@ -112,7 +112,8 @@ export function useDragAndDrop(
       if (toIndex === -1) return false;
 
       const [item] = list.splice(fromIndex, 1);
-      const insertIndex = dropType === 'before' ? toIndex : toIndex + 1;
+      const targetIndex = toIndex - (fromIndex < toIndex ? 1 : 0);
+      const insertIndex = dropType === 'before' ? targetIndex : targetIndex + 1;
       list.splice(insertIndex, 0, item);
       return true;
     } else if ('power' in draggedItem) {
@@ -143,7 +144,8 @@ export function useDragAndDrop(
       if (toIndex === -1) return false;
 
       const [item] = list.splice(fromIndex, 1);
-      const insertIndex = dropType === 'before' ? toIndex : toIndex + 1;
+      const targetIndex = toIndex - (fromIndex < toIndex ? 1 : 0);
+      const insertIndex = dropType === 'before' ? targetIndex : targetIndex + 1;
       list.splice(insertIndex, 0, item);
       return true;
     } else {
@@ -174,7 +176,8 @@ export function useDragAndDrop(
       if (toIndex === -1) return false;
 
       const [item] = list.splice(fromIndex, 1);
-      const insertIndex = dropType === 'before' ? toIndex : toIndex + 1;
+      const targetIndex = toIndex - (fromIndex < toIndex ? 1 : 0);
+      const insertIndex = dropType === 'before' ? targetIndex : targetIndex + 1;
       list.splice(insertIndex, 0, item);
       return true;
     }

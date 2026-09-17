@@ -4,7 +4,8 @@
       :default-expanded-keys="expandedKeys" :current-node-key="currentNodeKey" :expand-on-click-node="true"
       :draggable="true" :filter-node-method="filterNode" :filter-value="searchQuery"
       :allow-drag="props.dragDropHandlers.allowDrag" :allow-drop="props.dragDropHandlers.allowDrop"
-      :handle-node-drop="handleNodeDrop" @node-click="handleNodeClick">
+      :handle-node-drop="handleNodeDrop" :node-menu-items="getNodeMenuItems"
+      @node-menu-select="handleNodeMenuSelect" @node-click="handleNodeClick">
       <template #header-actions>
         <div class="split-create-actions">
           <el-tooltip content="新增地标" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
@@ -55,32 +56,6 @@
             <Icon :icon="data.icon" class="node-icon" :color="data.iconColor" />
             <span class="node-label">{{ node.label }}</span>
           </div>
-          <div class="node-actions" v-if="
-            data.isEntry &&
-            (data.type === 'project' ||
-              data.type === 'landmark' ||
-              data.type === 'force' ||
-              data.type === 'region')
-          ">
-            <el-tooltip content="复制" placement="top" :show-arrow="false" :offset="8" :hide-after="0"
-              v-if="data.type !== 'project' && data.type !== 'integration'">
-              <button @click.stop="emit('copy', data.raw)" class="list-item-action-button">
-                <Icon icon="ph:copy-duotone" />
-              </button>
-            </el-tooltip>
-            <el-tooltip content="编辑" placement="top" :show-arrow="false" :offset="8" :hide-after="0"
-              v-if="data.type !== 'integration'">
-              <button @click.stop="emit('edit', data.raw)" class="list-item-action-button">
-                <Icon icon="ph:pencil-duotone" />
-              </button>
-            </el-tooltip>
-            <el-tooltip content="删除" placement="top" :show-arrow="false" :offset="8" :hide-after="0"
-              v-if="data.type !== 'integration'">
-              <button @click.stop="emit('delete', data.raw)" class="list-item-action-button is-danger">
-                <Icon icon="ph:trash-duotone" />
-              </button>
-            </el-tooltip>
-          </div>
         </div>
       </template>
     </SidebarTreePanel>
@@ -103,6 +78,7 @@ import type {
 import { Icon } from "@iconify/vue";
 import { Search } from "@element-plus/icons-vue";
 import SidebarTreePanel from "@/components/ui/layout/common/SidebarTreePanel.vue";
+import type { TreeMenuItem } from "@/components/ui/layout/common/treeMenu";
 import type {
   Project,
   EnhancedLandmark,
@@ -155,6 +131,56 @@ const emit = defineEmits<{
   (e: "delete", item: SelectableItem): void;
   (e: "node-drop"): void;
 }>();
+
+const getSiblingNodes = (data: any, node: any): any[] =>
+  (node?.parent?.childNodes ?? []).filter((sibling: any) => sibling.data.type === data.type);
+
+const getNodeMenuItems = (data: any, node: any): TreeMenuItem[] => {
+  if (!data.isEntry || !["project", "landmark", "force", "region"].includes(data.type)) {
+    return [];
+  }
+  const siblings = getSiblingNodes(data, node);
+  const index = siblings.findIndex((sibling) => sibling.data.id === data.id);
+  const canMove = data.type !== "project";
+  return [
+    ...(data.type !== "project"
+      ? [{ key: "copy", label: "复制", icon: "ph:copy-duotone" }]
+      : []),
+    { key: "edit", label: "编辑", icon: "ph:pencil-duotone" },
+    ...(canMove ? [
+      { key: "up", label: "上移", icon: "ph:arrow-up-duotone", divided: true, disabled: index <= 0 },
+      { key: "down", label: "下移", icon: "ph:arrow-down-duotone", disabled: index < 0 || index >= siblings.length - 1 },
+      { key: "top", label: "移至顶端", icon: "ph:arrow-line-up-duotone", disabled: index <= 0 },
+      { key: "bottom", label: "移至末尾", icon: "ph:arrow-line-down-duotone", disabled: index < 0 || index >= siblings.length - 1 },
+    ] : []),
+    ...(data.type === "landmark" ? [
+      { key: "indent", label: "移动到", icon: "ph:caret-right-duotone", divided: true, disabled: index <= 0 },
+      { key: "outdent", label: "移出", icon: "ph:caret-left-duotone", disabled: node?.parent?.data.type !== "landmark" },
+    ] : []),
+    { key: "delete", label: "删除", icon: "ph:trash-duotone", divided: true, danger: true },
+  ];
+};
+
+const handleNodeMenuSelect = (key: string, data: any, node: any) => {
+  const item = getNodeMenuItems(data, node).find((item) => item.key === key);
+  if (!item || item.disabled) return;
+  if (key === "copy") return emit("copy", data.raw);
+  if (key === "edit") return emit("edit", data.raw);
+  if (key === "delete") return emit("delete", data.raw);
+
+  const siblings = getSiblingNodes(data, node);
+  const index = siblings.findIndex((sibling) => sibling.data.id === data.id);
+  const target = key === "outdent" ? node.parent
+    : key === "top" ? siblings[0]
+    : key === "bottom" ? siblings[siblings.length - 1]
+    : siblings[index + (key === "down" ? 1 : -1)];
+  if (!target) return;
+  const dropType = key === "indent" ? "inner" : key === "up" || key === "top" ? "before" : "after";
+  if (!props.dragDropHandlers.allowDrop(node, target, dropType === "before" ? "prev" : dropType === "after" ? "next" : "inner")) return;
+  if (handleNodeDrop(node, target, dropType) && key === "indent") {
+    target.expand();
+  }
+};
 
 const searchQuery = ref("");
 
@@ -404,7 +430,8 @@ const handleAddCommand = (
   display: flex;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding-right: 8px;
 }
 
@@ -428,37 +455,4 @@ const handleAddCommand = (
   font-size: 14px;
 }
 
-.node-actions {
-  display: flex;
-  align-items: center;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.toolbar-container :deep(.el-tree-node__content:hover .node-actions) {
-  opacity: 1;
-}
-
-.list-item-action-button {
-  background: none;
-  border: none;
-  padding: 4px;
-  margin-left: 4px;
-  cursor: pointer;
-  color: var(--el-text-color-secondary);
-  border-radius: 4px;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-}
-
-.list-item-action-button:hover {
-  background-color: var(--el-fill-color);
-  color: var(--el-text-color-primary);
-}
-
-.list-item-action-button.is-danger:hover {
-  background-color: var(--el-color-danger-light-9);
-  color: var(--el-color-danger);
-}
 </style>
