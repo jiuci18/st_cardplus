@@ -1,6 +1,6 @@
 <template>
   <div class="toolbar-container">
-    <SidebarTreePanel title="世界编辑器" :tree-data="treeData" :tree-props="treeProps" node-key="id"
+    <SidebarTreePanel ref="sidebarRef" title="世界编辑器" :tree-data="treeData" :tree-props="treeProps" node-key="id"
       :default-expanded-keys="expandedKeys" :current-node-key="currentNodeKey" :expand-on-click-node="true"
       :draggable="true" :filter-node-method="filterNode" :filter-value="searchQuery"
       :allow-drag="props.dragDropHandlers.allowDrag" :allow-drop="props.dragDropHandlers.allowDrop"
@@ -63,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import {
   ElTooltip,
   ElInput,
@@ -119,6 +119,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+const sidebarRef = ref<InstanceType<typeof SidebarTreePanel> | null>(null);
 const emit = defineEmits<{
   (e: "select", item: SelectableItem): void;
   (e: "open-graph", projectId: string): void;
@@ -177,9 +178,7 @@ const handleNodeMenuSelect = (key: string, data: any, node: any) => {
   if (!target) return;
   const dropType = key === "indent" ? "inner" : key === "up" || key === "top" ? "before" : "after";
   if (!props.dragDropHandlers.allowDrop(node, target, dropType === "before" ? "prev" : dropType === "after" ? "next" : "inner")) return;
-  if (handleNodeDrop(node, target, dropType) && key === "indent") {
-    target.expand();
-  }
+  void sidebarRef.value?.move(data.id, target.data.id, dropType);
 };
 
 const searchQuery = ref("");
@@ -344,21 +343,8 @@ const treeData = computed(() => {
   });
 });
 
-const expandedKeys = ref<(string | number)[]>([]);
-// 默认展开新项目
-watch(
-  () => props.projects,
-  (newProjects) => {
-    if (newProjects) {
-      newProjects.forEach((project) => {
-        if (!expandedKeys.value.includes(project.id)) {
-          expandedKeys.value.push(project.id);
-        }
-      });
-    }
-  },
-  { immediate: true },
-);
+// Only declares initial defaults; the shared controller owns live expansion state.
+const expandedKeys = computed(() => props.projects.map(project => project.id));
 
 const currentNodeKey = computed(() => {
   return props.selectedItem?.id;

@@ -1,5 +1,5 @@
 <template>
-  <SidebarTreePanel title="预设列表" :tree-data="treeData" :tree-props="treeProps" node-key="nodeKey"
+  <SidebarTreePanel ref="sidebarRef" :expand-on-click-node="true" title="预设列表" :tree-data="treeData" :tree-props="treeProps" node-key="nodeKey"
     :current-node-key="currentNodeKey" :draggable="true"
     :allow-drag="node => !node.data?.isBatchSettings && props.dragDropHandlers.allowDrag(node)" :allow-drop="allowDrop"
     :handle-node-drop="props.dragDropHandlers.handleNodeDrop" @node-click="handleNodeClick"
@@ -53,7 +53,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { ElTooltip } from 'element-plus';
 import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
 import { Icon } from '@iconify/vue';
@@ -110,6 +110,8 @@ const emit = defineEmits<{
   (e: 'import-preset', file: File): void;
   (e: 'export-preset'): void;
 }>();
+
+const sidebarRef = ref<InstanceType<typeof SidebarTreePanel> | null>(null);
 
 const treeProps = {
   children: 'children',
@@ -185,7 +187,7 @@ const handleNodeMenuSelect = (key: string, data: any) => {
   if (index < 0 || !siblings[target]) return;
   // 菜单排序只移动当前节点，不沿用拖拽的多选集合。
   emit('toggle-node-selection', data, false);
-  props.dragDropHandlers.handleNodeDrop({ data }, { data: siblings[target] }, target < index ? 'before' : 'after');
+  void sidebarRef.value?.move(data.nodeKey, siblings[target].nodeKey, target < index ? 'before' : 'after');
 };
 
 const currentNodeKey = computed(() => {
@@ -218,16 +220,6 @@ const currentNodeKey = computed(() => {
 const handleNodeClick = (data: any, context?: { event?: MouseEvent; node?: any }) => {
   const event = context?.event;
   const additive = Boolean(event && (event.ctrlKey || event.metaKey));
-  const treeNode = context?.node;
-
-  if (data?.isPreset || data?.isRegexFolder || data?.isGroup) {
-    if (treeNode?.expanded) {
-      treeNode.collapse?.();
-    } else {
-      treeNode.expand?.();
-    }
-  }
-
   if (data.isGroup) return;
 
   if (data.isBatchSettings) {

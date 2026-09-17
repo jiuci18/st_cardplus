@@ -229,13 +229,13 @@ export function useWorldBookCollection() {
 
     if (!fromBook || !toBook) {
       ElMessage.error('移动条目失败：源或目标世界书未找到');
-      return;
+      return false;
     }
 
     const entryIndexInSource = fromBook.entries.findIndex((e) => e.uid === entryToMove.uid);
     if (entryIndexInSource === -1) {
       ElMessage.error('移动条目失败：在源世界书中未找到该条目');
-      return;
+      return false;
     }
 
     const newFromEntries = [...fromBook.entries];
@@ -298,10 +298,11 @@ export function useWorldBookCollection() {
       );
 
       await Promise.all([worldBookService.updateBook(fromBookToUpdate), worldBookService.updateBook(toBookToUpdate)]);
+      return true;
     } catch (error) {
       ElMessage.error('移动条目时发生错误');
       console.error('moveEntryBetweenBooks error:', error);
-      // 可选：在这里重新加载数据以恢复到一致状态
+      return false;
     }
   };
 

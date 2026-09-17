@@ -368,9 +368,7 @@ const {
 const dragDropHandlers = useWorldBookDragDrop(
   mockCollection as any,
   // moveEntryBetweenBooks
-  (_entryToMove: WorldBookEntry, _fromBookId: string, _toBookId: string, _insertIndex: number) => {
-    return;
-  },
+  (_entryToMove: WorldBookEntry, _fromBookId: string, _toBookId: string, _insertIndex: number) => false,
   // updateBookEntries
   (_bookId: string, entries: WorldBookEntry[]) => {
     if (worldbookDraft.value) {

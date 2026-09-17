@@ -12,9 +12,9 @@ export function useWorldBookDragDrop(
     fromBookId: string,
     toBookId: string,
     insertIndex: number
-  ) => void,
-  updateBookEntries: (bookId: string, entries: WorldBookEntry[]) => void,
-  updateBookOrder: (bookIdsInOrder: string[]) => void,
+  ) => boolean | Promise<boolean>,
+  updateBookEntries: (bookId: string, entries: WorldBookEntry[]) => void | Promise<void>,
+  updateBookOrder: (bookIdsInOrder: string[]) => void | Promise<void>,
   forceUpdateEntries: () => void
 ) {
   const allowDrag = (): boolean => {
@@ -36,7 +36,7 @@ export function useWorldBookDragDrop(
     }
   };
 
-  const handleNodeDrop = (draggingNode: any, dropNode: any, dropType: ActualNodeDropType): boolean => {
+  const handleNodeDrop = async (draggingNode: any, dropNode: any, dropType: ActualNodeDropType): Promise<boolean> => {
     const isDraggingBook = !draggingNode.data.isEntry;
 
     if (isDraggingBook) {
@@ -60,11 +60,11 @@ export function useWorldBookDragDrop(
 
       // 移动书籍
       const [movedBook] = allBooks.splice(oldIndex, 1);
-      allBooks.splice(newIndex, 0, movedBook);
+      allBooks.splice(oldIndex < newIndex ? newIndex - 1 : newIndex, 0, movedBook);
 
       // 获取排序后的ID列表并更新
       const orderedBookIds = allBooks.map((b) => b.id);
-      updateBookOrder(orderedBookIds);
+      await updateBookOrder(orderedBookIds);
 
       ElMessage.success('世界书顺序已更新 ');
       forceUpdateEntries(); // 强制刷新UI
@@ -87,6 +87,7 @@ export function useWorldBookDragDrop(
     if (dropNode.data.isEntry) {
       toBookId = dropNode.parent?.data?.id || dropNode.data.bookId;
       toBook = worldBookCollection.value.books[toBookId];
+      if (!toBook) return false;
       const dropEntryIndex = toBook.entries.findIndex((e) => e.uid === dropNode.data.raw.uid);
       if (dropEntryIndex === -1) {
         ElMessage.error('拖拽失败：在目标世界书中找不到定位条目 ');
@@ -121,14 +122,14 @@ export function useWorldBookDragDrop(
           entry.order = index;
         });
 
-        updateBookEntries(fromBookId, newEntries);
+        await updateBookEntries(fromBookId, newEntries);
         ElMessage.success(`条目顺序已更新`);
       } else {
         ElMessage.error('排序失败：找不到原始条目 ');
         return false;
       }
     } else {
-      moveEntryBetweenBooks(entryToMove, fromBookId, toBookId, insertIndex);
+      if (!await moveEntryBetweenBooks(entryToMove, fromBookId, toBookId, insertIndex)) return false;
       ElMessage.success(`条目已移至 "${toBook.name}"`);
     }
 

@@ -1,93 +1,41 @@
 <template>
-  <SidebarTreePanel
-    title="世界书"
-    :tree-data="treeData"
-    :tree-props="treeProps"
-    :current-node-key="currentNodeKey"
-    :draggable="true"
-    :allow-drag="allowDrag"
-    :allow-drop="allowDrop"
-    :handle-node-drop="props.dragDropHandlers.handleNodeDrop"
-    :node-menu-items="getBookMenuItems"
-    @node-menu-select="handleBookMenuSelect"
-    @node-click="handleNodeClick"
-  >
+  <SidebarTreePanel ref="sidebarRef" title="世界书" :tree-data="treeData" :tree-props="treeProps"
+    :current-node-key="currentNodeKey" :draggable="true" :allow-drag="allowDrag" :allow-drop="allowDrop"
+    :handle-node-drop="props.dragDropHandlers.handleNodeDrop" :node-menu-items="getBookMenuItems"
+    @node-menu-select="handleBookMenuSelect" @node-click="handleNodeClick">
     <template #header-actions>
-      <el-tooltip
-        content="创建新世界书"
-        placement="top"
-        :show-arrow="false"
-        :offset="8"
-        :hide-after="0"
-      >
-        <button
-          @click="emit('create-book')"
-          class="btn-adv btn-primary-adv sidebar-header-button"
-          aria-label="创建新世界书"
-        >
+      <el-tooltip content="创建新世界书" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
+        <button @click="emit('create-book')" class="btn-adv btn-primary-adv sidebar-header-button" aria-label="创建新世界书">
           <Icon icon="ph:plus-bold" />
         </button>
       </el-tooltip>
     </template>
 
     <template #node="{ node, data }">
-      <div
-        class="sidebar-tree-node"
-        :class="{
-          'is-disabled': data.isEntry && data.raw.disable,
-          'is-constant': data.isEntry && data.raw.constant,
-          'is-utility': data.isUtility,
-        }"
-      >
+      <div class="sidebar-tree-node" :class="{
+        'is-disabled': data.isEntry && data.raw.disable,
+        'is-constant': data.isEntry && data.raw.constant,
+        'is-utility': data.isUtility,
+      }">
         <div class="sidebar-tree-node-main">
-          <Icon
-            :icon="data.icon"
-            class="sidebar-tree-node-icon"
-          />
+          <Icon :icon="data.icon" class="sidebar-tree-node-icon" />
           <span class="sidebar-tree-node-label">{{ node.label }}</span>
-          <el-tooltip
-            v-if="!data.isEntry && !data.isUtility && data.raw?.sourceCharacterName"
-            :content="`来自: ${data.raw.sourceCharacterName}`"
-            placement="top"
-            :show-arrow="false"
-            :offset="8"
-            :hide-after="0"
-          >
-            <Icon
-              icon="ph:user-circle-duotone"
-              class="sidebar-tree-node-source-icon"
-            />
+          <el-tooltip v-if="!data.isEntry && !data.isUtility && data.raw?.sourceCharacterName"
+            :content="`来自: ${data.raw.sourceCharacterName}`" placement="top" :show-arrow="false" :offset="8"
+            :hide-after="0">
+            <Icon icon="ph:user-circle-duotone" class="sidebar-tree-node-source-icon" />
           </el-tooltip>
         </div>
-        <div
-          class="sidebar-tree-node-actions"
-          v-if="data.isEntry"
-        >
-          <el-tooltip
-            content="复制条目"
-            placement="top"
-            :show-arrow="false"
-            :offset="8"
-            :hide-after="0"
-          >
-            <button
-              @click.stop="emit('duplicate-entry', data.bookId, data.entryIndex)"
-              class="sidebar-tree-node-action-button"
-            >
+        <div class="sidebar-tree-node-actions" v-if="data.isEntry">
+          <el-tooltip content="复制条目" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
+            <button @click.stop="emit('duplicate-entry', data.bookId, data.entryIndex)"
+              class="sidebar-tree-node-action-button">
               <Icon icon="ph:copy-duotone" />
             </button>
           </el-tooltip>
-          <el-tooltip
-            content="删除条目"
-            placement="top"
-            :show-arrow="false"
-            :offset="8"
-            :hide-after="0"
-          >
-            <button
-              @click.stop="emit('delete-entry', data.bookId, data.entryIndex)"
-              class="sidebar-tree-node-action-button is-danger"
-            >
+          <el-tooltip content="删除条目" placement="top" :show-arrow="false" :offset="8" :hide-after="0">
+            <button @click.stop="emit('delete-entry', data.bookId, data.entryIndex)"
+              class="sidebar-tree-node-action-button is-danger">
               <Icon icon="ph:trash-duotone" />
             </button>
           </el-tooltip>
@@ -96,20 +44,15 @@
     </template>
 
     <template #footer>
-      <WorldBookActions
-        context="list"
-        :sidebar-width="sidebarWidth"
-        @copy-book="$emit('copy-book')"
-        @export-json="$emit('export-json')"
-        @import-book-file="(file) => $emit('import-book-file', file)"
-        @clear-all="$emit('clear-all')"
-      />
+      <WorldBookActions context="list" :sidebar-width="sidebarWidth" @copy-book="$emit('copy-book')"
+        @export-json="$emit('export-json')" @import-book-file="(file) => $emit('import-book-file', file)"
+        @clear-all="$emit('clear-all')" />
     </template>
   </SidebarTreePanel>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { ElTooltip } from 'element-plus';
 import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
 import { Icon } from '@iconify/vue';
@@ -126,7 +69,7 @@ interface Props {
   dragDropHandlers: {
     allowDrag: (draggingNode: any) => boolean;
     allowDrop: (draggingNode: any, dropNode: any, type: AllowDropType) => boolean;
-    handleNodeDrop: (draggingNode: any, dropNode: any, type: Exclude<NodeDropType, 'none'>) => boolean;
+    handleNodeDrop: (draggingNode: any, dropNode: any, type: Exclude<NodeDropType, 'none'>) => boolean | Promise<boolean>;
   };
   sidebarWidth?: number;
 }
@@ -152,6 +95,8 @@ const emit = defineEmits<{
   (e: 'clear-all'): void;
   (e: 'reorder-books', ids: string[]): void;
 }>();
+
+const sidebarRef = ref<InstanceType<typeof SidebarTreePanel> | null>(null);
 
 const treeProps = {
   children: 'children',
@@ -215,9 +160,8 @@ const handleBookMenuSelect = (key: string, data: any) => {
   const ids = treeData.value.map(book => book.id);
   const index = ids.indexOf(data.id);
   const target = key === 'top' ? 0 : key === 'bottom' ? ids.length - 1 : index + (key === 'up' ? -1 : 1);
-  ids.splice(index, 1);
-  ids.splice(target, 0, data.id);
-  emit('reorder-books', ids);
+  if (index < 0 || !ids[target]) return;
+  void sidebarRef.value?.move(data.id, ids[target], target < index ? 'before' : 'after');
 };
 
 const currentNodeKey = computed(() => {

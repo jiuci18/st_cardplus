@@ -11,11 +11,12 @@
     </div>
 
     <el-scrollbar class="sidebar-panel-scrollbar">
-      <el-tree ref="treeRef" :data="treeData" :props="treeProps" :node-key="nodeKey"
+      <el-tree ref="treeRef" :data="renderData" :props="treeProps" :node-key="nodeKey"
         :default-expanded-keys="expandedKeys" :current-node-key="currentNodeKey" :highlight-current="highlightCurrent"
-        :expand-on-click-node="expandOnClickNode" :draggable="draggable" :filter-node-method="filterNodeMethod"
+        :expand-on-click-node="expandOnClickNode" :auto-expand-parent="false" :draggable="draggable && !busy" :filter-node-method="filterNodeMethod"
         :allow-drag="allowDrag" :allow-drop="allowDrop" class="sidebar-tree" @node-click="handleNodeClick"
-        @node-drop="handleNodeDrop" @node-expand="handleNodeExpand" @node-collapse="handleNodeCollapse">
+        @node-drop="handleNodeDrop" @node-drag-start="startDrag" @node-drag-end="endDrag"
+        @node-expand="handleNodeExpand" @node-collapse="handleNodeCollapse">
         <template #default="{ node, data }">
           <div class="sidebar-tree-node-slot" @dblclick.stop="handleNodeDblClick(data, node, $event)">
             <button v-if="draggable" class="sidebar-tree-node-drag-handle" type="button" aria-label="拖拽排序" @click.stop>
@@ -40,7 +41,8 @@ import { Icon } from '@iconify/vue';
 import TreeNodeMenu from './TreeNodeMenu.vue';
 import type { TreeMenuItem } from './treeMenu';
 import { ElScrollbar, ElTree } from 'element-plus';
-import { ref, watch } from 'vue';
+import { ref } from 'vue';
+import { useSidebarTree } from './useSidebarTree';
 import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
 
 type ActualNodeDropType = Exclude<NodeDropType, 'none'>;
@@ -57,7 +59,7 @@ interface Props {
   draggable?: boolean;
   allowDrag?: (draggingNode: any) => boolean;
   allowDrop?: (draggingNode: any, dropNode: any, type: AllowDropType) => boolean;
-  handleNodeDrop?: (draggingNode: any, dropNode: any, type: ActualNodeDropType) => boolean;
+  handleNodeDrop?: (draggingNode: any, dropNode: any, type: ActualNodeDropType) => boolean | Promise<boolean>;
   filterNodeMethod?: (value: string, data: any, node: any) => boolean;
   filterValue?: string;
   autoExpandFirst?: boolean;
@@ -82,94 +84,33 @@ const emit = defineEmits<{
 }>();
 
 const treeRef = ref<InstanceType<typeof ElTree> | null>(null);
-const expandedKeys = ref<Array<string | number>>([...props.defaultExpandedKeys]);
-const previousDefaultExpandedKeys = ref<Array<string | number>>([...props.defaultExpandedKeys]);
-
-const collectNodeKeys = (nodes: any[], keyField: string, childrenField: string, target: Set<string | number>) => {
-  nodes.forEach((node) => {
-    const key = node?.[keyField];
-    if (key !== undefined && key !== null) {
-      target.add(key);
-    }
-
-    const children = node?.[childrenField];
-    if (Array.isArray(children) && children.length > 0) {
-      collectNodeKeys(children, keyField, childrenField, target);
-    }
-  });
-};
-
-const getValidNodeKeys = (treeData: any[]) => {
-  const validKeys = new Set<string | number>();
-  const childrenField =
-    typeof props.treeProps?.children === 'string' && props.treeProps.children ? props.treeProps.children : 'children';
-
-  if (props.nodeKey) {
-    collectNodeKeys(treeData, props.nodeKey, childrenField, validKeys);
-  }
-
-  return validKeys;
-};
-
-const pruneExpandedKeys = (keys: Array<string | number>, validKeys: Set<string | number>) => {
-  return keys.filter((key) => validKeys.has(key));
-};
-
-watch(
-  () => props.defaultExpandedKeys,
-  (nextKeys) => {
-    const validKeys = getValidNodeKeys(props.treeData);
-    const previousDefaults = new Set(previousDefaultExpandedKeys.value);
-    const incomingDefaults = nextKeys.filter((key) => validKeys.has(key));
-    const nextExpanded = pruneExpandedKeys(expandedKeys.value, validKeys);
-
-    incomingDefaults.forEach((key) => {
-      if (!previousDefaults.has(key) && !nextExpanded.includes(key)) {
-        nextExpanded.push(key);
-      }
-    });
-
-    if (previousDefaultExpandedKeys.value.length === 0 && expandedKeys.value.length === 0) {
-      expandedKeys.value = [...incomingDefaults];
-    } else {
-      expandedKeys.value = nextExpanded;
-    }
-
-    previousDefaultExpandedKeys.value = [...nextKeys];
-  }
-);
-
-watch(
-  () => props.treeData,
-  (nextData) => {
-    const validKeys = getValidNodeKeys(nextData);
-    expandedKeys.value = pruneExpandedKeys(expandedKeys.value, validKeys);
-
-    if (!props.autoExpandFirst) return;
-    if (expandedKeys.value.length > 0) return;
-    if (!Array.isArray(nextData) || nextData.length === 0) return;
-    const first = nextData[0];
-    if (first && props.nodeKey && first[props.nodeKey] !== undefined) {
-      expandedKeys.value = [first[props.nodeKey]];
-    }
+const controller = useSidebarTree({
+  data: () => props.treeData,
+  key: () => props.nodeKey,
+  children: () => typeof props.treeProps.children === 'string' ? props.treeProps.children : 'children',
+  defaults: () => props.defaultExpandedKeys,
+  current: () => props.currentNodeKey,
+  filter: () => props.filterValue,
+  autoExpandFirst: () => props.autoExpandFirst,
+  tree: () => treeRef.value,
+  drop: (source, target, type) => {
+    const allowedType = type === 'before' ? 'prev' : type === 'after' ? 'next' : 'inner';
+    if (props.allowDrag && !props.allowDrag(source)) return false;
+    if (props.allowDrop && !props.allowDrop(source, target, allowedType)) return false;
+    return props.handleNodeDrop?.(source, target, type) ?? false;
   },
-  { immediate: true }
-);
+});
+const { data: renderData, expandedKeys, busy, startDrag, endDrag,
+  onExpand: handleNodeExpand, onCollapse: handleNodeCollapse } = controller;
+defineExpose({ open: controller.open, close: controller.close, toggle: controller.toggle,
+  refresh: controller.refresh, move: controller.move });
 
-watch(
-  () => props.filterValue,
-  (value) => {
-    treeRef.value?.filter(value || '');
-  }
-);
-
-const handleNodeDrop = (draggingNode: any, dropNode: any, dropType: ActualNodeDropType) => {
-  if (!props.handleNodeDrop) return;
-  props.handleNodeDrop(draggingNode, dropNode, dropType);
-};
+const handleNodeDrop = (draggingNode: any, dropNode: any, dropType: ActualNodeDropType) =>
+  controller.drop(draggingNode, dropNode, dropType);
 
 const handleNodeClick = (data: any, node: any, component: any, event: MouseEvent) => {
   if (shouldIgnoreTreeNodeEvent(event)) return;
+  controller.onClick(data);
   emit('node-click', data, { node, component, event });
 };
 
@@ -189,21 +130,6 @@ const shouldIgnoreTreeNodeEvent = (event?: MouseEvent) => {
   );
 };
 
-const handleNodeExpand = (data: any) => {
-  const key = data?.[props.nodeKey];
-  if (key !== undefined && key !== null && !expandedKeys.value.includes(key)) {
-    expandedKeys.value.push(key);
-  }
-};
-
-const handleNodeCollapse = (data: any) => {
-  const key = data?.[props.nodeKey];
-  if (key === undefined || key === null) return;
-  const index = expandedKeys.value.indexOf(key);
-  if (index > -1) {
-    expandedKeys.value.splice(index, 1);
-  }
-};
 </script>
 
 <style>

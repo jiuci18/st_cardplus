@@ -89,6 +89,7 @@ export function useRegexDragDrop(
     if (dropNode.data.isScript) {
       toCategoryId = dropNode.parent?.data?.id || dropNode.data.categoryId;
       toCategory = regexCollection.value.categories[toCategoryId];
+      if (!toCategory) return false;
       const dropScriptIndex = toCategory.scripts.findIndex((s) => s.id === dropNode.data.scriptId);
       if (dropScriptIndex === -1) {
         ElMessage.error('拖拽失败：在目标类别中找不到定位脚本');
@@ -126,7 +127,7 @@ export function useRegexDragDrop(
       }
     } else {
       // 跨类别移动
-     moveScriptBetweenCategories(scriptId, fromCategoryId, toCategoryId, insertIndex);
+      return moveScriptBetweenCategories(scriptId, fromCategoryId, toCategoryId, insertIndex);
     }
 
     return true;

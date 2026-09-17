@@ -1,5 +1,5 @@
 <template>
-  <SidebarTreePanel title="正则脚本库" :tree-data="treeData" :tree-props="treeProps" :current-node-key="currentNodeKey"
+  <SidebarTreePanel ref="sidebarRef" title="正则脚本库" :tree-data="treeData" :tree-props="treeProps" :current-node-key="currentNodeKey"
     :draggable="true" :allow-drag="props.dragDropHandlers.allowDrag" :allow-drop="props.dragDropHandlers.allowDrop"
     :handle-node-drop="props.dragDropHandlers.handleNodeDrop" :auto-expand-first="true"
     :node-menu-items="getNodeMenuItems" @node-menu-select="handleNodeMenuSelect" @node-click="handleNodeClick">
@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { ElTooltip } from 'element-plus';
 import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
 import { Icon } from '@iconify/vue';
@@ -61,6 +61,8 @@ const emit = defineEmits<{
   (e: 'rename-script', id: string): void;
   (e: 'delete-script', id: string): void;
 }>();
+
+const sidebarRef = ref<InstanceType<typeof SidebarTreePanel> | null>(null);
 
 const treeProps = {
   children: 'children',
@@ -133,7 +135,7 @@ const handleNodeMenuSelect = (key: string, data: MenuNode) => {
   const index = siblings.findIndex(node => node.id === data.id);
   const target = key === 'top' ? 0 : key === 'bottom' ? siblings.length - 1 : index + (key === 'up' ? -1 : 1);
   if (index < 0 || !siblings[target]) return;
-  props.dragDropHandlers.handleNodeDrop({ data }, { data: siblings[target] }, target < index ? 'before' : 'after');
+  void sidebarRef.value?.move(data.id, siblings[target].id, target < index ? 'before' : 'after');
 };
 
 const currentNodeKey = computed(() => {

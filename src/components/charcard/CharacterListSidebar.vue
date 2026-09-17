@@ -1,5 +1,5 @@
 <template>
-  <SidebarTreePanel title="角色列表" :tree-data="treeData" :tree-props="treeProps"
+  <SidebarTreePanel ref="sidebarRef" title="角色列表" :tree-data="treeData" :tree-props="treeProps"
     :default-expanded-keys="defaultExpandedKeys" :current-node-key="activeCharacterId ?? undefined" :draggable="true"
     :allow-drag="allowDrag" :allow-drop="allowDrop" :handle-node-drop="handleNodeDrop"
     :node-menu-items="getNodeMenuItems" @node-menu-select="handleNodeMenuSelect" @node-click="handleNodeClick">
@@ -89,6 +89,7 @@ const emit = defineEmits<{
   (e: 'delete-project', id: string): void;
 }>();
 
+const sidebarRef = ref<InstanceType<typeof SidebarTreePanel> | null>(null);
 const filePickerRef = ref<BrowserFilePickerExposed | null>(null);
 const props = defineProps<Props>();
 const defaultExpandedKeys = computed<Array<string | number>>(() =>
@@ -151,7 +152,7 @@ const handleNodeMenuSelect = (key: string, data: MenuNode) => {
   const index = siblings.findIndex(node => node.id === data.id);
   const target = key === 'top' ? 0 : key === 'bottom' ? siblings.length - 1 : index + (key === 'up' ? -1 : 1);
   if (index < 0 || !siblings[target]) return;
-  handleNodeDrop({ data }, { data: siblings[target] }, target < index ? 'before' : 'after');
+  void sidebarRef.value?.move(data.id, siblings[target].id, target < index ? 'before' : 'after');
 };
 
 const triggerFileInput = () => {
