@@ -64,19 +64,20 @@
             <Icon v-else icon="ph:user-circle-duotone" class="card-grid-avatar-icon" />
           </div>
           <div class="card-grid-content">
-            <h3 class="card-grid-name">{{ card.name || '未命名角色' }}</h3>
-            <p class="card-grid-description">{{ card.description || '暂无描述' }}</p>
             <div class="card-grid-meta">
-              <span class="card-grid-time">{{ formatTime(card.updatedAt) }}</span>
-              <div v-if="card.tags && card.tags.length > 0" class="card-grid-tags">
-                <el-tag v-for="tag in card.tags.slice(0, 3)" :key="tag" type="info" size="small" effect="plain"
-                  class="card-grid-tag">
-                  {{ tag }}
-                </el-tag>
-                <span v-if="card.tags.length > 3" class="card-grid-tag-more">
-                  +{{ card.tags.length - 3 }}
-                </span>
-              </div>
+              <h3 class="card-grid-name" @mouseenter="prepareNameScroll">
+                <span class="card-grid-name-text">{{ card.name || '未命名角色' }}</span>
+              </h3>
+              <span class="card-grid-time" :title="`更新于 ${card.updatedAt}`">{{ formatTime(card.updatedAt) }}</span>
+            </div>
+            <div class="card-grid-tags">
+              <el-tag v-for="tag in (card.tags || []).slice(0, 3)" :key="tag" type="info" size="small" effect="plain"
+                class="card-grid-tag">
+                {{ tag }}
+              </el-tag>
+              <span v-if="card.tags && card.tags.length > 3" class="card-grid-tag-more">
+                +{{ card.tags.length - 3 }}
+              </span>
             </div>
           </div>
           <div class="card-grid-actions">
@@ -104,7 +105,7 @@
 
 <script setup lang="ts">
 import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
-import { formatDate, now, toDateSafe } from '@/utils/datetime';
+import { toDateSafe } from '@/utils/datetime';
 import type { CharacterCardCollection } from '@/types/character/character-card-collection';
 import { Delete, Download, FolderOpened, MoreFilled, Plus, Search, Switch } from '@element-plus/icons-vue';
 import { Icon } from '@iconify/vue';
@@ -224,6 +225,18 @@ const handleInvertSelection = () => {
   checkedCards.value = newChecked;
 };
 
+// 按实际溢出距离滚动，短名称保持静止。
+const prepareNameScroll = (event: MouseEvent) => {
+  const container = event.currentTarget as HTMLElement;
+  const text = container.querySelector<HTMLElement>('.card-grid-name-text');
+  if (!text) return;
+
+  const overflow = Math.max(0, text.scrollWidth - container.clientWidth);
+  container.dataset.overflow = String(overflow > 0);
+  container.style.setProperty('--name-scroll-distance', `${-overflow}px`);
+  container.style.setProperty('--name-scroll-duration', `${Math.max(3, overflow / 35 + 1)}s`);
+};
+
 // 格式化时间
 const formatTime = (timeStr: string) => {
   const date = toDateSafe(timeStr);
@@ -231,17 +244,7 @@ const formatTime = (timeStr: string) => {
     return '未知时间';
   }
 
-  const diffMs = now().getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays <= 0) {
-    return '今天';
-  } else if (diffDays === 1) {
-    return '昨天';
-  } else if (diffDays < 7) {
-    return `${diffDays}天前`;
-  }
-
-  return formatDate(date);
+  return `${String(date.getFullYear()).slice(-2)}/${date.getMonth() + 1}/${date.getDate()}`;
 };
 </script>
 
@@ -344,7 +347,7 @@ const formatTime = (timeStr: string) => {
 /* 网格布局 */
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
   gap: 16px;
   padding-top: 4px;
   padding-bottom: 24px;
@@ -354,7 +357,8 @@ const formatTime = (timeStr: string) => {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  overflow: hidden;
+  min-width: 0;
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
   background-color: var(--el-bg-color);
@@ -367,6 +371,7 @@ const formatTime = (timeStr: string) => {
   top: 10px;
   left: 10px;
   z-index: 2;
+  height: 28px;
 }
 
 .card-grid-item:hover {
@@ -376,11 +381,9 @@ const formatTime = (timeStr: string) => {
 }
 
 .card-grid-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
+  width: 100%;
+  aspect-ratio: 3 / 4;
   overflow: hidden;
-  margin: 0 auto 16px;
   flex-shrink: 0;
   background-color: var(--el-fill-color-light);
   display: flex;
@@ -392,21 +395,25 @@ const formatTime = (timeStr: string) => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: top;
+  display: block;
 }
 
 .card-grid-avatar-icon {
-  font-size: 48px;
+  font-size: 72px;
   color: var(--el-text-color-placeholder);
 }
 
 .card-grid-content {
-  flex: 1;
-  text-align: center;
+  padding: 12px;
+  border-top: 1px solid var(--el-border-color-lighter);
 }
 
 .card-grid-name {
-  margin: 0 0 8px 0;
-  font-size: 16px;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 15px;
   font-weight: 600;
   color: var(--el-text-color-primary);
   white-space: nowrap;
@@ -414,46 +421,83 @@ const formatTime = (timeStr: string) => {
   text-overflow: ellipsis;
 }
 
-.card-grid-description {
-  margin: 0 0 12px 0;
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  min-height: 40px;
+.card-grid-name-text {
+  display: inline-block;
+  vertical-align: bottom;
+}
+
+.card-grid-name[data-overflow='true']:hover {
+  text-overflow: clip;
+}
+
+.card-grid-name[data-overflow='true']:hover .card-grid-name-text {
+  animation: card-name-scroll var(--name-scroll-duration) linear infinite alternate;
+}
+
+@keyframes card-name-scroll {
+
+  0%,
+  15% {
+    transform: translateX(0);
+  }
+
+  85%,
+  100% {
+    transform: translateX(var(--name-scroll-distance));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-grid-name[data-overflow='true']:hover {
+    overflow-x: auto;
+  }
+
+  .card-grid-name[data-overflow='true']:hover .card-grid-name-text {
+    animation: none;
+  }
 }
 
 .card-grid-meta {
   display: flex;
-  flex-direction: column;
   gap: 8px;
-  align-items: center;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
 .card-grid-time {
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 12px;
   color: var(--el-text-color-placeholder);
 }
 
 .card-grid-tags {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  align-items: center;
+  min-height: 20px;
+  overflow: hidden;
   gap: 4px;
 }
 
 .card-grid-tag {
+  min-width: 0;
+  max-width: 100%;
+  flex-shrink: 1;
   font-size: 11px;
   height: 20px;
   padding: 0 8px;
   line-height: 20px;
 }
 
+.card-grid-tag :deep(.el-tag__content) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .card-grid-tag-more {
+  flex-shrink: 0;
   font-size: 11px;
   color: var(--el-text-color-placeholder);
 }
@@ -468,7 +512,8 @@ const formatTime = (timeStr: string) => {
   transition: opacity 0.2s ease;
 }
 
-.card-grid-item:hover .card-grid-actions {
+.card-grid-item:hover .card-grid-actions,
+.card-grid-item:focus-within .card-grid-actions {
   opacity: 1;
 }
 
@@ -498,9 +543,9 @@ const formatTime = (timeStr: string) => {
 }
 
 /* 响应式设计 */
-@media (max-width: 1200px) {
-  .card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+@media (hover: none) {
+  .card-grid-actions {
+    opacity: 1;
   }
 }
 
@@ -548,7 +593,7 @@ const formatTime = (timeStr: string) => {
   }
 
   .card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
     gap: 12px;
   }
 }
