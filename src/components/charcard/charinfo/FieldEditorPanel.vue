@@ -24,8 +24,7 @@
             <div class="preset-group-label">{{ group.label }}</div>
             <div class="preset-chips">
               <button v-for="item in group.items" :key="item" type="button" class="preset-chip"
-                :class="{ 'is-active': activeTokens.has(item) }"
-                :aria-pressed="activeTokens.has(item)"
+                :class="{ 'is-active': activeTokens.has(item) }" :aria-pressed="activeTokens.has(item)"
                 :title="activeTokens.has(item) ? '点击移除该预设' : '点击追加该预设'" @click="togglePreset(item)">
                 {{ item }}
               </button>
@@ -36,15 +35,15 @@
 
       <!-- 分隔条：拖动调节上下高度 -->
       <div v-if="presetGroups.length > 0" class="panel-splitter" :class="{ 'is-dragging': isDragging }" role="separator"
-        aria-orientation="horizontal" aria-label="拖动调节预设区域高度" tabindex="0"
-        @pointerdown="startDrag" @keydown="handleSplitterKeydown">
+        aria-orientation="horizontal" aria-label="拖动调节预设区域高度" tabindex="0" @pointerdown="startDrag"
+        @keydown="handleSplitterKeydown">
         <span class="panel-splitter-grip" />
       </div>
 
       <!-- 多行输入 -->
       <div class="panel-input">
-        <el-input :model-value="modelValue" type="textarea" resize="none" class="panel-textarea"
-          :placeholder="`请输入 ${label} 特征`" @update:model-value="emit('update:modelValue', $event)" />
+        <el-input :model-value="modelValue" type="textarea" resize="vertical" class="panel-textarea"
+          :placeholder="`请输入 ${label} 内容`" @update:model-value="emit('update:modelValue', $event)" />
         <div class="panel-input-footer">
           <span>{{ (modelValue || '').length }} 字</span>
           <span v-if="presetGroups.length > 0">点击预设可追加 / 移除，多条以「，」分隔</span>
@@ -58,12 +57,12 @@
 import { Icon } from '@iconify/vue';
 import { ElButton, ElInput, ElScrollbar } from 'element-plus';
 import { computed, onBeforeUnmount, ref } from 'vue';
-import { resolveAppearancePresets } from '@/config/appearancePresets';
 
 const props = defineProps<{
   fieldKey: string | null;
   label: string;
   modelValue: string;
+  presetGroups?: { label: string; items: string[] }[];
 }>();
 
 const emit = defineEmits<{
@@ -73,9 +72,7 @@ const emit = defineEmits<{
 const MIN_PRESET_HEIGHT = 120;
 const MAX_PRESET_HEIGHT = 520;
 
-const presetGroups = computed(() =>
-  props.fieldKey ? resolveAppearancePresets(props.fieldKey, props.label) : [],
-);
+const presetGroups = computed(() => props.presetGroups ?? []);
 
 const SEPARATOR = '，';
 const splitTokens = (value: string): string[] =>
@@ -284,12 +281,20 @@ onBeforeUnmount(stopDrag);
 }
 
 .panel-textarea {
+  display: flex;
+  flex-direction: column;
   flex: 1;
+  width: 100%;
+  min-width: 0;
 }
 
 .panel-textarea :deep(.el-textarea__inner) {
-  height: 100%;
-  min-height: 150px;
+  flex: 1 0 auto;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 100%;
+  max-width: 100%;
+  min-height: 80px;
   font-size: 13px;
   line-height: 1.6;
 }

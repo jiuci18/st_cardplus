@@ -137,6 +137,10 @@ watch(
   () => props.notes,
   (newNotes) => {
     localNotes.value = deepClone(newNotes);
+    if (localNotes.value.length === 0) {
+      localNotes.value.push({ id: generateNoteId(), name: '', data: [''] });
+      emit('update:notes', deepClone(localNotes.value));
+    }
   },
   { deep: true, immediate: true }
 );

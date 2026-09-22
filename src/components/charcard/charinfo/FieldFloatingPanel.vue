@@ -1,26 +1,27 @@
 <template>
   <Teleport to="body">
-    <aside v-show="active && visible && !closed" ref="panel" class="appearance-floating-panel" aria-label="外貌字段编辑"
+    <aside v-show="active && visible && !closed" ref="panel" class="appearance-floating-panel" :aria-label="title"
       :style="positionStyle">
-      <div class="floating-header" :class="{ 'is-pinned': pinned }"
-        @pointerdown="startDrag" @pointermove="moveDrag" @pointerup="stopDrag"
-        @pointercancel="stopDrag" @lostpointercapture="stopDrag">
-        <span>外貌编辑</span>
+      <div class="floating-header" :class="{ 'is-pinned': pinned }" @pointerdown="startDrag" @pointermove="moveDrag"
+        @pointerup="stopDrag" @pointercancel="stopDrag" @lostpointercapture="stopDrag">
+        <span>{{ title }}</span>
         <div class="floating-actions" @pointerdown.stop>
           <el-button text size="small" :aria-pressed="pinned" :title="pinned ? '取消固定，可拖动面板' : '固定面板位置'"
             :aria-label="pinned ? '取消固定面板' : '固定面板'" @click="pinned = !pinned">
             <Icon :icon="pinned ? 'ph:push-pin-fill' : 'ph:push-pin'" />
           </el-button>
-          <el-button text size="small" :aria-expanded="expanded" :aria-label="expanded ? '收起外貌编辑' : '展开外貌编辑'"
+          <el-button text size="small" :aria-expanded="expanded" :aria-label="`${expanded ? '收起' : '展开'}${title}`"
             :title="expanded ? '收起' : '展开'" @click="expanded = !expanded">
             <Icon :icon="expanded ? 'ph:caret-down' : 'ph:caret-up'" />
           </el-button>
-          <el-button text size="small" title="关闭" aria-label="关闭外貌编辑" @click="closePanel">
+          <el-button text size="small" title="关闭" :aria-label="`关闭${title}`" @click="closePanel">
             <Icon icon="ph:x" />
           </el-button>
         </div>
       </div>
-      <div v-show="expanded" class="floating-content"><slot /></div>
+      <div v-show="expanded" class="floating-content">
+        <slot />
+      </div>
     </aside>
   </Teleport>
 </template>
@@ -30,7 +31,7 @@ import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMoun
 import { ElButton } from 'element-plus';
 import { Icon } from '@iconify/vue';
 
-const props = defineProps<{ fieldKey: string | null; openSignal: number; toggleSignal: number; visible: boolean; anchor?: { x: number; y: number } | null }>();
+const props = defineProps<{ title: string; fieldKey: string | null; openSignal: number; toggleSignal: number; visible: boolean; anchor?: { x: number; y: number } | null }>();
 const panel = ref<HTMLElement>();
 const active = ref(true);
 const expanded = ref(true);
@@ -111,6 +112,9 @@ onBeforeUnmount(() => {
   bottom: 24px;
   z-index: 2000;
   width: min(460px, calc(100vw - 16px));
+  min-width: min(300px, calc(100vw - 16px));
+  max-width: calc(100vw - 16px);
+  resize: horizontal;
   max-height: calc(100dvh - 16px);
   display: flex;
   flex-direction: column;
@@ -121,6 +125,7 @@ onBeforeUnmount(() => {
   color: var(--el-text-color-primary);
   box-shadow: var(--el-box-shadow-dark);
 }
+
 .floating-header {
   display: flex;
   align-items: center;
@@ -133,12 +138,34 @@ onBeforeUnmount(() => {
   font-size: 13px;
   border-bottom: 1px solid var(--el-border-color-lighter);
 }
-.floating-header.is-pinned { cursor: default; }
-.floating-actions { display: flex; }
-.floating-actions .el-button + .el-button { margin-left: 4px; }
-.floating-content { min-height: 0; overflow: auto; overscroll-behavior: contain; }
-.floating-content :deep(.field-editor-panel) { border: 0; border-radius: 0; }
+
+.floating-header.is-pinned {
+  cursor: default;
+}
+
+.floating-actions {
+  display: flex;
+}
+
+.floating-actions .el-button+.el-button {
+  margin-left: 4px;
+}
+
+.floating-content {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.floating-content :deep(.field-editor-panel) {
+  border: 0;
+  border-radius: 0;
+}
+
 @media (max-width: 600px) {
-  .appearance-floating-panel { right: 8px; bottom: 8px; }
+  .appearance-floating-panel {
+    right: 8px;
+    bottom: 8px;
+  }
 }
 </style>
