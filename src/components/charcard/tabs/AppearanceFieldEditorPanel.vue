@@ -18,11 +18,8 @@
       </div>
 
       <!-- 预设信息 -->
-      <div class="panel-presets" :style="{ height: `${presetHeight}px` }">
+      <div v-if="presetGroups.length > 0" class="panel-presets" :style="{ height: `${presetHeight}px` }">
         <el-scrollbar height="100%">
-          <div v-if="presetGroups.length === 0" class="panel-presets-empty">
-            该字段暂无内置预设，可直接在下方输入
-          </div>
           <div v-for="group in presetGroups" :key="group.label" class="preset-group">
             <div class="preset-group-label">{{ group.label }}</div>
             <div class="preset-chips">
@@ -38,7 +35,7 @@
       </div>
 
       <!-- 分隔条：拖动调节上下高度 -->
-      <div class="panel-splitter" :class="{ 'is-dragging': isDragging }" role="separator"
+      <div v-if="presetGroups.length > 0" class="panel-splitter" :class="{ 'is-dragging': isDragging }" role="separator"
         aria-orientation="horizontal" aria-label="拖动调节预设区域高度" tabindex="0"
         @pointerdown="startDrag" @keydown="handleSplitterKeydown">
         <span class="panel-splitter-grip" />
@@ -50,7 +47,7 @@
           :placeholder="`请输入 ${label} 特征`" @update:model-value="emit('update:modelValue', $event)" />
         <div class="panel-input-footer">
           <span>{{ (modelValue || '').length }} 字</span>
-          <span>点击预设可追加 / 移除，多条以「，」分隔</span>
+          <span v-if="presetGroups.length > 0">点击预设可追加 / 移除，多条以「，」分隔</span>
         </div>
       </div>
     </template>
@@ -193,13 +190,6 @@ onBeforeUnmount(stopDrag);
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 4px;
   background: var(--el-fill-color-extra-light);
-}
-
-.panel-presets-empty {
-  padding: 16px 12px;
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  line-height: 1.5;
 }
 
 .preset-group {

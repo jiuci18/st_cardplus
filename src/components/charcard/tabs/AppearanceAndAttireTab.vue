@@ -24,7 +24,7 @@
               :class="{ 'is-empty': !field.value, 'is-active': field.key === selectedKey }">
               <button type="button" class="field-trigger" :aria-pressed="field.key === selectedKey"
                 :title="field.value?.trim() ? `${field.label}：${field.value}` : `编辑 ${field.label}`"
-                @click="toggleField(field.key)">
+                @click="toggleField(field.key, $event)">
                 <span class="field-trigger-status" aria-hidden="true">
                   <Icon v-if="field.value?.trim()" icon="material-symbols:check-circle-rounded" width="16"
                     height="16" />
@@ -34,8 +34,7 @@
               </button>
               <el-button text size="small" class="remove-btn"
                 :class="{ 'is-confirming': pendingDeleteKey === field.key }"
-                :title="pendingDeleteKey === field.key ? '再次点击确认删除' : '删除该字段'"
-                @click="handleRemoveField(index)">
+                :title="pendingDeleteKey === field.key ? '再次点击确认删除' : '删除该字段'" @click="handleRemoveField(index)">
                 <Icon
                   :icon="pendingDeleteKey === field.key ? 'material-symbols:delete-forever-outline' : 'material-symbols:delete-outline'"
                   width="18" height="18" />
@@ -68,7 +67,8 @@
             </el-dropdown>
           </div>
         </div>
-        <AppearanceFloatingPanel v-if="selectedField" :visible="active" :field-key="selectedKey" :open-signal="panelOpenSignal" :toggle-signal="panelToggleSignal">
+        <AppearanceFloatingPanel v-if="selectedField" :visible="active" :anchor="panelAnchor" :field-key="selectedKey"
+          :open-signal="panelOpenSignal" :toggle-signal="panelToggleSignal">
           <AppearanceFieldEditorPanel :field-key="selectedKey" :label="selectedField?.label ?? ''"
             :model-value="selectedField?.value ?? ''" @update:model-value="updateSelectedValue" />
         </AppearanceFloatingPanel>
@@ -130,6 +130,7 @@ import {
   ElMessageBox,
 } from 'element-plus';
 import { useBatchCustomFieldPrompt } from '@/composables/characterInfo/useBatchCustomFieldPrompt';
+import { createEmptyAttire } from '@/composables/characterInfo/useCharacterCard';
 import { computed, onBeforeUnmount, onMounted, ref, toRefs, watch } from 'vue';
 import draggable from 'vuedraggable';
 import AppearanceFieldEditorPanel from './AppearanceFieldEditorPanel.vue';
@@ -147,7 +148,16 @@ const props = defineProps({
   },
 });
 
-defineEmits(['addAttire', 'removeAttire', 'exportAttires', 'exportAppearance', 'update:attires']);
+const emit = defineEmits(['addAttire', 'removeAttire', 'exportAttires', 'exportAppearance', 'update:attires']);
+
+// 无服装数据时保留一张空白套装卡片，方便直接输入。
+watch(
+  () => props.form.attires?.length,
+  (length) => {
+    if (!length) emit('update:attires', [createEmptyAttire()]);
+  },
+  { immediate: true },
+);
 
 const { form } = toRefs(props);
 const { addFieldsByPrompt } = useBatchCustomFieldPrompt();
@@ -159,6 +169,7 @@ interface AppearanceField {
 }
 const displayFields = ref<AppearanceField[]>([]);
 const selectedKey = ref<string | null>(null);
+const panelAnchor = ref<{ x: number; y: number } | null>(null);
 const panelOpenSignal = ref(0);
 const panelToggleSignal = ref(0);
 const pendingDeleteKey = ref<string | null>(null);
@@ -205,7 +216,11 @@ const selectField = (key: string) => {
   panelOpenSignal.value++;
 };
 
-const toggleField = (key: string) => {
+const toggleField = (key: string, event: MouseEvent) => {
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  panelAnchor.value = event.detail === 0
+    ? { x: rect.right, y: rect.top }
+    : { x: event.clientX, y: event.clientY };
   if (selectedKey.value === key) {
     panelToggleSignal.value++;
   } else {

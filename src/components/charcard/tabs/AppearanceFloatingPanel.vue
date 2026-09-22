@@ -26,15 +26,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onMounted, ref, watch } from 'vue';
 import { ElButton } from 'element-plus';
 import { Icon } from '@iconify/vue';
 
-const props = defineProps<{ fieldKey: string | null; openSignal: number; toggleSignal: number; visible: boolean }>();
+const props = defineProps<{ fieldKey: string | null; openSignal: number; toggleSignal: number; visible: boolean; anchor?: { x: number; y: number } | null }>();
 const panel = ref<HTMLElement>();
 const active = ref(true);
 const expanded = ref(true);
-const closed = ref(false);
+const closed = ref(props.openSignal === 0 && props.toggleSignal === 0);
 const pinned = ref(false);
 const position = ref<{ x: number; y: number } | null>(null);
 const positionStyle = computed(() => position.value
@@ -69,14 +69,21 @@ function fitViewport() {
   if (!active.value || !props.visible || closed.value) return;
   if (position.value) position.value = clampPosition(position.value.x, position.value.y);
 }
+async function positionNearAnchor() {
+  await nextTick();
+  if (closed.value || pinned.value || !props.anchor) return;
+  position.value = clampPosition(props.anchor.x + 12, props.anchor.y + 12);
+}
 watch(() => props.openSignal, () => {
   closed.value = false;
   expanded.value = true;
+  void positionNearAnchor();
 });
 watch(() => props.toggleSignal, () => {
   if (closed.value) {
     closed.value = false;
     expanded.value = true;
+    void positionNearAnchor();
   } else {
     closePanel();
   }
@@ -84,6 +91,7 @@ watch(() => props.toggleSignal, () => {
 watch([expanded, active, closed, () => props.fieldKey, () => props.visible], fitViewport, { flush: 'post' });
 let observer: ResizeObserver | undefined;
 onMounted(() => {
+  void positionNearAnchor();
   window.addEventListener('resize', fitViewport);
   observer = new ResizeObserver(fitViewport);
   if (panel.value) observer.observe(panel.value);
