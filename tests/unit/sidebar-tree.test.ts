@@ -82,6 +82,26 @@ test('clicking to collapse a parent is not undone by selecting a synthetic child
   assert.equal(nodes.get('a').expanded, false);
 });
 
+test('native click expansion survives selection updates and data refreshes across repeated clicks', async t => {
+  const { controller, source, current, nodes } = setup(t);
+  await tick();
+  await controller.close('a');
+
+  for (const expanded of [true, false, true, false]) {
+    // ElTree toggles before emitting node-click; the controller only records it.
+    nodes.get('a').expanded = expanded;
+    if (expanded) controller.onExpand({ id: 'a' });
+    else controller.onCollapse({ id: 'a' });
+    controller.onClick({ id: 'a' });
+    current.value = expanded ? 'a' : 'a1';
+    source.value = [...source.value];
+    await tick();
+    await controller.refresh();
+    assert.equal(nodes.get('a').expanded, expanded);
+    assert.equal(controller.expandedKeys.value.includes('a'), expanded);
+  }
+});
+
 test('ElTree structural mutations do not mutate business tree arrays', async t => {
   const { controller, source } = setup(t);
   const moved = controller.data.value[0].children.pop();

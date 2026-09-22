@@ -13,7 +13,7 @@
     <el-scrollbar class="sidebar-panel-scrollbar">
       <el-tree ref="treeRef" :data="renderData" :props="treeProps" :node-key="nodeKey"
         :default-expanded-keys="expandedKeys" :current-node-key="currentNodeKey" :highlight-current="highlightCurrent"
-        :expand-on-click-node="expandOnClickNode" :auto-expand-parent="false" :draggable="draggable && !busy" :filter-node-method="filterNodeMethod"
+        :expand-on-click-node="true" :auto-expand-parent="false" :draggable="draggable && !busy" :filter-node-method="filterNodeMethod"
         :allow-drag="allowDrag" :allow-drop="allowDrop" class="sidebar-tree" @node-click="handleNodeClick"
         @node-drop="handleNodeDrop" @node-drag-start="startDrag" @node-drag-end="endDrag"
         @node-expand="handleNodeExpand" @node-collapse="handleNodeCollapse">
@@ -55,7 +55,6 @@ interface Props {
   nodeKey?: string;
   currentNodeKey?: string | number;
   highlightCurrent?: boolean;
-  expandOnClickNode?: boolean;
   draggable?: boolean;
   allowDrag?: (draggingNode: any) => boolean;
   allowDrop?: (draggingNode: any, dropNode: any, type: AllowDropType) => boolean;
@@ -70,7 +69,6 @@ const props = withDefaults(defineProps<Props>(), {
   treeProps: () => ({ children: 'children', label: 'label' }),
   nodeKey: 'id',
   highlightCurrent: true,
-  expandOnClickNode: false,
   draggable: false,
   filterValue: '',
   autoExpandFirst: false,

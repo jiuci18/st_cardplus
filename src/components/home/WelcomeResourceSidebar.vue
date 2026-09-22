@@ -1,7 +1,7 @@
 <template>
   <aside class="resource-sidebar" :aria-label="title">
     <SidebarTreePanel :title="title" :tree-data="treeData" :tree-props="treeProps" :default-expanded-keys="expandedKeys"
-      node-key="id" :expand-on-click-node="true" @node-click="handleNodeClick">
+      node-key="id" @node-click="handleNodeClick">
       <template #header-actions>
         <Icon :icon="headerIcon" class="sidebar-header-icon" />
       </template>

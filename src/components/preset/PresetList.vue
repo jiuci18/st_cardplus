@@ -1,7 +1,6 @@
 <template>
   <SidebarTreePanel
     ref="sidebarRef"
-    :expand-on-click-node="true"
     title="预设列表"
     :tree-data="treeData"
     :tree-props="treeProps"

@@ -32,7 +32,6 @@ export function useWorldBookDragDrop(
         const byId = new Map(source.context.entries.map((entry) => [entryKey(source.context!.id, entry), entry]));
         const entries = targetKeys.map((id, order) => ({ ...byId.get(id)!, order }));
         await updateBookEntries(source.context.id, entries);
-        ElMessage.success('条目顺序已更新');
       } else {
         const byId = new Map(
           [source.context, target.context!].flatMap((book) =>

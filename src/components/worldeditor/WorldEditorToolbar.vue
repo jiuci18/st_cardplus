@@ -8,7 +8,6 @@
       node-key="id"
       :default-expanded-keys="expandedKeys"
       :current-node-key="currentNodeKey"
-      :expand-on-click-node="true"
       :draggable="true"
       :filter-node-method="filterNode"
       :filter-value="searchQuery"

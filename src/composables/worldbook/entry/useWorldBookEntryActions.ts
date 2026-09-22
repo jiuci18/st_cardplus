@@ -55,7 +55,6 @@ export function useWorldBookEntryActions(state: EntryState, callbacks: EntryCall
     if (activeBook.value) {
       activeBook.value.entries = newOrder;
       await callbacks.updateEntries(newOrder);
-      ElMessage.success('条目顺序已更新！');
     }
   };
 
