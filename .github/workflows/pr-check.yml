@@ -36,7 +36,7 @@ jobs:
       run: pnpm test
 
     - name: Type check
-      run: pnpm vue-tsc --noEmit
+      run: pnpm type-check
 
     - name: Build web
       run: pnpm build
