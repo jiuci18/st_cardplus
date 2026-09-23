@@ -36,34 +36,16 @@
       </h3>
       <div class="form-section-content">
         <div id="routine-form">
-          <div
-            v-for="(field, index) in displayRoutineFields"
-            :key="field.key"
-          >
-            <label class="form-label">{{ field.label }}</label>
-            <div class="custom-field-container">
-              <el-input
-                type="textarea"
-                :rows="1"
-                v-model="field.value"
-                :placeholder="`请输入 ${field.label} 内容`"
-                @input="updateRoutineFormField(field.key, field.value)"
-              />
-              <el-button
-                type="danger"
-                size="small"
-                @click="removeRoutineField(index)"
-                class="remove-btn"
-              >
-                <Icon
-                  icon="material-symbols:delete-outline"
-                  width="20"
-                  height="20"
-                />
-              </el-button>
-            </div>
-          </div>
+          <FieldTrigger v-for="(field, index) in displayRoutineFields" :key="field.key"
+            :label="field.label" :value="field.value" :active="field.key === selectedKey"
+            @select="toggleField(field.key, $event)" @remove="removeRoutineField(index)" />
         </div>
+        <FieldFloatingPanel v-if="selectedField" title="日常作息编辑" :visible="active"
+          :field-key="selectedKey" :anchor="panelAnchor"
+          :open-signal="panelOpenSignal" :toggle-signal="panelToggleSignal">
+          <FieldEditorPanel :field-key="selectedKey" :label="selectedField.label"
+            :model-value="selectedField.value" @update:model-value="updateRoutineFormField(selectedField.key, $event)" />
+        </FieldFloatingPanel>
         <el-button
           type="primary"
           size="small"
@@ -87,13 +69,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, toRefs } from 'vue';
+import { computed, ref, watch, onMounted, toRefs } from 'vue';
 import { ElInput, ElButton } from 'element-plus';
 import { Icon } from '@iconify/vue';
 import { useBatchCustomFieldPrompt } from '@/composables/characterInfo/useBatchCustomFieldPrompt';
 import CharacterNotes from '../CharacterNotes.vue';
+import FieldTrigger from '../charinfo/FieldTrigger.vue';
+import FieldEditorPanel from '../charinfo/FieldEditorPanel.vue';
+import FieldFloatingPanel from '../charinfo/FieldFloatingPanel.vue';
 
 const props = defineProps({
+  active: { type: Boolean, default: true },
   form: {
     type: Object,
     required: true,
@@ -111,6 +97,24 @@ interface RoutineField {
   value: string;
 }
 const displayRoutineFields = ref<RoutineField[]>([]);
+const selectedKey = ref<string | null>(null);
+const selectedField = computed(() => displayRoutineFields.value.find((field) => field.key === selectedKey.value));
+const panelAnchor = ref<{ x: number; y: number } | null>(null);
+const panelOpenSignal = ref(0);
+const panelToggleSignal = ref(0);
+
+const toggleField = (key: string, event: MouseEvent) => {
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  panelAnchor.value = event.detail === 0
+    ? { x: rect.right, y: rect.top }
+    : { x: event.clientX, y: event.clientY };
+  if (selectedKey.value === key) {
+    panelToggleSignal.value++;
+  } else {
+    selectedKey.value = key;
+    panelOpenSignal.value++;
+  }
+};
 const standardRoutineFieldsMap: { [key: string]: string } = {
   earlyMorning: '清晨',
   morning: '上午',
@@ -131,6 +135,7 @@ const syncRoutineFields = () => {
     }
   }
   displayRoutineFields.value = newFields;
+  if (!newFields.some((field) => field.key === selectedKey.value)) selectedKey.value = null;
 };
 
 const updateRoutineFormField = (key: string, value: string) => {
@@ -218,23 +223,6 @@ watch(
   display: flex;
   flex-direction: column;
   flex-grow: 1;
-}
-
-.custom-field-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.remove-btn {
-  flex-shrink: 0;
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 #routine-form {

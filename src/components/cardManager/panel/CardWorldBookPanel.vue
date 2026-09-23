@@ -368,9 +368,7 @@ const {
 const dragDropHandlers = useWorldBookDragDrop(
   mockCollection as any,
   // moveEntryBetweenBooks
-  (_entryToMove: WorldBookEntry, _fromBookId: string, _toBookId: string, _insertIndex: number) => {
-    return;
-  },
+  () => false,
   // updateBookEntries
   (_bookId: string, entries: WorldBookEntry[]) => {
     if (worldbookDraft.value) {
@@ -380,10 +378,6 @@ const dragDropHandlers = useWorldBookDragDrop(
   },
   // updateBookOrder（无实际作用，单本书）
   (_orderedBookIds: string[]) => {
-    // no-op
-  },
-  // forceUpdateEntries（单本书无需额外强刷）
-  () => {
     // no-op
   }
 );

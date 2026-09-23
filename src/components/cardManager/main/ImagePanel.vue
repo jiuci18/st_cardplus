@@ -206,14 +206,15 @@ const openImageUrlEditor = async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  height: 100%;
+  justify-content: flex-start;
 }
 
 .character-image {
   width: 50%;
-  height: 100%;
-  height: calc(100% - 50px);
+  height: 600px;
+  max-height: 60vh;
+  flex-shrink: 0;
+  box-sizing: border-box;
   border-radius: 6px;
   background-color: var(--el-fill-color-light);
   border: 1px dashed var(--el-border-color);

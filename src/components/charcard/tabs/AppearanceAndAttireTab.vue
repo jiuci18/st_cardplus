@@ -20,27 +20,9 @@
       <div class="appearance-workspace">
         <div class="appearance-fields-column">
           <div id="appearance-form">
-            <div v-for="(field, index) in displayFields" :key="field.key" class="field-cell"
-              :class="{ 'is-empty': !field.value, 'is-active': field.key === selectedKey }">
-              <button type="button" class="field-trigger" :aria-pressed="field.key === selectedKey"
-                :title="field.value?.trim() ? `${field.label}：${field.value}` : `编辑 ${field.label}`"
-                @click="toggleField(field.key)">
-                <span class="field-trigger-status" aria-hidden="true">
-                  <Icon v-if="field.value?.trim()" icon="material-symbols:check-circle-rounded" width="16"
-                    height="16" />
-                </span>
-                <span class="field-trigger-label">{{ field.label }}</span>
-                <span class="sr-only">{{ field.value?.trim() ? '已填写' : '未填写' }}</span>
-              </button>
-              <el-button text size="small" class="remove-btn"
-                :class="{ 'is-confirming': pendingDeleteKey === field.key }"
-                :title="pendingDeleteKey === field.key ? '再次点击确认删除' : '删除该字段'"
-                @click="handleRemoveField(index)">
-                <Icon
-                  :icon="pendingDeleteKey === field.key ? 'material-symbols:delete-forever-outline' : 'material-symbols:delete-outline'"
-                  width="18" height="18" />
-              </el-button>
-            </div>
+            <FieldTrigger v-for="(field, index) in displayFields" :key="field.key"
+              :label="field.label" :value="field.value" :active="field.key === selectedKey"
+              @select="toggleField(field.key, $event)" @remove="removeField(index)" />
           </div>
           <div style="display: flex; gap: 8px; margin-top: 1rem">
             <el-dropdown trigger="click" @command="handleAddField">
@@ -68,10 +50,11 @@
             </el-dropdown>
           </div>
         </div>
-        <AppearanceFloatingPanel v-if="selectedField" :visible="active" :field-key="selectedKey" :open-signal="panelOpenSignal" :toggle-signal="panelToggleSignal">
-          <AppearanceFieldEditorPanel :field-key="selectedKey" :label="selectedField?.label ?? ''"
+        <FieldFloatingPanel title="外貌编辑" v-if="selectedField" :visible="active" :anchor="panelAnchor" :field-key="selectedKey"
+          :open-signal="panelOpenSignal" :toggle-signal="panelToggleSignal">
+          <FieldEditorPanel :preset-groups="selectedField ? resolveAppearancePresets(selectedField.key, selectedField.label) : []" :field-key="selectedKey" :label="selectedField?.label ?? ''"
             :model-value="selectedField?.value ?? ''" @update:model-value="updateSelectedValue" />
-        </AppearanceFloatingPanel>
+        </FieldFloatingPanel>
       </div>
     </div>
   </section>
@@ -130,10 +113,13 @@ import {
   ElMessageBox,
 } from 'element-plus';
 import { useBatchCustomFieldPrompt } from '@/composables/characterInfo/useBatchCustomFieldPrompt';
-import { computed, onBeforeUnmount, onMounted, ref, toRefs, watch } from 'vue';
+import { createEmptyAttire } from '@/composables/characterInfo/useCharacterCard';
+import { computed, onMounted, ref, toRefs, watch } from 'vue';
 import draggable from 'vuedraggable';
-import AppearanceFieldEditorPanel from './AppearanceFieldEditorPanel.vue';
-import AppearanceFloatingPanel from './AppearanceFloatingPanel.vue';
+import FieldTrigger from '../charinfo/FieldTrigger.vue';
+import FieldEditorPanel from '../charinfo/FieldEditorPanel.vue';
+import FieldFloatingPanel from '../charinfo/FieldFloatingPanel.vue';
+import { resolveAppearancePresets } from '@/config/appearancePresets';
 
 const props = defineProps({
   active: { type: Boolean, default: true },
@@ -147,7 +133,16 @@ const props = defineProps({
   },
 });
 
-defineEmits(['addAttire', 'removeAttire', 'exportAttires', 'exportAppearance', 'update:attires']);
+const emit = defineEmits(['addAttire', 'removeAttire', 'exportAttires', 'exportAppearance', 'update:attires']);
+
+// 无服装数据时保留一张空白套装卡片，方便直接输入。
+watch(
+  () => props.form.attires?.length,
+  (length) => {
+    if (!length) emit('update:attires', [createEmptyAttire()]);
+  },
+  { immediate: true },
+);
 
 const { form } = toRefs(props);
 const { addFieldsByPrompt } = useBatchCustomFieldPrompt();
@@ -159,10 +154,9 @@ interface AppearanceField {
 }
 const displayFields = ref<AppearanceField[]>([]);
 const selectedKey = ref<string | null>(null);
+const panelAnchor = ref<{ x: number; y: number } | null>(null);
 const panelOpenSignal = ref(0);
 const panelToggleSignal = ref(0);
-const pendingDeleteKey = ref<string | null>(null);
-let deleteConfirmationTimer: ReturnType<typeof setTimeout> | undefined;
 const standardFieldsMap: { [key: string]: string } = {
   hairColor: '发色',
   hairstyle: '发型',
@@ -205,7 +199,11 @@ const selectField = (key: string) => {
   panelOpenSignal.value++;
 };
 
-const toggleField = (key: string) => {
+const toggleField = (key: string, event: MouseEvent) => {
+  const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+  panelAnchor.value = event.detail === 0
+    ? { x: rect.right, y: rect.top }
+    : { x: event.clientX, y: event.clientY };
   if (selectedKey.value === key) {
     panelToggleSignal.value++;
   } else {
@@ -283,31 +281,6 @@ const removeField = (index: number) => {
     selectedKey.value = neighbor?.key ?? null;
   }
 };
-
-const clearDeleteConfirmation = () => {
-  pendingDeleteKey.value = null;
-  if (deleteConfirmationTimer) {
-    clearTimeout(deleteConfirmationTimer);
-    deleteConfirmationTimer = undefined;
-  }
-};
-
-const handleRemoveField = (index: number) => {
-  const field = displayFields.value[index];
-  if (!field) return;
-
-  if (pendingDeleteKey.value === field.key) {
-    clearDeleteConfirmation();
-    removeField(index);
-    return;
-  }
-
-  clearDeleteConfirmation();
-  pendingDeleteKey.value = field.key;
-  deleteConfirmationTimer = setTimeout(clearDeleteConfirmation, 3000);
-};
-
-onBeforeUnmount(clearDeleteConfirmation);
 
 onMounted(() => {
   syncFields();
@@ -416,136 +389,6 @@ watch(
 #appearance-form {
   column-width: 200px;
   column-gap: 12px;
-}
-
-#appearance-form .field-cell {
-  break-inside: avoid;
-  margin-bottom: 6px;
-  display: flex;
-  align-items: stretch;
-  gap: 4px;
-}
-
-.field-trigger {
-  flex: 1;
-  min-width: 0;
-  font: inherit;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 10px;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 4px;
-  background: var(--el-bg-color);
-  cursor: pointer;
-  transition:
-    border-color 0.15s,
-    background-color 0.15s;
-}
-
-.field-trigger:hover {
-  border-color: var(--el-color-primary-light-5);
-}
-
-.field-trigger:focus-visible {
-  outline: 2px solid var(--el-color-primary);
-  outline-offset: 1px;
-}
-
-.field-trigger-status {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--el-color-success);
-}
-
-.field-trigger-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--el-text-color-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.field-cell.is-active .field-trigger {
-  border-color: var(--el-color-primary);
-  background: var(--el-color-primary-light-9);
-}
-
-.field-cell.is-empty .field-trigger-label {
-  color: var(--el-text-color-secondary);
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* 其他表单仍用网格 */
-#routine-form {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 16px;
-}
-
-@media (min-width: 768px) {
-  #routine-form {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-  }
-}
-
-.remove-btn {
-  flex-shrink: 0;
-  width: 28px;
-  height: auto;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--el-text-color-placeholder);
-  opacity: 0;
-  transition:
-    opacity 0.15s,
-    color 0.15s;
-}
-
-.field-cell:hover .remove-btn,
-.remove-btn:focus-visible {
-  opacity: 1;
-}
-
-.remove-btn:hover {
-  color: var(--el-color-danger);
-}
-
-.remove-btn.is-confirming {
-  color: var(--el-color-danger);
-  opacity: 1;
-  background: var(--el-color-danger-light-9);
-}
-
-/* 触屏设备无 hover，常显删除按钮 */
-@media (hover: none) {
-  .remove-btn {
-    opacity: 1;
-  }
-}
-
-/* 空值字段淡化提示 */
-.field-cell.is-empty .form-label {
-  color: var(--el-text-color-secondary);
 }
 
 .title-Btn-add {

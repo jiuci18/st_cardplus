@@ -1,89 +1,41 @@
 <template>
   <div class="card-page-container">
-    <div
-      class="card-page-mobile-layout"
-      v-if="useNewEditor && isMobile"
-    >
+    <div class="card-page-mobile-layout" v-if="useNewEditor && isMobile">
       <div class="editor-area">
-        <component
-          :is="editorComponent"
-          v-if="activeCharacter"
-          :character="activeCharacter"
-          @update:character="handleUpdateCharacter"
-        />
-        <div
-          v-else
-          class="editor-empty-state"
-        >
+        <component :is="editorComponent" v-if="activeCharacter" :character="activeCharacter"
+          @update:character="handleUpdateCharacter" />
+        <div v-else class="editor-empty-state">
           <el-empty description="请先打开角色列表选择一个角色，或创建一个新角色" />
         </div>
       </div>
 
-      <MobileBookmarkDrawer
-        v-model:visible="mobileDrawerVisible"
-        v-model:active-tab="mobilePanelTab"
-        :items="mobileBookmarkItems"
-        drawer-size="88%"
-      >
+      <MobileBookmarkDrawer v-model:visible="mobileDrawerVisible" v-model:active-tab="mobilePanelTab"
+        :items="mobileBookmarkItems" drawer-size="88%">
         <template #pane-list>
-          <CharacterListSidebar
-            :characters="characters"
-            :projects="projects"
-            :active-character-id="activeCharacterId"
-            @select="handleSelectCharacterWithTabSwitch"
-            @create-project="handleCreateProject"
-            @create="handleCreateCharacter"
-            @delete="handleDeleteCharacter"
-            @import="handleImportCharacter"
-            @reorder="handleReorderCharacterPatches"
-            @reorder-projects="handleReorderProjects"
-            @toggle-star="handleToggleStar"
-            @rename-project="handleRenameProject"
-          />
+          <CharacterListSidebar :characters="characters" :projects="projects" :active-character-id="activeCharacterId"
+            @select="handleSelectCharacterWithTabSwitch" @create-project="handleCreateProject"
+            @create="handleCreateCharacter" @delete="handleDeleteCharacter" @import="handleImportCharacter"
+            @reorder="handleReorderCharacterPatches" @reorder-projects="handleReorderProjects"
+            @toggle-star="handleToggleStar" @rename-project="handleRenameProject"
+            @delete-project="handleDeleteProject" />
         </template>
       </MobileBookmarkDrawer>
     </div>
 
-    <div
-      class="card-page-desktop-layout"
-      v-if="useNewEditor && !isMobile"
-    >
-      <Splitpanes
-        class="default-theme"
-        style="width: 100%; height: 100%"
-      >
-        <Pane
-          size="15"
-          min-size="10"
-          max-size="25"
-        >
-          <CharacterListSidebar
-            :characters="characters"
-            :projects="projects"
-            :active-character-id="activeCharacterId"
-            @select="handleSelectCharacter"
-            @create-project="handleCreateProject"
-            @create="handleCreateCharacter"
-            @delete="handleDeleteCharacter"
-            @import="handleImportCharacter"
-            @reorder="handleReorderCharacterPatches"
-            @reorder-projects="handleReorderProjects"
-            @toggle-star="handleToggleStar"
-            @rename-project="handleRenameProject"
-          />
+    <div class="card-page-desktop-layout" v-if="useNewEditor && !isMobile">
+      <Splitpanes class="default-theme" style="width: 100%; height: 100%">
+        <Pane size="15" min-size="10" max-size="25">
+          <CharacterListSidebar :characters="characters" :projects="projects" :active-character-id="activeCharacterId"
+            @select="handleSelectCharacter" @create-project="handleCreateProject" @create="handleCreateCharacter"
+            @delete="handleDeleteCharacter" @import="handleImportCharacter" @reorder="handleReorderCharacterPatches"
+            @reorder-projects="handleReorderProjects" @toggle-star="handleToggleStar"
+            @rename-project="handleRenameProject" @delete-project="handleDeleteProject" />
         </Pane>
         <Pane size="85">
           <div class="editor-area">
-            <component
-              :is="editorComponent"
-              v-if="activeCharacter"
-              :character="activeCharacter"
-              @update:character="handleUpdateCharacter"
-            />
-            <div
-              v-else
-              class="editor-empty-state"
-            >
+            <component :is="editorComponent" v-if="activeCharacter" :character="activeCharacter"
+              @update:character="handleUpdateCharacter" />
+            <div v-else class="editor-empty-state">
               <el-empty description="请在左侧选择一个角色进行编辑，或创建一个新角色 " />
             </div>
           </div>
@@ -91,10 +43,7 @@
       </Splitpanes>
     </div>
 
-    <div
-      v-if="!useNewEditor"
-      class="editor-area-full"
-    >
+    <div v-if="!useNewEditor" class="editor-area-full">
       <component :is="editorComponent" />
     </div>
   </div>
@@ -129,6 +78,7 @@ const {
   handleSelectCharacter,
   handleCreateProject,
   handleRenameProject,
+  handleDeleteProject,
   handleCreateCharacter,
   handleDeleteCharacter,
   handleImportCharacter,

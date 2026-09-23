@@ -220,7 +220,7 @@
               @exportSkills="exportSkills" v-model:skills="form.data.skills" />
           </el-tab-pane>
           <el-tab-pane label="日常与笔记" name="notes">
-            <DailyAndNotesTab :form="form.data" @update:form-likes="form.data.likes = $event"
+            <DailyAndNotesTab :active="activeTab === 'notes'" :form="form.data" @update:form-likes="form.data.likes = $event"
               @update:form-dislikes="form.data.dislikes = $event" @update:notes="form.data.notes = $event" />
           </el-tab-pane>
         </el-tabs>

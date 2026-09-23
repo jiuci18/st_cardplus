@@ -25,6 +25,9 @@
               <el-dropdown-item command="export-all" :icon="Download">
                 导出全部
               </el-dropdown-item>
+              <el-dropdown-item v-if="hasCheckedCards" command="export-selected" :icon="Download">
+                导出所选
+              </el-dropdown-item>
               <el-dropdown-item v-if="hasCheckedCards" command="delete-selected" :icon="Delete" divided>
                 删除所选
               </el-dropdown-item>
@@ -54,8 +57,10 @@
         <p class="empty-text">{{ emptyText }}</p>
         <p class="empty-hint">{{ emptyHint }}</p>
       </div>
-      <div v-else class="card-grid">
-        <div v-for="card in filteredCards" :key="card.id" class="card-grid-item"
+      <draggable v-else v-model="displayCards" item-key="id" class="card-grid" :animation="200" ghost-class="card-grid-ghost" chosen-class="card-grid-chosen"
+        :filter="'.card-grid-checkbox, .card-grid-actions'" :prevent-on-filter="false" @end="handleDragEnd">
+        <template #item="{ element: card }">
+        <div class="card-grid-item"
           @click="emit('open-card', card.id, card.name)">
           <el-checkbox v-model="checkedCards[card.id]" class="card-grid-checkbox" @click.stop />
           <div class="card-grid-avatar">
@@ -64,49 +69,48 @@
             <Icon v-else icon="ph:user-circle-duotone" class="card-grid-avatar-icon" />
           </div>
           <div class="card-grid-content">
-            <h3 class="card-grid-name">{{ card.name || '未命名角色' }}</h3>
-            <p class="card-grid-description">{{ card.description || '暂无描述' }}</p>
             <div class="card-grid-meta">
-              <span class="card-grid-time">{{ formatTime(card.updatedAt) }}</span>
-              <div v-if="card.tags && card.tags.length > 0" class="card-grid-tags">
-                <el-tag v-for="tag in card.tags.slice(0, 3)" :key="tag" type="info" size="small" effect="plain"
-                  class="card-grid-tag">
-                  {{ tag }}
-                </el-tag>
-                <span v-if="card.tags.length > 3" class="card-grid-tag-more">
-                  +{{ card.tags.length - 3 }}
-                </span>
-              </div>
+              <h3 class="card-grid-name" @mouseenter="prepareNameScroll">
+                <span class="card-grid-name-text">{{ card.name || '未命名角色' }}</span>
+              </h3>
+              <span class="card-grid-time" :title="`更新于 ${card.updatedAt}`">{{ formatTime(card.updatedAt) }}</span>
+            </div>
+            <div class="card-grid-tags">
+              <el-tag v-for="tag in (card.tags || []).slice(0, 3)" :key="tag" type="info" size="small" effect="plain"
+                class="card-grid-tag">
+                {{ tag }}
+              </el-tag>
+              <span v-if="card.tags && card.tags.length > 3" class="card-grid-tag-more">
+                +{{ card.tags.length - 3 }}
+              </span>
             </div>
           </div>
-          <div class="card-grid-actions">
-            <el-tooltip content="重命名" placement="top">
-              <button @click.stop="emit('rename-card', card.id)" class="card-action-btn">
-                <Icon icon="ph:pencil-simple-duotone" />
+          <div class="card-grid-actions" @click.stop>
+            <el-dropdown trigger="click" @command="(command: string) => handleCardCommand(command, card.id)">
+              <button class="card-action-btn" aria-label="更多操作" @click.stop>
+                <Icon icon="ph:dots-three-vertical-bold" />
               </button>
-            </el-tooltip>
-            <el-tooltip content="导出" placement="top">
-              <button @click.stop="emit('export-card', card.id)" class="card-action-btn">
-                <Icon icon="ph:export-duotone" />
-              </button>
-            </el-tooltip>
-            <el-tooltip content="删除" placement="top">
-              <button @click.stop="emit('delete-card', card.id)" class="card-action-btn is-danger">
-                <Icon icon="ph:trash-duotone" />
-              </button>
-            </el-tooltip>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="rename" :icon="EditPen">重命名</el-dropdown-item>
+                  <el-dropdown-item command="export" :icon="Download">导出</el-dropdown-item>
+                  <el-dropdown-item command="delete" :icon="Delete" divided>删除</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
         </div>
-      </div>
+        </template>
+      </draggable>
     </el-scrollbar>
   </div>
 </template>
 
 <script setup lang="ts">
 import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
-import { formatDate, now, toDateSafe } from '@/utils/datetime';
+import { toDateSafe } from '@/utils/datetime';
 import type { CharacterCardCollection } from '@/types/character/character-card-collection';
-import { Delete, Download, FolderOpened, MoreFilled, Plus, Search, Switch } from '@element-plus/icons-vue';
+import { Delete, Download, EditPen, FolderOpened, MoreFilled, Plus, Search, Switch } from '@element-plus/icons-vue';
 import { Icon } from '@iconify/vue';
 import {
   ElCheckbox,
@@ -119,9 +123,9 @@ import {
   ElScrollbar,
   ElSelect,
   ElTag,
-  ElTooltip,
 } from 'element-plus';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import draggable from 'vuedraggable';
 
 interface Props {
   collection: CharacterCardCollection;
@@ -135,9 +139,11 @@ const emit = defineEmits<{
   'delete-card': [cardId: string];
   'export-card': [cardId: string];
   'export-all': [];
+  'export-selected': [cardIds: string[]];
   'import-file': [file: File];
   'clear-all': [];
   'delete-selected': [cardIds: string[]];
+  'reorder-cards': [cardIds: string[]];
 }>();
 
 const searchQuery = ref('');
@@ -181,6 +187,22 @@ const filteredCards = computed(() => {
   return cards;
 });
 
+const displayCards = ref<CharacterCardCollection['cards'][string][]>([]);
+watch(filteredCards, (cards) => { displayCards.value = [...cards]; }, { immediate: true });
+
+const handleDragEnd = () => {
+  const visible = new Set(displayCards.value.map((card) => card.id));
+  const iterator = displayCards.value.map((card) => card.id)[Symbol.iterator]();
+  const orderedIds = allCards.value.map((card) => visible.has(card.id) ? iterator.next().value! : card.id);
+  emit('reorder-cards', orderedIds);
+};
+
+const handleCardCommand = (command: string, cardId: string) => {
+  if (command === 'rename') emit('rename-card', cardId);
+  if (command === 'export') emit('export-card', cardId);
+  if (command === 'delete') emit('delete-card', cardId);
+};
+
 const emptyText = computed(() => {
   if (searchQuery.value || selectedTags.value.length > 0) {
     return '未找到匹配的角色卡';
@@ -204,6 +226,8 @@ const handleFileChange = (files: File[]) => {
 const handleMenuCommand = (command: string) => {
   if (command === 'export-all') {
     emit('export-all');
+  } else if (command === 'export-selected') {
+    emit('export-selected', Object.keys(props.collection.cards).filter((id) => checkedCards.value[id]));
   } else if (command === 'clear-all') {
     emit('clear-all');
   } else if (command === 'delete-selected') {
@@ -224,6 +248,18 @@ const handleInvertSelection = () => {
   checkedCards.value = newChecked;
 };
 
+// 按实际溢出距离滚动，短名称保持静止。
+const prepareNameScroll = (event: MouseEvent) => {
+  const container = event.currentTarget as HTMLElement;
+  const text = container.querySelector<HTMLElement>('.card-grid-name-text');
+  if (!text) return;
+
+  const overflow = Math.max(0, text.scrollWidth - container.clientWidth);
+  container.dataset.overflow = String(overflow > 0);
+  container.style.setProperty('--name-scroll-distance', `${-overflow}px`);
+  container.style.setProperty('--name-scroll-duration', `${Math.max(3, overflow / 35 + 1)}s`);
+};
+
 // 格式化时间
 const formatTime = (timeStr: string) => {
   const date = toDateSafe(timeStr);
@@ -231,17 +267,7 @@ const formatTime = (timeStr: string) => {
     return '未知时间';
   }
 
-  const diffMs = now().getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays <= 0) {
-    return '今天';
-  } else if (diffDays === 1) {
-    return '昨天';
-  } else if (diffDays < 7) {
-    return `${diffDays}天前`;
-  }
-
-  return formatDate(date);
+  return `${String(date.getFullYear()).slice(-2)}/${date.getMonth() + 1}/${date.getDate()}`;
 };
 </script>
 
@@ -344,17 +370,19 @@ const formatTime = (timeStr: string) => {
 /* 网格布局 */
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
   gap: 16px;
   padding-top: 4px;
   padding-bottom: 24px;
 }
 
 .card-grid-item {
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  overflow: hidden;
+  min-width: 0;
   border: 1px solid var(--el-border-color-lighter);
   border-radius: 8px;
   background-color: var(--el-bg-color);
@@ -367,7 +395,11 @@ const formatTime = (timeStr: string) => {
   top: 10px;
   left: 10px;
   z-index: 2;
+  height: 28px;
 }
+
+.card-grid-ghost { opacity: 0.4; }
+.card-grid-chosen { cursor: grabbing; }
 
 .card-grid-item:hover {
   border-color: var(--el-color-primary);
@@ -376,11 +408,9 @@ const formatTime = (timeStr: string) => {
 }
 
 .card-grid-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
+  width: 100%;
+  aspect-ratio: 3 / 4;
   overflow: hidden;
-  margin: 0 auto 16px;
   flex-shrink: 0;
   background-color: var(--el-fill-color-light);
   display: flex;
@@ -392,21 +422,25 @@ const formatTime = (timeStr: string) => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: top;
+  display: block;
 }
 
 .card-grid-avatar-icon {
-  font-size: 48px;
+  font-size: 72px;
   color: var(--el-text-color-placeholder);
 }
 
 .card-grid-content {
-  flex: 1;
-  text-align: center;
+  padding: 12px;
+  border-top: 1px solid var(--el-border-color-lighter);
 }
 
 .card-grid-name {
-  margin: 0 0 8px 0;
-  font-size: 16px;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 15px;
   font-weight: 600;
   color: var(--el-text-color-primary);
   white-space: nowrap;
@@ -414,46 +448,83 @@ const formatTime = (timeStr: string) => {
   text-overflow: ellipsis;
 }
 
-.card-grid-description {
-  margin: 0 0 12px 0;
-  font-size: 13px;
-  color: var(--el-text-color-secondary);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  min-height: 40px;
+.card-grid-name-text {
+  display: inline-block;
+  vertical-align: bottom;
+}
+
+.card-grid-name[data-overflow='true']:hover {
+  text-overflow: clip;
+}
+
+.card-grid-name[data-overflow='true']:hover .card-grid-name-text {
+  animation: card-name-scroll var(--name-scroll-duration) linear infinite alternate;
+}
+
+@keyframes card-name-scroll {
+
+  0%,
+  15% {
+    transform: translateX(0);
+  }
+
+  85%,
+  100% {
+    transform: translateX(var(--name-scroll-distance));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-grid-name[data-overflow='true']:hover {
+    overflow-x: auto;
+  }
+
+  .card-grid-name[data-overflow='true']:hover .card-grid-name-text {
+    animation: none;
+  }
 }
 
 .card-grid-meta {
   display: flex;
-  flex-direction: column;
   gap: 8px;
-  align-items: center;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
 }
 
 .card-grid-time {
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 12px;
   color: var(--el-text-color-placeholder);
 }
 
 .card-grid-tags {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  align-items: center;
+  min-height: 20px;
+  overflow: hidden;
   gap: 4px;
 }
 
 .card-grid-tag {
+  min-width: 0;
+  max-width: 100%;
+  flex-shrink: 1;
   font-size: 11px;
   height: 20px;
   padding: 0 8px;
   line-height: 20px;
 }
 
+.card-grid-tag :deep(.el-tag__content) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .card-grid-tag-more {
+  flex-shrink: 0;
   font-size: 11px;
   color: var(--el-text-color-placeholder);
 }
@@ -468,7 +539,8 @@ const formatTime = (timeStr: string) => {
   transition: opacity 0.2s ease;
 }
 
-.card-grid-item:hover .card-grid-actions {
+.card-grid-item:hover .card-grid-actions,
+.card-grid-item:focus-within .card-grid-actions {
   opacity: 1;
 }
 
@@ -498,9 +570,9 @@ const formatTime = (timeStr: string) => {
 }
 
 /* 响应式设计 */
-@media (max-width: 1200px) {
-  .card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+@media (hover: none) {
+  .card-grid-actions {
+    opacity: 1;
   }
 }
 
@@ -548,7 +620,7 @@ const formatTime = (timeStr: string) => {
   }
 
   .card-grid {
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr));
     gap: 12px;
   }
 }

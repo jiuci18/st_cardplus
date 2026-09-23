@@ -227,6 +227,9 @@
   /* 让编辑器滚动区域在父级flex列中占满剩余空间，避免把底部工具栏“顶”出去 */
   flex: 1;
   min-height: 0;
+  box-sizing: border-box;
+  /* 固定保留顶部呼吸区，滚动内容不会贴住或被面板标题的分界线遮住 */
+  padding-top: 12px;
 }
 
 .worldbook-editor-empty-state {

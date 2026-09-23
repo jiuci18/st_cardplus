@@ -55,7 +55,6 @@ export function useWorldBookEntryActions(state: EntryState, callbacks: EntryCall
     if (activeBook.value) {
       activeBook.value.entries = newOrder;
       await callbacks.updateEntries(newOrder);
-      ElMessage.success('条目顺序已更新！');
     }
   };
 
@@ -211,12 +210,6 @@ export function useWorldBookEntryActions(state: EntryState, callbacks: EntryCall
     }
   };
 
-  const forceUpdateEntries = () => {
-    if (activeBook.value) {
-      activeBook.value.entries = [...activeBook.value.entries];
-    }
-  };
-
   return {
     addNewEntry,
     handleReorderEntries,
@@ -225,6 +218,5 @@ export function useWorldBookEntryActions(state: EntryState, callbacks: EntryCall
     copySelectedEntry,
     duplicateEntry,
     clearAllEntries,
-    forceUpdateEntries,
   };
 }

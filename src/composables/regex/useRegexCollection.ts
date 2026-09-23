@@ -157,18 +157,29 @@ export function useRegexCollection() {
     const category = regexCollection.value.categories[categoryId];
     if (!category) return;
 
-    if (Object.keys(regexCollection.value.categories).length <= 1) {
-      ElMessage.warning('不能删除最后一个类别');
-      return;
-    }
+    const canDelete = () => {
+      const current = regexCollection.value.categories[categoryId];
+      if (!current) return false;
+      if (current.scripts.length > 0) {
+        ElMessage.warning('类别内还有脚本，无法删除，请先移出或删除脚本');
+        return false;
+      }
+      if (Object.keys(regexCollection.value.categories).length <= 1) {
+        ElMessage.warning('不能删除最后一个类别');
+        return false;
+      }
+      return true;
+    };
+    if (!canDelete()) return;
 
     try {
-      await ElMessageBox.confirm(`确定要删除类别 "${category.name}" 吗？此类别下的所有脚本也会被删除！`, '删除类别', {
+      await ElMessageBox.confirm(`确定要删除空类别 "${category.name}" 吗？`, '删除类别', {
         confirmButtonText: '确认删除',
         cancelButtonText: '取消',
         type: 'warning',
       });
 
+      if (!canDelete()) return;
       delete regexCollection.value.categories[categoryId];
 
       if (regexCollection.value.activeCategoryId === categoryId) {
@@ -269,10 +280,10 @@ export function useRegexCollection() {
   };
 
   const moveScriptBetweenCategories = (
-    scriptId: string,
     fromCategoryId: string,
+    fromScripts: SillyTavernRegexScript[],
     toCategoryId: string,
-    insertIndex: number
+    toScripts: SillyTavernRegexScript[]
   ) => {
     const fromCategory = regexCollection.value.categories[fromCategoryId];
     const toCategory = regexCollection.value.categories[toCategoryId];
@@ -282,17 +293,9 @@ export function useRegexCollection() {
       return false;
     }
 
-    const scriptIndex = fromCategory.scripts.findIndex((s) => s.id === scriptId);
-    if (scriptIndex === -1) {
-      ElMessage.error('移动脚本失败：在源类别中未找到该脚本');
-      return false;
-    }
-
-    const script = fromCategory.scripts[scriptIndex];
-    fromCategory.scripts.splice(scriptIndex, 1);
-
-    script.categoryId = toCategoryId;
-    toCategory.scripts.splice(insertIndex, 0, script);
+    fromCategory.scripts = fromScripts;
+    toCategory.scripts = toScripts;
+    toScripts.forEach(script => { script.categoryId = toCategoryId; });
 
     const now = nowIso();
     fromCategory.updatedAt = now;

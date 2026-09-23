@@ -164,15 +164,6 @@ function createRemoteTree(status: BarkeepStatus | null): ResourceTreeNode[] {
   ];
 }
 
-function toggleNode(context?: TreeNodeContext): void {
-  const node = context?.node;
-  if (node?.expanded) {
-    node.collapse?.();
-  } else {
-    node?.expand?.();
-  }
-}
-
 /** Owns welcome-page resource counts, trees, and resource-tree interactions. */
 export function useWelcomeResources(
   status: Ref<BarkeepStatus | null>,
@@ -241,13 +232,9 @@ export function useWelcomeResources(
     localResourceExpandedKeys,
     remoteResourceExpandedKeys,
     loadLocalStats,
-    handleLocalResourceNodeClick: (data, context) => {
-      if (data.nodeType === "group") {
-        toggleNode(context);
-      } else if (data.route) {
-        navigate(data.route);
-      }
+    handleLocalResourceNodeClick: (data) => {
+      if (data.nodeType !== "group" && data.route) navigate(data.route);
     },
-    handleRemoteResourceNodeClick: (_data, context) => toggleNode(context),
+    handleRemoteResourceNodeClick: () => {}, 
   };
 }

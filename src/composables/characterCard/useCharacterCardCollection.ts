@@ -7,6 +7,7 @@ import {
   ElCheckbox,
 } from "element-plus";
 import { v4 as uuidv4 } from "uuid";
+import { zipSync, strToU8 } from "fflate";
 import { read as readPngMetadata } from "@/utils/pngCardMetadata";
 import type { CharacterCardV3 } from "@/types/character/character-card-v3";
 import type {
@@ -533,6 +534,49 @@ export function useCharacterCardCollection() {
     }
   };
 
+  const handleReorderCards = async (cardIds: string[]) => {
+    const cards = characterCardCollection.value.cards;
+    if (cardIds.length !== Object.keys(cards).length || new Set(cardIds).size !== cardIds.length || cardIds.some((id) => !cards[id])) return;
+    const previous = cardIds.map((id) => cards[id].order);
+    cardIds.forEach((id, index) => { cards[id].order = index; });
+    try {
+      await characterCardService.updateCardOrder(cardIds.map((id, order) => ({ id, order, updatedAt: cards[id].updatedAt })));
+    } catch (error) {
+      cardIds.forEach((id, index) => { cards[id].order = previous[index]; });
+      console.error("保存角色卡排序失败:", error);
+      ElMessage.error("保存角色卡排序失败");
+    }
+  };
+
+  const handleExportSelectedCards = async (cardIds: string[]) => {
+    const cards = cardIds.map((id) => characterCardCollection.value.cards[id]).filter((card) => !!card);
+    if (cards.length === 0) {
+      ElMessage.warning("请先选择角色卡");
+      return;
+    }
+
+    try {
+      const files: Record<string, Uint8Array> = {};
+      for (const card of cards) {
+        const { id, createdAt, updatedAt, order, ...exportData } = card;
+        const name = (card.name || "character").replace(/[\\/:*?"<>|\x00-\x1f]/g, "_").replace(/\.+$/, "") || "character";
+        let fileName = `${name}.json`;
+        let suffix = 2;
+        while (Object.hasOwn(files, fileName)) fileName = `${name}-${suffix++}.json`;
+        files[fileName] = strToU8(JSON.stringify(exportData, null, 2));
+      }
+      await saveFile({
+        data: zipSync(files),
+        fileName: `character-cards-selected-${nowIso().split("T")[0]}.zip`,
+        mimeType: "application/zip",
+      });
+      ElMessage.success(`已导出 ${cards.length} 张角色卡`);
+    } catch (error) {
+      console.error("导出所选角色卡失败:", error);
+      ElMessage.error("导出所选角色卡失败！");
+    }
+  };
+
   const handleExportAllCards = async () => {
     try {
       const exportData = await characterCardService.exportDatabase();
@@ -654,6 +698,8 @@ export function useCharacterCardCollection() {
     handleImportFromFile,
     handleExportCard,
     handleExportAllCards,
+    handleExportSelectedCards,
+    handleReorderCards,
     handleClearAllCards,
     handleCreateNewCard,
     loadInitialData,
