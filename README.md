@@ -1,4 +1,4 @@
-# SillyTavern 角色卡编辑器
+# St_cardPlus
 
 这是一个基于 Tauri 2、Vue 3、TypeScript 和 Vite 构建的桌面应用程序，旨在为 SillyTavern 用户提供快速创建和管理角色卡及世界观的工具
 
