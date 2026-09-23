@@ -8,7 +8,8 @@
         <div v-show="currentTab?.type === 'home'" class="tab-content-panel">
           <CharacterCardHome :collection="characterCardCollection" @open-card="handleOpenCardFromHome"
             @create-new="handleCreateNewCard" @rename-card="handleRenameCard" @delete-card="handleDeleteCard"
-            @export-card="handleExportCard" @export-all="handleExportAllCards" @import-file="handleImportFromFile"
+            @export-card="handleExportCard" @export-all="handleExportAllCards"
+            @export-selected="handleExportSelectedCards" @reorder-cards="handleReorderCards" @import-file="handleImportFromFile"
             @clear-all="handleClearAllCards" @delete-selected="handleDeleteSelectedCards" />
         </div>
 
@@ -44,7 +45,7 @@
                     <Icon icon="ph:file-image-duotone" v-if="!isUploading" />
                     <span class="button-text">{{
                       isUploading ? uploadProgress : "加载PNG"
-                    }}</span>
+                      }}</span>
                   </el-button>
                 </BrowserFilePicker>
                 <el-button type="success" @click="handleSave" size="small">
@@ -215,6 +216,8 @@ const {
   handleImportFromFile,
   handleExportCard,
   handleExportAllCards,
+  handleExportSelectedCards,
+  handleReorderCards,
   handleClearAllCards: handleClearAllCardsFromCollection,
   handleCreateNewCard: handleCreateNewCardFromCollection,
 } = useCharacterCardCollection();

@@ -25,6 +25,9 @@
               <el-dropdown-item command="export-all" :icon="Download">
                 导出全部
               </el-dropdown-item>
+              <el-dropdown-item v-if="hasCheckedCards" command="export-selected" :icon="Download">
+                导出所选
+              </el-dropdown-item>
               <el-dropdown-item v-if="hasCheckedCards" command="delete-selected" :icon="Delete" divided>
                 删除所选
               </el-dropdown-item>
@@ -54,8 +57,10 @@
         <p class="empty-text">{{ emptyText }}</p>
         <p class="empty-hint">{{ emptyHint }}</p>
       </div>
-      <div v-else class="card-grid">
-        <div v-for="card in filteredCards" :key="card.id" class="card-grid-item"
+      <draggable v-else v-model="displayCards" item-key="id" class="card-grid" :animation="200" ghost-class="card-grid-ghost" chosen-class="card-grid-chosen"
+        :filter="'.card-grid-checkbox, .card-grid-actions'" :prevent-on-filter="false" @end="handleDragEnd">
+        <template #item="{ element: card }">
+        <div class="card-grid-item"
           @click="emit('open-card', card.id, card.name)">
           <el-checkbox v-model="checkedCards[card.id]" class="card-grid-checkbox" @click.stop />
           <div class="card-grid-avatar">
@@ -80,25 +85,23 @@
               </span>
             </div>
           </div>
-          <div class="card-grid-actions">
-            <el-tooltip content="重命名" placement="top">
-              <button @click.stop="emit('rename-card', card.id)" class="card-action-btn">
-                <Icon icon="ph:pencil-simple-duotone" />
+          <div class="card-grid-actions" @click.stop>
+            <el-dropdown trigger="click" @command="(command: string) => handleCardCommand(command, card.id)">
+              <button class="card-action-btn" aria-label="更多操作" @click.stop>
+                <Icon icon="ph:dots-three-vertical-bold" />
               </button>
-            </el-tooltip>
-            <el-tooltip content="导出" placement="top">
-              <button @click.stop="emit('export-card', card.id)" class="card-action-btn">
-                <Icon icon="ph:export-duotone" />
-              </button>
-            </el-tooltip>
-            <el-tooltip content="删除" placement="top">
-              <button @click.stop="emit('delete-card', card.id)" class="card-action-btn is-danger">
-                <Icon icon="ph:trash-duotone" />
-              </button>
-            </el-tooltip>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="rename" :icon="EditPen">重命名</el-dropdown-item>
+                  <el-dropdown-item command="export" :icon="Download">导出</el-dropdown-item>
+                  <el-dropdown-item command="delete" :icon="Delete" divided>删除</el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
           </div>
         </div>
-      </div>
+        </template>
+      </draggable>
     </el-scrollbar>
   </div>
 </template>
@@ -107,7 +110,7 @@
 import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
 import { toDateSafe } from '@/utils/datetime';
 import type { CharacterCardCollection } from '@/types/character/character-card-collection';
-import { Delete, Download, FolderOpened, MoreFilled, Plus, Search, Switch } from '@element-plus/icons-vue';
+import { Delete, Download, EditPen, FolderOpened, MoreFilled, Plus, Search, Switch } from '@element-plus/icons-vue';
 import { Icon } from '@iconify/vue';
 import {
   ElCheckbox,
@@ -120,9 +123,9 @@ import {
   ElScrollbar,
   ElSelect,
   ElTag,
-  ElTooltip,
 } from 'element-plus';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import draggable from 'vuedraggable';
 
 interface Props {
   collection: CharacterCardCollection;
@@ -136,9 +139,11 @@ const emit = defineEmits<{
   'delete-card': [cardId: string];
   'export-card': [cardId: string];
   'export-all': [];
+  'export-selected': [cardIds: string[]];
   'import-file': [file: File];
   'clear-all': [];
   'delete-selected': [cardIds: string[]];
+  'reorder-cards': [cardIds: string[]];
 }>();
 
 const searchQuery = ref('');
@@ -182,6 +187,22 @@ const filteredCards = computed(() => {
   return cards;
 });
 
+const displayCards = ref<CharacterCardCollection['cards'][string][]>([]);
+watch(filteredCards, (cards) => { displayCards.value = [...cards]; }, { immediate: true });
+
+const handleDragEnd = () => {
+  const visible = new Set(displayCards.value.map((card) => card.id));
+  const iterator = displayCards.value.map((card) => card.id)[Symbol.iterator]();
+  const orderedIds = allCards.value.map((card) => visible.has(card.id) ? iterator.next().value! : card.id);
+  emit('reorder-cards', orderedIds);
+};
+
+const handleCardCommand = (command: string, cardId: string) => {
+  if (command === 'rename') emit('rename-card', cardId);
+  if (command === 'export') emit('export-card', cardId);
+  if (command === 'delete') emit('delete-card', cardId);
+};
+
 const emptyText = computed(() => {
   if (searchQuery.value || selectedTags.value.length > 0) {
     return '未找到匹配的角色卡';
@@ -205,6 +226,8 @@ const handleFileChange = (files: File[]) => {
 const handleMenuCommand = (command: string) => {
   if (command === 'export-all') {
     emit('export-all');
+  } else if (command === 'export-selected') {
+    emit('export-selected', Object.keys(props.collection.cards).filter((id) => checkedCards.value[id]));
   } else if (command === 'clear-all') {
     emit('clear-all');
   } else if (command === 'delete-selected') {
@@ -354,6 +377,7 @@ const formatTime = (timeStr: string) => {
 }
 
 .card-grid-item {
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -373,6 +397,9 @@ const formatTime = (timeStr: string) => {
   z-index: 2;
   height: 28px;
 }
+
+.card-grid-ghost { opacity: 0.4; }
+.card-grid-chosen { cursor: grabbing; }
 
 .card-grid-item:hover {
   border-color: var(--el-color-primary);
