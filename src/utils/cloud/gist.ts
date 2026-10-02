@@ -3,12 +3,13 @@
  * 提供与 GitHub Gist 交互的 API 封装
  */
 
-import { Octokit } from '@octokit/rest';
-import type { BackupData, GistResponse, GistInfo } from '@/types/gist';
-import { fetchJsonResource } from '@/utils/fetchResource';
+import { Octokit } from "@octokit/rest";
+import { utf8ByteLength } from "../binary";
+import type { BackupData, GistResponse, GistInfo } from "@/types/gist";
+import { fetchJsonResource } from "@/utils/fetchResource";
 
-const BACKUP_FILENAME = 'st-cardplus-backup.json';
-const GIST_DESCRIPTION = 'SillyTavern Card Plus 数据备份';
+const BACKUP_FILENAME = "st-cardplus-backup.json";
+const GIST_DESCRIPTION = "SillyTavern Card Plus 数据备份";
 
 /**
  * 创建 Octokit 客户端实例
@@ -36,18 +37,18 @@ export async function testGistConnection(token: string): Promise<GistResponse> {
       },
     };
   } catch (error: any) {
-    console.error('测试 Gist 连接失败:', error);
+    console.error("测试 Gist 连接失败:", error);
 
     if (error.status === 401) {
       return {
         success: false,
-        message: 'Token 无效或已过期,请检查您的 Personal Access Token',
+        message: "Token 无效或已过期,请检查您的 Personal Access Token",
       };
     }
 
     return {
       success: false,
-      message: `连接失败: ${error.message || '未知错误'}`,
+      message: `连接失败: ${error.message || "未知错误"}`,
     };
   }
 }
@@ -55,7 +56,10 @@ export async function testGistConnection(token: string): Promise<GistResponse> {
 /**
  * 创建新的备份 Gist (Secret Gist)
  */
-export async function createBackupGist(token: string, backupData: BackupData): Promise<GistResponse> {
+export async function createBackupGist(
+  token: string,
+  backupData: BackupData,
+): Promise<GistResponse> {
   try {
     const octokit = createOctokitClient(token);
 
@@ -78,10 +82,10 @@ export async function createBackupGist(token: string, backupData: BackupData): P
       },
     };
   } catch (error: any) {
-    console.error('创建 Gist 失败:', error);
+    console.error("创建 Gist 失败:", error);
     return {
       success: false,
-      message: `创建失败: ${error.message || '未知错误'}`,
+      message: `创建失败: ${error.message || "未知错误"}`,
     };
   }
 }
@@ -89,7 +93,11 @@ export async function createBackupGist(token: string, backupData: BackupData): P
 /**
  * 上传备份数据到指定的 Gist
  */
-export async function uploadToGist(token: string, gistId: string, backupData: BackupData): Promise<GistResponse> {
+export async function uploadToGist(
+  token: string,
+  gistId: string,
+  backupData: BackupData,
+): Promise<GistResponse> {
   try {
     const octokit = createOctokitClient(token);
 
@@ -100,7 +108,7 @@ export async function uploadToGist(token: string, gistId: string, backupData: Ba
       if (error.status === 404) {
         return {
           success: false,
-          message: 'Gist 不存在,请检查 Gist ID 或创建新的 Gist',
+          message: "Gist 不存在,请检查 Gist ID 或创建新的 Gist",
         };
       }
       throw error;
@@ -118,13 +126,13 @@ export async function uploadToGist(token: string, gistId: string, backupData: Ba
 
     return {
       success: true,
-      message: '备份数据已成功推送到 Gist',
+      message: "备份数据已成功推送到 Gist",
     };
   } catch (error: any) {
-    console.error('上传到 Gist 失败:', error);
+    console.error("上传到 Gist 失败:", error);
     return {
       success: false,
-      message: `上传失败: ${error.message || '未知错误'}`,
+      message: `上传失败: ${error.message || "未知错误"}`,
     };
   }
 }
@@ -132,62 +140,71 @@ export async function uploadToGist(token: string, gistId: string, backupData: Ba
 /**
  * 从 Gist 下载备份数据
  */
-async function downloadFromGist(token: string, gistId: string): Promise<GistResponse> {
+async function downloadFromGist(
+  token: string,
+  gistId: string,
+): Promise<GistResponse> {
   try {
     const octokit = createOctokitClient(token);
 
-    console.log('[Gist API] 正在获取 Gist:', gistId);
+    console.log("[Gist API] 正在获取 Gist:", gistId);
     const { data } = await octokit.gists.get({ gist_id: gistId });
 
-    console.log('[Gist API] Gist 文件列表:', Object.keys(data.files || {}));
+    console.log("[Gist API] Gist 文件列表:", Object.keys(data.files || {}));
 
     // 检查文件是否存在
     const file = data.files?.[BACKUP_FILENAME];
     if (!file) {
-      console.error('[Gist API] 未找到备份文件:', BACKUP_FILENAME);
+      console.error("[Gist API] 未找到备份文件:", BACKUP_FILENAME);
       return {
         success: false,
         message: `Gist 中未找到备份文件: ${BACKUP_FILENAME}`,
       };
     }
 
-    console.log('[Gist API] 文件大小:', file.size);
-    console.log('[Gist API] 文件是否被截断:', file.truncated);
+    console.log("[Gist API] 文件大小:", file.size);
+    console.log("[Gist API] 文件是否被截断:", file.truncated);
 
     let content: string;
     let backupData: BackupData | null = null;
 
     // 如果文件被截断或没有 content 字段,使用 raw_url 下载完整内容
     if (file.truncated || !file.content) {
-      console.log('[Gist API] 文件被截断,使用 raw_url 下载完整内容:', file.raw_url);
+      console.log(
+        "[Gist API] 文件被截断,使用 raw_url 下载完整内容:",
+        file.raw_url,
+      );
 
       if (!file.raw_url) {
         return {
           success: false,
-          message: '无法获取文件内容: 缺少 raw_url',
+          message: "无法获取文件内容: 缺少 raw_url",
         };
       }
 
       const result = await fetchJsonResource<BackupData>(file.raw_url);
       backupData = result.data;
       content = JSON.stringify(backupData);
-      console.log('[Gist API] 通过 raw_url 下载完成,文件大小:', content.length);
+      console.log("[Gist API] 通过 raw_url 下载完成,文件大小:", content.length);
     } else {
       content = file.content;
-      console.log('[Gist API] 使用 API 返回的文件内容,长度:', content.length);
+      console.log("[Gist API] 使用 API 返回的文件内容,长度:", content.length);
     }
 
-    console.log('[Gist API] 文件内容前100字符:', content.substring(0, 100));
+    console.log("[Gist API] 文件内容前100字符:", content.substring(0, 100));
 
     if (!backupData) {
       try {
         backupData = JSON.parse(content);
       } catch (error) {
-        console.error('[Gist API] JSON 解析失败:', error);
-        console.error('[Gist API] 内容末尾500字符:', content.substring(content.length - 500));
+        console.error("[Gist API] JSON 解析失败:", error);
+        console.error(
+          "[Gist API] 内容末尾500字符:",
+          content.substring(content.length - 500),
+        );
         return {
           success: false,
-          message: '备份数据格式错误,无法解析 JSON',
+          message: "备份数据格式错误,无法解析 JSON",
         };
       }
     }
@@ -195,12 +212,12 @@ async function downloadFromGist(token: string, gistId: string): Promise<GistResp
     if (!backupData) {
       return {
         success: false,
-        message: '备份数据为空',
+        message: "备份数据为空",
       };
     }
 
-    console.log('[Gist API] JSON 解析成功');
-    console.log('[Gist API] 数据结构:', {
+    console.log("[Gist API] JSON 解析成功");
+    console.log("[Gist API] 数据结构:", {
       timestamp: backupData.timestamp,
       version: backupData.version,
       hasLocalStorage: !!backupData.localStorage,
@@ -211,35 +228,39 @@ async function downloadFromGist(token: string, gistId: string): Promise<GistResp
 
     return {
       success: true,
-      message: '成功从 Gist 下载备份数据',
+      message: "成功从 Gist 下载备份数据",
       data: backupData,
-      backupSizeBytes: new TextEncoder().encode(content).length,
+      backupSizeBytes: utf8ByteLength(content),
     };
   } catch (error: any) {
-    console.error('[Gist API] 下载失败:', error);
+    console.error("[Gist API] 下载失败:", error);
 
     if (error.status === 404) {
       return {
         success: false,
-        message: 'Gist 不存在,请检查 Gist ID',
+        message: "Gist 不存在,请检查 Gist ID",
       };
     }
 
     return {
       success: false,
-      message: `下载失败: ${error.message || '未知错误'}`,
+      message: `下载失败: ${error.message || "未知错误"}`,
     };
   }
 }
 
 async function fetchTextWithProgress(
   url: string,
-  onProgress?: (progress: { loaded: number; total: number; lengthComputable: boolean }) => void
+  onProgress?: (progress: {
+    loaded: number;
+    total: number;
+    lengthComputable: boolean;
+  }) => void,
 ): Promise<string> {
   return await new Promise<string>((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.responseType = 'text';
+    xhr.open("GET", url, true);
+    xhr.responseType = "text";
 
     xhr.onprogress = (event) => {
       if (onProgress) {
@@ -259,7 +280,7 @@ async function fetchTextWithProgress(
       }
     };
 
-    xhr.onerror = () => reject(new Error('网络错误'));
+    xhr.onerror = () => reject(new Error("网络错误"));
     xhr.send();
   });
 }
@@ -270,7 +291,11 @@ async function fetchTextWithProgress(
 export async function downloadFromGistWithProgress(
   token: string,
   gistId: string,
-  onProgress?: (progress: { loaded: number; total?: number; lengthComputable?: boolean }) => void
+  onProgress?: (progress: {
+    loaded: number;
+    total?: number;
+    lengthComputable?: boolean;
+  }) => void,
 ): Promise<GistResponse> {
   try {
     const octokit = createOctokitClient(token);
@@ -302,29 +327,29 @@ export async function downloadFromGistWithProgress(
     } catch (error) {
       return {
         success: false,
-        message: '备份数据格式错误,无法解析 JSON',
+        message: "备份数据格式错误,无法解析 JSON",
       };
     }
 
     return {
       success: true,
-      message: '成功从 Gist 下载备份数据',
+      message: "成功从 Gist 下载备份数据",
       data: backupData,
-      backupSizeBytes: new TextEncoder().encode(content).length,
+      backupSizeBytes: utf8ByteLength(content),
     };
   } catch (error: any) {
-    console.error('[Gist API] 下载失败:', error);
+    console.error("[Gist API] 下载失败:", error);
 
     if (error.status === 404) {
       return {
         success: false,
-        message: 'Gist 不存在,请检查 Gist ID',
+        message: "Gist 不存在,请检查 Gist ID",
       };
     }
 
     return {
       success: false,
-      message: `下载失败: ${error.message || '未知错误'}`,
+      message: `下载失败: ${error.message || "未知错误"}`,
     };
   }
 }
@@ -345,7 +370,7 @@ export async function listUserGists(token: string): Promise<GistResponse> {
       .filter((gist) => gist.files?.[BACKUP_FILENAME])
       .map((gist) => ({
         id: gist.id,
-        description: gist.description || '(无描述)',
+        description: gist.description || "(无描述)",
         public: gist.public,
         created_at: gist.created_at,
         updated_at: gist.updated_at,
@@ -358,7 +383,7 @@ export async function listUserGists(token: string): Promise<GistResponse> {
                 filename: file!.filename!,
                 size: file!.size!,
               },
-            ])
+            ]),
         ),
       }));
 
@@ -368,10 +393,10 @@ export async function listUserGists(token: string): Promise<GistResponse> {
       data: backupGists,
     };
   } catch (error: any) {
-    console.error('列出 Gists 失败:', error);
+    console.error("列出 Gists 失败:", error);
     return {
       success: false,
-      message: `获取列表失败: ${error.message || '未知错误'}`,
+      message: `获取列表失败: ${error.message || "未知错误"}`,
     };
   }
 }

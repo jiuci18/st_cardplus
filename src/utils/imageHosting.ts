@@ -1,4 +1,5 @@
 import { stripCharacterCardMetadata } from "@/utils/pngCardMetadata";
+import { bytesToBase64 } from "./binary";
 
 export type HostingProvider = "catbox" | "imgbb" | "local";
 
@@ -50,18 +51,6 @@ const PNG_SIGNATURE = new Uint8Array([
 const hasPngSignature = (bytes: Uint8Array): boolean =>
   bytes.length >= PNG_SIGNATURE.length &&
   PNG_SIGNATURE.every((value, index) => bytes[index] === value);
-
-const bytesToBase64 = (bytes: Uint8Array): string => {
-  let binary = "";
-  const chunkSize = 0x8000;
-
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
-
-  return btoa(binary);
-};
 
 export const sanitizeImageBytesForUpload = async (
   file: File,

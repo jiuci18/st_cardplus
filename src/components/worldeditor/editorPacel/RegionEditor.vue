@@ -1,10 +1,7 @@
 <template>
   <el-scrollbar class="worldbook-editor-scrollbar">
     <div class="content-panel-body">
-      <div
-        v-if="!region"
-        class="worldbook-editor-empty-state"
-      >
+      <div v-if="!region" class="worldbook-editor-empty-state">
         <el-empty
           description="请在列表中选择或新增一个区域进行编辑"
           :image-size="80"
@@ -19,19 +16,13 @@
       >
         <section class="form-section">
           <h3 class="form-section-title">
-            <Icon
-              icon="ph:info-duotone"
-              class="form-section-icon"
-            />
+            <Icon icon="ph:info-duotone" class="form-section-icon" />
             基础信息
           </h3>
           <div class="form-section-content">
             <div>
               <label class="form-label">名称</label>
-              <el-input
-                v-model="region.name"
-                placeholder="例如：北境"
-              />
+              <el-input v-model="region.name" placeholder="例如：北境" />
             </div>
             <div>
               <label class="form-label">介绍</label>
@@ -47,10 +38,7 @@
 
         <section class="form-section">
           <h3 class="form-section-title">
-            <Icon
-              icon="ph:paint-brush-duotone"
-              class="form-section-icon"
-            />
+            <Icon icon="ph:paint-brush-duotone" class="form-section-icon" />
             展示设置
           </h3>
           <div class="form-grid-2-col">
@@ -74,10 +62,7 @@
 
         <section class="form-section">
           <h3 class="form-section-title">
-            <Icon
-              icon="ph:note-pencil-duotone"
-              class="form-section-icon"
-            />
+            <Icon icon="ph:note-pencil-duotone" class="form-section-icon" />
             备注
           </h3>
           <div>
@@ -96,11 +81,17 @@
 </template>
 
 <script setup lang="ts">
-import { ElScrollbar, ElForm, ElInput, ElColorPicker, ElEmpty } from 'element-plus';
-import { Icon } from '@iconify/vue';
-import type { EnhancedRegion } from '@/types/worldeditor/world-editor';
-import { REGION_COLOR_PALETTE } from '@/utils/worldeditor/regionColors';
-import '@/css/worldbook.css';
+import {
+  ElScrollbar,
+  ElForm,
+  ElInput,
+  ElColorPicker,
+  ElEmpty,
+} from "element-plus";
+import { Icon } from "@iconify/vue";
+import type { EnhancedRegion } from "@/types/worldeditor/world-editor";
+import { REGION_COLOR_PALETTE } from "@/utils/worldeditor/typeMeta";
+import "@/css/worldbook.css";
 
 interface Props {
   region: EnhancedRegion | null;

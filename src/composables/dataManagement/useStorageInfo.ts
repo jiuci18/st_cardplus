@@ -1,19 +1,28 @@
-import { ref } from 'vue';
-import { worldBookService, type WorldBookStats } from '@/database/appdb/worldBookService';
-import { characterCardService, type CharacterCardStats } from '@/database/appdb/characterCardService';
-import { worldEditorService, type WorldEditorStats } from '@/database/appdb/worldEditorService';
-import { getLocalStorageSnapshot } from '@/utils/localStorageUtils';
-import { formatBytes } from '@/utils/formatBytes';
+import { ref } from "vue";
+import {
+  worldBookService,
+  type WorldBookStats,
+} from "@/database/appdb/worldBookService";
+import {
+  characterCardService,
+  type CharacterCardStats,
+} from "@/database/appdb/characterCardService";
+import {
+  worldEditorService,
+  type WorldEditorStats,
+} from "@/database/appdb/worldEditorService";
+import { getLocalStorageSnapshot } from "@/utils/localStorageUtils";
+import { formatBytes } from "@/utils/binary";
 
 export function useStorageInfo() {
   const indexedDBUsage = ref({
     percentage: 0,
-    text: '加载中...',
+    text: "加载中...",
   });
 
   const localStorageUsage = ref({
     percentage: 0,
-    text: '加载中...',
+    text: "加载中...",
   });
 
   const worldBookStats = ref<WorldBookStats | null>(null);
@@ -23,7 +32,7 @@ export function useStorageInfo() {
   // 获取存储信息
   const getStorageEstimate = async () => {
     const storageEstimatePromise =
-      'storage' in navigator && 'estimate' in navigator.storage
+      "storage" in navigator && "estimate" in navigator.storage
         ? navigator.storage.estimate()
         : Promise.resolve<StorageEstimate | null>(null);
 
@@ -38,7 +47,8 @@ export function useStorageInfo() {
     characterCardStats.value = cardStats;
     worldEditorStats.value = editorStats;
 
-    const totalApproxBytes = worldStats.approxBytes + cardStats.approxBytes + editorStats.approxBytes;
+    const totalApproxBytes =
+      worldStats.approxBytes + cardStats.approxBytes + editorStats.approxBytes;
     const quota = estimate?.quota ?? null;
     const reportedUsage = estimate?.usage ?? null;
 
@@ -48,7 +58,8 @@ export function useStorageInfo() {
     if (quota && quota > 0) {
       const oneGB = 1024 * 1024 * 1024;
       const effectiveQuota = quota > oneGB ? oneGB : quota;
-      percentage = totalApproxBytes > 0 ? (totalApproxBytes / effectiveQuota) * 100 : 0;
+      percentage =
+        totalApproxBytes > 0 ? (totalApproxBytes / effectiveQuota) * 100 : 0;
 
       if (quota > oneGB) {
         displayText = `${formatBytes(totalApproxBytes)} / 1 GB+`;
@@ -88,10 +99,12 @@ export function useStorageInfo() {
   };
 
   // 根据使用率返回颜色状态
-  const getProgressStatus = (percentage: number): 'success' | 'warning' | 'exception' => {
-    if (percentage >= 80) return 'exception';
-    if (percentage >= 60) return 'warning';
-    return 'success';
+  const getProgressStatus = (
+    percentage: number,
+  ): "success" | "warning" | "exception" => {
+    if (percentage >= 80) return "exception";
+    if (percentage >= 60) return "warning";
+    return "success";
   };
 
   // 统一的存储信息更新函数

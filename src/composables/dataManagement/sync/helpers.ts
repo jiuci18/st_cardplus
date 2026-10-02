@@ -1,12 +1,16 @@
-import type { BackupData } from '@/types/gist';
-import type { SyncProvider, TransferProgress } from '@/types/dataSync';
+import { utf8ByteLength } from "../../../utils/binary.ts";
+import type { BackupData } from "@/types/gist";
+import type { SyncProvider, TransferProgress } from "@/types/dataSync";
 
 export function formatErrorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
 
-export function parseBackupData(provider: SyncProvider, payload: unknown): BackupData | null {
-  if (provider === 'webdav') {
+export function parseBackupData(
+  provider: SyncProvider,
+  payload: unknown,
+): BackupData | null {
+  if (provider === "webdav") {
     return JSON.parse(String(payload)) as BackupData;
   }
 
@@ -14,16 +18,19 @@ export function parseBackupData(provider: SyncProvider, payload: unknown): Backu
   return result.success ? (result.data ?? null) : null;
 }
 
-export function calculateDownloadedBackupSizeBytes(provider: SyncProvider, payload: unknown): number {
-  if (provider === 'webdav') {
-    return new TextEncoder().encode(String(payload)).length;
+export function calculateDownloadedBackupSizeBytes(
+  provider: SyncProvider,
+  payload: unknown,
+): number {
+  if (provider === "webdav") {
+    return utf8ByteLength(String(payload));
   }
 
   const result = payload as { backupSizeBytes?: unknown; data?: BackupData };
   if (
-    typeof result.backupSizeBytes === 'number'
-    && Number.isFinite(result.backupSizeBytes)
-    && result.backupSizeBytes >= 0
+    typeof result.backupSizeBytes === "number" &&
+    Number.isFinite(result.backupSizeBytes) &&
+    result.backupSizeBytes >= 0
   ) {
     return result.backupSizeBytes;
   }
@@ -32,28 +39,43 @@ export function calculateDownloadedBackupSizeBytes(provider: SyncProvider, paylo
 }
 
 function formatSpeedValue(bytesPerSecond: number | null): string {
-  if (!bytesPerSecond || !Number.isFinite(bytesPerSecond) || bytesPerSecond <= 0) return '--';
+  if (
+    !bytesPerSecond ||
+    !Number.isFinite(bytesPerSecond) ||
+    bytesPerSecond <= 0
+  )
+    return "--";
   return (bytesPerSecond / 1024).toFixed(1);
 }
 
 function formatTotalSizeKB(total?: number, lengthComputable?: boolean): string {
-  if (!lengthComputable || !total || !Number.isFinite(total) || total <= 0) return '-- KB';
+  if (!lengthComputable || !total || !Number.isFinite(total) || total <= 0)
+    return "-- KB";
   return `${(total / 1024).toFixed(1)} KB`;
 }
 
-export function formatDownloadProgressText(provider: SyncProvider, speed: number | null, progress: TransferProgress): string {
+export function formatDownloadProgressText(
+  provider: SyncProvider,
+  speed: number | null,
+  progress: TransferProgress,
+): string {
   const speedText = `${formatSpeedValue(speed)} KB/S : ${formatTotalSizeKB(progress.total, progress.lengthComputable)}`;
   return `正在从 ${provider} 下载... · ${speedText}`;
 }
 
 export function calculateJsonSizeBytes(data: unknown): number {
-  return new TextEncoder().encode(JSON.stringify(data, null, 2)).length;
+  return utf8ByteLength(JSON.stringify(data, null, 2) ?? "");
 }
 
-export function isRemoteBackupSmaller(remoteSizeBytes: number, localSizeBytes: number): boolean {
-  return Number.isFinite(remoteSizeBytes)
-    && Number.isFinite(localSizeBytes)
-    && remoteSizeBytes >= 0
-    && localSizeBytes >= 0
-    && remoteSizeBytes < localSizeBytes;
+export function isRemoteBackupSmaller(
+  remoteSizeBytes: number,
+  localSizeBytes: number,
+): boolean {
+  return (
+    Number.isFinite(remoteSizeBytes) &&
+    Number.isFinite(localSizeBytes) &&
+    remoteSizeBytes >= 0 &&
+    localSizeBytes >= 0 &&
+    remoteSizeBytes < localSizeBytes
+  );
 }

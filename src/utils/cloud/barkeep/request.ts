@@ -1,7 +1,7 @@
 //! HTTP serialization, authentication headers, and error mapping for Barkeep.
 
 import type { BarkeepConnectionConfig } from "@/types/barkeep";
-import { requestText } from "../../httpTransport.ts";
+import { requestText } from "../../fetchResource.ts";
 import { BarkeepClientError } from "./errors.ts";
 
 const STATUS_MESSAGES: Record<number, string> = {
@@ -91,10 +91,7 @@ function assertOkResponse(status: number, ok: boolean, body: unknown): void {
   if (ok) return;
 
   const detail = errorDetail(body);
-  if (
-    status === 403 &&
-    detail?.toLowerCase().includes("invalid csrf token")
-  ) {
+  if (status === 403 && detail?.toLowerCase().includes("invalid csrf token")) {
     throw new BarkeepClientError(
       "CSRF 会话无效：请刷新页面，并确保 CardPlus 与 SillyTavern 使用相同主机名（不要混用 localhost 和 127.0.0.1）",
       status,

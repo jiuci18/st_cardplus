@@ -1,29 +1,14 @@
-import extract, { type Chunk } from 'png-chunks-extract';
-import PNGtext from 'png-chunk-text';
+import extract, { type Chunk } from "png-chunks-extract";
+import PNGtext from "png-chunk-text";
+import { bytesToBase64, base64ToBytes } from "./binary";
 
 // Helper for base64 encoding and decoding in browser environment
 function toBase64(str: string): string {
-  const bytes = new TextEncoder().encode(str);
-  let binary = '';
-  const chunkSize = 0x8000;
-
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
-
-  return btoa(binary);
+  return bytesToBase64(new TextEncoder().encode(str));
 }
 
 function fromBase64(base64: string): string {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
-
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-
-  return new TextDecoder().decode(bytes);
+  return new TextDecoder().decode(base64ToBytes(base64));
 }
 
 const CRC_TABLE = (() => {
@@ -31,7 +16,7 @@ const CRC_TABLE = (() => {
   for (let i = 0; i < 256; i++) {
     let c = i;
     for (let j = 0; j < 8; j++) {
-      c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
     }
     table[i] = c >>> 0;
   }
@@ -84,7 +69,12 @@ function encode(chunks: Chunk[]): Uint8Array {
   for (let i = 0; i < chunks.length; i++) {
     const { name, data } = chunks[i];
     const size = data.length;
-    const nameChars = [name.charCodeAt(0), name.charCodeAt(1), name.charCodeAt(2), name.charCodeAt(3)];
+    const nameChars = [
+      name.charCodeAt(0),
+      name.charCodeAt(1),
+      name.charCodeAt(2),
+      name.charCodeAt(3),
+    ];
 
     uint32[0] = size;
     output[idx++] = uint8[3];
@@ -120,12 +110,15 @@ function encode(chunks: Chunk[]): Uint8Array {
  */
 export const write = (image: Uint8Array, data: string): Uint8Array => {
   const chunks = extract(image);
-  const tEXtChunks = chunks.filter((chunk) => chunk.name === 'tEXt');
+  const tEXtChunks = chunks.filter((chunk) => chunk.name === "tEXt");
 
   // Remove existing tEXt chunks for chara data
   for (const tEXtChunk of tEXtChunks) {
     const decoded = PNGtext.decode(tEXtChunk.data);
-    if (decoded.keyword.toLowerCase() === 'chara' || decoded.keyword.toLowerCase() === 'ccv3') {
+    if (
+      decoded.keyword.toLowerCase() === "chara" ||
+      decoded.keyword.toLowerCase() === "ccv3"
+    ) {
       const index = chunks.indexOf(tEXtChunk);
       if (index > -1) {
         chunks.splice(index, 1);
@@ -135,18 +128,18 @@ export const write = (image: Uint8Array, data: string): Uint8Array => {
 
   // Add new v2 chunk before the IEND chunk
   const base64EncodedDataV2 = toBase64(data);
-  chunks.splice(-1, 0, PNGtext.encode('chara', base64EncodedDataV2));
+  chunks.splice(-1, 0, PNGtext.encode("chara", base64EncodedDataV2));
 
   // Try adding v3 chunk before the IEND chunk
   try {
     const v3Data = JSON.parse(data);
-    v3Data.spec = 'chara_card_v3';
-    v3Data.spec_version = '3.0';
+    v3Data.spec = "chara_card_v3";
+    v3Data.spec_version = "3.0";
 
     const base64EncodedDataV3 = toBase64(JSON.stringify(v3Data));
-    chunks.splice(-1, 0, PNGtext.encode('ccv3', base64EncodedDataV3));
+    chunks.splice(-1, 0, PNGtext.encode("ccv3", base64EncodedDataV3));
   } catch (error) {
-    console.warn('Failed to create and add V3 character card chunk.', error);
+    console.warn("Failed to create and add V3 character card chunk.", error);
   }
 
   return encode(chunks);
@@ -162,20 +155,23 @@ export const stripCharacterCardMetadata = (image: Uint8Array): Uint8Array => {
   const chunks = extract(image);
   let removedCount = 0;
   const sanitizedChunks = chunks.filter((chunk) => {
-    if (chunk.name !== 'tEXt') {
+    if (chunk.name !== "tEXt") {
       return true;
     }
 
     try {
       const decoded = PNGtext.decode(chunk.data);
       const keyword = decoded.keyword.toLowerCase();
-      const shouldKeep = keyword !== 'chara' && keyword !== 'ccv3';
+      const shouldKeep = keyword !== "chara" && keyword !== "ccv3";
       if (!shouldKeep) {
         removedCount += 1;
       }
       return shouldKeep;
     } catch (error) {
-      console.warn('Failed to decode PNG tEXt chunk while stripping metadata, keeping original chunk.', error);
+      console.warn(
+        "Failed to decode PNG tEXt chunk while stripping metadata, keeping original chunk.",
+        error,
+      );
       return true;
     }
   });
@@ -196,23 +192,29 @@ export const stripCharacterCardMetadata = (image: Uint8Array): Uint8Array => {
 export const read = (image: Uint8Array): string => {
   const chunks = extract(image);
 
-  const textChunks = chunks.filter((chunk) => chunk.name === 'tEXt').map((chunk) => PNGtext.decode(chunk.data));
+  const textChunks = chunks
+    .filter((chunk) => chunk.name === "tEXt")
+    .map((chunk) => PNGtext.decode(chunk.data));
 
   if (textChunks.length === 0) {
-    console.error('PNG metadata does not contain any text chunks.');
-    throw new Error('No PNG metadata found.');
+    console.error("PNG metadata does not contain any text chunks.");
+    throw new Error("No PNG metadata found.");
   }
 
-  const ccv3Chunk = textChunks.find((chunk) => chunk.keyword.toLowerCase() === 'ccv3');
+  const ccv3Chunk = textChunks.find(
+    (chunk) => chunk.keyword.toLowerCase() === "ccv3",
+  );
   if (ccv3Chunk) {
     return fromBase64(ccv3Chunk.text);
   }
 
-  const charaChunk = textChunks.find((chunk) => chunk.keyword.toLowerCase() === 'chara');
+  const charaChunk = textChunks.find(
+    (chunk) => chunk.keyword.toLowerCase() === "chara",
+  );
   if (charaChunk) {
     return fromBase64(charaChunk.text);
   }
 
-  console.error('PNG metadata does not contain any character data.');
-  throw new Error('No character data found in PNG metadata.');
+  console.error("PNG metadata does not contain any character data.");
+  throw new Error("No character data found in PNG metadata.");
 };

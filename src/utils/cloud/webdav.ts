@@ -1,4 +1,5 @@
 import { createClient } from "webdav";
+import { utf8ByteLength } from "../binary";
 import type { WebDAVClientOptions } from "webdav";
 import { isTauriApp } from "@/utils/system/tauri";
 import { buildWebDAVResourceUrl } from "@/utils/cloud/webdavUrl";
@@ -118,7 +119,7 @@ export async function downloadFromWebDAVWithProgress(
       "download",
       remotePath,
     );
-    const size = new TextEncoder().encode(content).length;
+    const size = utf8ByteLength(content);
     onProgress?.({ loaded: size, total: size, lengthComputable: true });
     return content;
   }

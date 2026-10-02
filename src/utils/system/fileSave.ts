@@ -1,5 +1,6 @@
 import { localStorageStore } from "../localStorageUtils";
 import { isTauriApp } from "./tauri";
+import { bytesToBase64, bytesToBlob } from "../binary";
 
 export interface SaveFileOptions {
   data: Uint8Array;
@@ -16,24 +17,12 @@ export interface SaveFileResult {
   canceled?: boolean;
 }
 
-const bytesToBase64 = (bytes: Uint8Array): string => {
-  let binary = "";
-  const chunkSize = 0x8000;
-  for (let i = 0; i < bytes.length; i += chunkSize) {
-    const chunk = bytes.subarray(i, i + chunkSize);
-    binary += String.fromCharCode(...chunk);
-  }
-  return btoa(binary);
-};
-
 const browserDownload = (
   data: Uint8Array,
   fileName: string,
   mimeType: string,
 ): SaveFileResult => {
-  const copied = new Uint8Array(data.byteLength);
-  copied.set(data);
-  const blob = new Blob([copied], { type: mimeType });
+  const blob = bytesToBlob(data, mimeType);
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
