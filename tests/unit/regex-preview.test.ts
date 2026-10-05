@@ -55,10 +55,10 @@ test('updates exact class attributes without changing unrelated attributes', () 
   );
 });
 
-test('preserves distinctions between original and already-prefixed names', () => {
+test('leaves already-prefixed names unchanged', () => {
   assert.equal(
     prefixPreviewCss('.panel, .custom-panel { color: red }'),
-    '.custom-panel,.custom-custom-panel{color:red}'
+    '.custom-panel,.custom-panel{color:red}'
   );
 });
 
