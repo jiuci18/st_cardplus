@@ -10,6 +10,13 @@
   </el-form-item>
   <el-form-item label="结果 (Result)">
     <div class="result-controls">
+      <el-button
+        size="small"
+        :disabled="!preview.css || !!preview.error"
+        @click="copyProcessedCss"
+      >
+        复制处理后的 CSS
+      </el-button>
       <el-switch
         :model-value="renderHtml"
         @update:model-value="$emit('update:renderHtml', $event)"
@@ -18,13 +25,23 @@
         size="small"
       />
     </div>
+    <div class="preview-hint">
+      预览中的 class 和内嵌 CSS 类选择器会同步添加 custom- 前缀，不修改源码；复制的 CSS 需搭配加前缀后的 class 使用。
+    </div>
+    <el-alert
+      v-if="preview.error"
+      class="preview-error"
+      :title="preview.error"
+      type="error"
+      :closable="false"
+    />
     <div
-      v-if="renderHtml"
+      v-if="renderHtml && !preview.error"
       class="result-box html-rendered"
-      v-html="simulatedResult"
+      v-html="preview.html"
     ></div>
     <pre
-      v-else
+      v-else-if="!renderHtml"
       class="result-box"
       >{{ simulatedResult }}</pre
     >
@@ -48,7 +65,11 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue';
+import { copyToClipboard } from '@/utils/clipboard';
+import { prepareRegexPreview } from './regexPreview';
+
+const props = defineProps<{
   testString: string;
   simulatedResult: string;
   renderHtml: boolean;
@@ -60,6 +81,21 @@ defineEmits(['update:testString', 'update:renderHtml', 'update:userMacroValue', 
 
 const user = '{{user}}';
 const char = '{{char}}';
+
+const preview = computed(() => {
+  try {
+    return { ...prepareRegexPreview(props.simulatedResult), error: '' };
+  } catch (error) {
+    // Never render the unprocessed CSS on failure: it could affect the editor.
+    const detail = error instanceof Error ? error.message : '未知错误';
+    return { html: '', css: '', error: `CSS 预处理失败，请检查源码：${detail}` };
+  }
+});
+
+async function copyProcessedCss() {
+  if (!preview.value.css || preview.value.error) return;
+  await copyToClipboard(preview.value.css, '处理后的 CSS 已复制到剪贴板');
+}
 </script>
 
 <style scoped>
@@ -77,6 +113,22 @@ const char = '{{char}}';
 .result-controls {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.preview-hint {
+  width: 100%;
+  margin-bottom: 8px;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.preview-error {
   margin-bottom: 8px;
 }
 
