@@ -2,9 +2,9 @@ import { generate, ident, parse, walk } from 'css-tree';
 
 const CLASS_PREFIX = 'custom-';
 
-// Always prefix, so "panel" and an existing "custom-panel" remain distinct.
+// Shared by CSS and HTML: already-prefixed classes are left unchanged.
 function prefixClassName(name: string): string {
-  return `${CLASS_PREFIX}${name}`;
+  return name.startsWith(CLASS_PREFIX) ? name : `${CLASS_PREFIX}${name}`;
 }
 
 function prefixClassList(value: string): string {
