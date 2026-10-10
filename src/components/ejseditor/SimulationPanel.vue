@@ -414,7 +414,7 @@ function isStageMatched(stage: Stage): boolean {
 
 .comparison-row {
   display: grid;
-  grid-template-columns: 30px 1fr 80px 60px;
+  grid-template-columns: 30px minmax(0, 1fr) minmax(0, 2fr) 60px;
   gap: 8px;
   align-items: center;
   padding: 8px;
@@ -453,6 +453,9 @@ function isStageMatched(stage: Stage): boolean {
 }
 
 .row-condition {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   color: var(--el-text-color-secondary);
 }
@@ -543,7 +546,7 @@ function isStageMatched(stage: Stage): boolean {
   }
 
   .comparison-row {
-    grid-template-columns: 20px 1fr 60px 45px;
+    grid-template-columns: 20px minmax(0, 1fr) minmax(0, 2fr) 45px;
     gap: 3px;
     padding: 4px;
     font-size: 11px;
@@ -589,7 +592,7 @@ function isStageMatched(stage: Stage): boolean {
   }
 
   .comparison-row {
-    grid-template-columns: 25px 1fr 80px 55px;
+    grid-template-columns: 25px minmax(0, 1fr) minmax(0, 2fr) 55px;
   }
 }
 </style>

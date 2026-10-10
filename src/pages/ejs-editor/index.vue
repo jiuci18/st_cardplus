@@ -64,9 +64,6 @@
               </el-tabs>
             </div>
             <div class="sidebar-actions">
-              <el-button @click="toggleCenterPanel" :icon="centerPanelVisible ? Hide : View" size="small">
-                {{ centerPanelVisible ? '隐藏编辑器' : '显示编辑器' }}
-              </el-button>
               <el-button-group>
                 <el-button :icon="DocumentAdd" @click="handleImportConfig" size="small">
                   导入配置
@@ -94,22 +91,6 @@
             </el-tabs>
           </div>
         </pane>
-        <pane v-if="centerPanelVisible" min-size="30">
-          <div class="center-panel">
-            <div class="panel-header">
-              <h3>模板编辑器</h3>
-              <div class="header-actions">
-                <el-button :icon="CopyDocument" @click="copyToClipboard" size="small" type="primary">
-                  复制代码
-                </el-button>
-                <el-button :icon="RefreshRight" @click="store.generateEjsTemplate" size="small">
-                  重新生成
-                </el-button>
-              </div>
-            </div>
-            <TemplateEditor />
-          </div>
-        </pane>
         <pane min-size="20" size="30">
           <div class="right-panel">
             <el-tabs v-model="activeRightTab" class="h-full">
@@ -130,11 +111,10 @@
 <script setup lang="ts">
 import { useEjsEditorStore } from '@/composables/ejs/ejsEditor';
 import { useDevice } from '@/composables/useDevice';
-import { copyToClipboard as copyTextToClipboard } from '@/utils/clipboard';
 import { nowIso } from '@/utils/datetime';
 import { saveFile } from '@/utils/system/fileSave';
 import { getSetting, readLocalStorageJSON, writeLocalStorageJSON } from '@/utils/localStorageUtils';
-import { CopyDocument, DocumentAdd, Download, Hide, RefreshLeft, RefreshRight, View } from '@element-plus/icons-vue';
+import { DocumentAdd, Download, RefreshLeft } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { Pane, Splitpanes } from 'splitpanes';
 import 'splitpanes/dist/splitpanes.css';
@@ -145,7 +125,6 @@ import MobileBookmarkDrawer from '@/components/ui/common/MobileBookmarkDrawer.vu
 import PreviewPanel from '@/components/ejseditor/PreviewPanel.vue';
 import ProjectManager from '@/components/ejseditor/ProjectManager.vue';
 import SimulationPanel from '@/components/ejseditor/SimulationPanel.vue';
-import TemplateEditor from '@/components/ejseditor/TemplateEditor.vue';
 import VariablePanel from '@/components/ejseditor/VariablePanel.vue';
 
 const store = useEjsEditorStore();
@@ -153,7 +132,6 @@ const { isMobileOrTablet } = useDevice();
 const activeSidebarTab = ref('projects');
 const activeLeftTab = ref('variables');
 const activeRightTab = ref('preview');
-const centerPanelVisible = ref(false);
 const mobileBookmarkTab = ref('preview');
 const mobileDrawerVisible = ref(false);
 const mobileBookmarkItems = [
@@ -166,10 +144,6 @@ const mobileBookmarkGroupStyle = {
   top: '50%',
   transform: 'translateY(-50%)',
 } as const;
-
-function toggleCenterPanel() {
-  centerPanelVisible.value = !centerPanelVisible.value;
-}
 
 // 工具栏操作
 async function handleImportConfig() {
@@ -239,15 +213,6 @@ async function handleClearAll() {
   }
 }
 
-async function copyToClipboard() {
-  if (!store.ejsTemplate) {
-    ElMessage.warning('没有可复制的代码');
-    return;
-  }
-
-  await copyTextToClipboard(store.ejsTemplate, '代码已复制到剪贴板', '复制失败');
-}
-
 // 页面加载时的初始化
 onMounted(() => {
   store.initializeStore();
@@ -310,8 +275,7 @@ watch(
 
 .sidebar-panel,
 .left-panel,
-.right-panel,
-.center-panel {
+.right-panel {
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -342,36 +306,6 @@ watch(
 .sidebar-actions :deep(.el-button-group .el-button) {
   flex: 1;
   min-width: 0;
-}
-
-.center-panel {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--el-border-color-light);
-  order: -1;
-  /* 确保 header 在最前面 */
-  flex-shrink: 0;
-  /* 防止压缩 */
-}
-
-.panel-header h3 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--el-text-color-primary);
-}
-
-.header-actions {
-  display: flex;
-  gap: 8px;
 }
 
 /* Element Plus 标签页样式覆盖 */

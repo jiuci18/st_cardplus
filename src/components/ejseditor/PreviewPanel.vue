@@ -79,12 +79,7 @@
           </el-empty>
         </div>
 
-        <div
-          v-else
-          class="code-container"
-        >
-          <pre class="code-content"><code>{{ store.previewCode }}</code></pre>
-        </div>
+        <TemplateEditor v-else :code="store.previewCode" />
       </div>
 
       <div
@@ -114,6 +109,7 @@ import { formatDateTime } from '@/utils/datetime';
 import { useDevice } from '@/composables/useDevice';
 import { CopyDocument, RefreshRight } from '@element-plus/icons-vue';
 import { computed, ref, watch } from 'vue';
+import TemplateEditor from './TemplateEditor.vue';
 
 const store = useEjsEditorStore();
 const { isMobile } = useDevice();
@@ -174,6 +170,7 @@ function formatTimestamp(timestamp: number): string {
 
 .panel-content {
   flex: 1;
+  min-height: 0;
   padding: 16px;
   overflow-y: auto;
   display: flex;
@@ -212,7 +209,7 @@ function formatTimestamp(timestamp: number): string {
 }
 
 .code-preview {
-  flex: 1;
+  flex: 1 0 200px;
   min-height: 200px;
   border: 1px solid var(--el-border-color-light);
   border-radius: 6px;
@@ -226,25 +223,6 @@ function formatTimestamp(timestamp: number): string {
   justify-content: center;
   padding: 40px 20px;
   text-align: center;
-}
-
-.code-container {
-  height: 100%;
-  overflow: auto;
-  background-color: var(--el-bg-color-page);
-}
-
-.code-content {
-  margin: 0;
-  padding: 16px;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--el-text-color-primary);
-  background-color: transparent;
-  white-space: pre-wrap;
-  word-break: break-word;
-  min-height: 100%;
 }
 
 .quick-actions {
@@ -342,16 +320,12 @@ function formatTimestamp(timestamp: number): string {
     min-width: 0;
   }
 
-  .code-content {
-    font-size: 11px;
-    padding: 12px;
-  }
-
   .template-info {
     padding: 8px;
   }
 
   .code-preview {
+    flex-basis: 150px;
     min-height: 150px;
   }
 }
@@ -366,10 +340,4 @@ function formatTimestamp(timestamp: number): string {
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  .code-content {
-    background-color: #1e1e1e;
-    color: #d4d4d4;
-  }
-}
 </style>

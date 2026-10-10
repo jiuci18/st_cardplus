@@ -21,7 +21,6 @@
             <el-input
               v-model="store.yamlInput"
               type="textarea"
-              :rows="isMobile ? 6 : 8"
               placeholder="粘贴YAML格式的变量定义...&#10;例如:&#10;世界:&#10;  日期: [0, '记录故事天数']&#10;角色:&#10;  狼蛛:&#10;    好感度: [0, '角色好感度']"
               class="yaml-textarea"
             />
@@ -218,6 +217,11 @@ function selectVariable(node: VariableNode) {
 
 .yaml-textarea {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.yaml-textarea :deep(.el-textarea__inner) {
+  height: 50vh;
+  height: 50dvh;
 }
 
 .yaml-actions {
