@@ -30,7 +30,7 @@
       :base-url="baseUrl"
       :stats="localStats"
       :random-tip="randomTip"
-      @begin-sync="welcomeOverlayVisible = false"
+      @dismiss="dismissWelcomeOverlay"
       @open-connection="barkeepDrawerVisible = true"
       @next-tip="pickRandomTip"
       @navigate="router.push"
@@ -66,9 +66,12 @@ import { useAppUpdate } from "@/composables/useAppUpdate";
 import { useBarkeepConnection } from "@/composables/useBarkeepConnection";
 import { useWelcomeResources } from "@/composables/wellcome/useWelcomeResources";
 import { useWelcomeTips } from "@/composables/wellcome/useWelcomeTips";
+import { getSessionStorageItem, setSessionStorageItem } from "@/utils/localStorageUtils";
 
+const CONNECTION_SKIPPED_KEY = "welcomeConnectionSkipped";
+const connectionSkipped = ref(getSessionStorageItem(CONNECTION_SKIPPED_KEY) === "true");
 const barkeepDrawerVisible = ref(false);
-const welcomeOverlayVisible = ref(true);
+const welcomeOverlayVisible = ref(!connectionSkipped.value);
 const router = useRouter();
 const connection = useBarkeepConnection();
 const { status, mode, baseUrl, canPing, multiUser, password } = connection.state;
@@ -89,6 +92,14 @@ const {
 });
 const { randomTip, loadRemoteTips, pickRandomTip } = useWelcomeTips();
 
+const dismissWelcomeOverlay = (): void => {
+  welcomeOverlayVisible.value = false;
+  if (!status.value) {
+    connectionSkipped.value = true;
+    setSessionStorageItem(CONNECTION_SKIPPED_KEY, "true");
+  }
+};
+
 const goToSettings = (): void => {
   void router.push("/settings");
 };
@@ -97,10 +108,12 @@ onMounted(async () => {
   initialize();
   await loadLocalStats();
 
-  if (canPing.value) {
-    await ping(true).catch(() => undefined);
-  } else if (baseUrl.value && (!multiUser.value || password.value)) {
-    await login(true).catch(() => undefined);
+  if (!connectionSkipped.value) {
+    if (canPing.value) {
+      await ping(true).catch(() => undefined);
+    } else if (baseUrl.value && (!multiUser.value || password.value)) {
+      await login(true).catch(() => undefined);
+    }
   }
 
   pickRandomTip();

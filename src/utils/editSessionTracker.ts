@@ -2,6 +2,7 @@ import { now, nowIso } from "./datetime.ts";
 
 const EDIT_DIRECTORY_STORAGE_KEY = "ST_CARDPLUS_SESSION_EDIT_DIRECTORY";
 const MAX_EDIT_RECORDS = 500;
+export const EDIT_SESSION_CHANGED_EVENT = "edit-session-changed";
 
 export type EditSessionStorageKind = "localStorage" | "sessionStorage" | "indexedDB";
 
@@ -73,6 +74,9 @@ const createEmptyDirectory = (): EditSessionDirectory => {
   };
 };
 
+const isIgnoredEdit = (storage: EditSessionStorageKind, target?: string): boolean =>
+  storage === "sessionStorage" || target === EDIT_DIRECTORY_STORAGE_KEY;
+
 const readDirectory = (): EditSessionDirectory => {
   if (!canUseSessionStorage()) return createEmptyDirectory();
 
@@ -85,8 +89,12 @@ const readDirectory = (): EditSessionDirectory => {
     }
     return {
       ...parsed,
-      entries: parsed.entries && typeof parsed.entries === "object" ? parsed.entries : {},
-      records: Array.isArray(parsed.records) ? parsed.records : [],
+      entries: Object.fromEntries(
+        Object.entries(parsed.entries ?? {}).filter(([, entry]) => !isIgnoredEdit(entry.storage, entry.target)),
+      ),
+      records: Array.isArray(parsed.records)
+        ? parsed.records.filter((record) => !isIgnoredEdit(record.storage, record.target))
+        : [],
     };
   } catch (error) {
     console.error("Failed to read edit session directory:", error);
@@ -99,6 +107,7 @@ const writeDirectory = (directory: EditSessionDirectory): void => {
 
   try {
     window.sessionStorage.setItem(EDIT_DIRECTORY_STORAGE_KEY, JSON.stringify(directory));
+    window.dispatchEvent(new Event(EDIT_SESSION_CHANGED_EVENT));
   } catch (error) {
     console.error("Failed to write edit session directory:", error);
   }
@@ -150,14 +159,15 @@ export const clearEditSessionDirectory = (): void => {
   if (!canUseSessionStorage()) return;
   try {
     window.sessionStorage.removeItem(EDIT_DIRECTORY_STORAGE_KEY);
+    window.dispatchEvent(new Event(EDIT_SESSION_CHANGED_EVENT));
   } catch (error) {
     console.error("Failed to clear edit session directory:", error);
   }
 };
 
-/** Record a localStorage or sessionStorage mutation in the current edit session. */
+/** Record a localStorage mutation; sessionStorage is UI/session state, not an edit. */
 export const trackStorageEdit = (input: LocalStorageEditInput): void => {
-  if (input.key === EDIT_DIRECTORY_STORAGE_KEY) return;
+  if (isIgnoredEdit(input.storage, input.key)) return;
 
   appendRecord({
     storage: input.storage,

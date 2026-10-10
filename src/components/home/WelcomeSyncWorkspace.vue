@@ -8,9 +8,24 @@
         </div>
         <Icon icon="material-symbols:sync" />
       </div>
-      <div class="empty-state">
+      <p class="session-summary">本次会话已编辑 {{ editedItems.length }} 个项目</p>
+      <ul v-if="editedItems.length" class="edit-list" aria-label="本次会话编辑记录">
+        <li v-for="item in editedItems" :key="`${item.storage}:${item.target}`" class="edit-item">
+          <div class="edit-item-heading">
+            <strong>{{ targetLabel(item) }}</strong>
+            <span>{{ item.count }} 次操作</span>
+          </div>
+          <code class="edit-target">{{ item.target }}</code>
+          <div class="edit-meta">
+            <span>{{ item.operations.map(operation => operationLabels[operation]).join(' · ') }}</span>
+            <time :datetime="item.lastEditedAt">{{ formatDateTime(item.lastEditedAt) }}</time>
+          </div>
+          <p v-if="item.fields.length" class="edit-fields">修改字段：{{ item.fields.join('、') }}</p>
+        </li>
+      </ul>
+      <div v-else class="empty-state">
         <Icon icon="material-symbols:sync-problem-outline" />
-        <p>尚未建立同步任务</p><span>资源差异将在这里等待确认。</span>
+        <p>本次会话暂无编辑记录</p><span>编辑过的项目会自动记录在这里。</span>
       </div>
     </section>
     <section class="operation-panel" aria-labelledby="operation-panel-title">
@@ -29,7 +44,48 @@
 </template>
 
 <script setup lang="ts">
+import { computed, shallowRef } from "vue";
+import { useEventListener } from "@vueuse/core";
 import { Icon } from "@iconify/vue";
+import { formatDateTime } from "@/utils/datetime";
+import {
+  EDIT_SESSION_CHANGED_EVENT,
+  getEditSessionDirectory,
+  type EditSessionDirectoryEntry,
+  type EditSessionOperation,
+} from "@/utils/editSessionTracker";
+
+const directory = shallowRef(getEditSessionDirectory());
+useEventListener(window, EDIT_SESSION_CHANGED_EVENT, () => {
+  directory.value = getEditSessionDirectory();
+});
+
+const editedItems = computed(() =>
+  Object.values(directory.value.entries).sort((a, b) => b.lastEditedAt.localeCompare(a.lastEditedAt)),
+);
+const operationLabels: Record<EditSessionOperation, string> = {
+  set: "写入",
+  remove: "移除",
+  clear: "清空",
+  create: "新建",
+  update: "修改",
+  delete: "删除",
+};
+const tableLabels: Record<string, string> = {
+  books: "世界书",
+  entries: "世界书条目",
+  characterCards: "角色卡",
+  presets: "预设",
+  worldProjects: "世界项目",
+  worldLandmarks: "地标",
+  worldForces: "势力",
+  worldRegions: "区域",
+};
+const targetLabel = (item: EditSessionDirectoryEntry): string => {
+  if (item.storage !== "indexedDB") return item.storage;
+  const table = item.target.split("/")[0];
+  return tableLabels[table] ?? table;
+};
 </script>
 
 <style scoped>
@@ -85,6 +141,60 @@ import { Icon } from "@iconify/vue";
   font-size: 1.15rem;
 }
 
+.session-summary {
+  margin: 14px 0;
+  color: var(--el-text-color-secondary);
+  font-size: .85rem;
+}
+
+.edit-list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.edit-item {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--el-border-color-light);
+}
+
+.edit-item-heading,
+.edit-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+}
+
+.edit-item-heading strong {
+  font-size: .9rem;
+}
+
+.edit-item-heading span,
+.edit-meta,
+.edit-fields {
+  color: var(--el-text-color-secondary);
+  font-size: .78rem;
+  line-height: 1.6;
+}
+
+.edit-target {
+  display: block;
+  margin: 6px 0;
+  color: var(--el-text-color-regular);
+  font-size: .8rem;
+  overflow-wrap: anywhere;
+}
+
+.edit-fields {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+
 .empty-state {
   display: flex;
   flex: 1;
@@ -133,6 +243,10 @@ import { Icon } from "@iconify/vue";
 @media (max-width: 680px) {
   .workspace-center {
     gap: 16px;
+  }
+
+  .edit-list {
+    max-height: 420px;
   }
 }
 </style>
