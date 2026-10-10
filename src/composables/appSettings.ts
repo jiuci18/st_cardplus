@@ -84,7 +84,6 @@ export const getAppSettings = (
       type: "switch",
       model: models.useNewWelcomePage,
       handler: handlers.onUseNewWelcomePageToggle,
-      disabled: true,
     },
     {
       id: "betaFeaturesEnabled",
