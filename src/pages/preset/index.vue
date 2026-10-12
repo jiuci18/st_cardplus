@@ -41,7 +41,7 @@
     </div>
 
     <splitpanes v-else class="default-theme preset-split" :horizontal="false">
-      <pane min-size="18" size="22">
+      <pane min-size="10" size="15">
         <PresetList :presets="presets" :active-preset-id="activePresetId" :selected-prompt-index="selectedPromptIndex"
           :selected-regex-index="selectedRegexIndex" :selected-is-header="selectedIsHeader"
           :multi-selected-node-keys="multiSelectedNodeKeys" :drag-drop-handlers="dragDropHandlers"
@@ -55,7 +55,7 @@
           @import-preset="handleImportPreset" />
       </pane>
 
-      <pane min-size="35" size="50">
+      <pane min-size="40" size="60">
         <PresetBatchSettings v-if="activeView === 'batch'" :preset="activePreset" hide-targets
           v-model:checked-prompt-indexes="batchCheckedPromptIndexes" @apply="handleApplyBatchSettings" />
         <PresetEditor v-else v-model:active-tab="activeEditorTab" v-model:editor-state="editorState"
@@ -69,7 +69,7 @@
           @go-next="goToNext" />
       </pane>
 
-      <pane min-size="20" size="28">
+      <pane min-size="15" size="25">
         <PresetBatchTargetSelector v-if="activeView === 'batch'" :preset="activePreset"
           v-model:checked-prompt-indexes="batchCheckedPromptIndexes" />
         <el-tabs v-else v-model="rightPanelTab" class="right-panel-tabs">

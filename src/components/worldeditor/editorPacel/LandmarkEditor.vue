@@ -212,18 +212,10 @@
                 default-first-option :reserve-keyword="false" placeholder="例如：铁矿, 魔法水晶"
                 class="form-full-width"></el-select>
             </div>
-          </div>
-        </section>
-
-        <!-- 元数据 -->
-        <section class="form-section">
-          <h3 class="form-section-title">
-            <Icon icon="ph:note-pencil-duotone" class="form-section-icon" />
-            元数据
-          </h3>
-          <div>
-            <label class="form-label">备注</label>
-            <el-input v-model="landmark.notes" type="textarea" :rows="3" placeholder="内部备注或额外信息..." />
+            <div class="form-grid-span-3">
+              <label class="form-label">备注</label>
+              <el-input v-model="landmark.notes" type="textarea" :rows="3" placeholder="内部备注或额外信息..." />
+            </div>
           </div>
         </section>
       </el-form>
