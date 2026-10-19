@@ -5,10 +5,7 @@
     :tree-data="treeData"
     :tree-props="treeProps"
     :current-node-key="currentNodeKey"
-    :draggable="true"
-    :allow-drag="allowDrag"
-    :allow-drop="allowDrop"
-    :handle-node-drop="props.dragDropHandlers.handleNodeDrop"
+    :move-handlers="props.dragDropHandlers"
     :node-menu-items="getBookMenuItems"
     @node-menu-select="handleBookMenuSelect"
     @node-click="handleNodeClick"
@@ -85,7 +82,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { ElTooltip } from 'element-plus';
-import type { AllowDropType } from 'element-plus/es/components/tree/src/tree.type';
 import { Icon } from '@iconify/vue';
 import SidebarTreePanel from '@/components/ui/layout/common/SidebarTreePanel.vue';
 import WorldBookActions from './WorldBookActions.vue';
@@ -219,15 +215,6 @@ const handleNodeClick = (data: any) => {
   }
 };
 
-const allowDrag = (draggingNode: any) => {
-  if (draggingNode.data?.isUtility) return false;
-  return props.dragDropHandlers.allowDrag(draggingNode);
-};
-
-const allowDrop = (draggingNode: any, dropNode: any, type: AllowDropType) => {
-  if (draggingNode.data?.isUtility || dropNode.data?.isUtility) return false;
-  return props.dragDropHandlers.allowDrop(draggingNode, dropNode, type);
-};
 </script>
 
 <style scoped>

@@ -1,7 +1,6 @@
-import { nextTick, ref, shallowRef, watch } from 'vue';
-
-export type TreeKey = string | number;
-export type TreeDropType = 'before' | 'after' | 'inner';
+import { nextTick, ref, shallowRef, watch } from "vue";
+import { useTreeMove } from '../../../../composables/tree/useTreeMove.ts';
+import type { TreeKey, TreeMoveType } from '../../../../utils/treeMove.ts';
 
 interface Options {
   data: () => any[];
@@ -12,21 +11,25 @@ interface Options {
   filter: () => string;
   autoExpandFirst: () => boolean;
   tree: () => any;
-  drop: (source: any, target: any, type: TreeDropType) => boolean | Promise<boolean>;
+  drop: (
+    source: any,
+    target: any,
+    type: TreeMoveType,
+  ) => boolean | Promise<boolean>;
+  canDrag?: (node: any) => boolean;
+  canDrop?: (source: any, target: any, type: TreeMoveType) => boolean;
+  innerPosition?: () => "start" | "end";
 }
 
-/** Sole owner of sidebar expansion and refresh. Business data is never passed to ElTree for mutation. */
+/** Owns expansion/rendering only; selection and movement belong to the move library. */
 export function useSidebarTree(options: Options) {
   const data = shallowRef<any[]>([]);
   const expandedKeys = ref<TreeKey[]>([]);
-  const busy = ref(false);
   let parents = new Map<TreeKey, TreeKey | undefined>();
   const appliedDefaults = new Set<TreeKey>();
   let initialized = false;
-  let selectionPath = '';
+  let selectionPath = "";
   let clickedKey: TreeKey | undefined;
-  let dragSource: any;
-  let dragExpansion: TreeKey[] | undefined;
 
   const pathTo = (key: TreeKey): TreeKey[] => {
     const path: TreeKey[] = [];
@@ -52,122 +55,137 @@ export function useSidebarTree(options: Options) {
     tree.setCurrentKey(options.current(), false);
     if (options.filter()) tree.filter(options.filter());
   };
-
   const open = (key: TreeKey) => {
     expandedKeys.value = [...new Set([...expandedKeys.value, ...pathTo(key)])];
     return apply();
   };
   const close = (key: TreeKey) => {
-    expandedKeys.value = expandedKeys.value.filter(value => value !== key);
+    expandedKeys.value = expandedKeys.value.filter((value) => value !== key);
     return apply();
   };
-  const toggle = (key: TreeKey) => expandedKeys.value.includes(key) ? close(key) : open(key);
-
+  const toggle = (key: TreeKey) =>
+    expandedKeys.value.includes(key) ? close(key) : open(key);
   const revealSelection = () => {
     const key = options.current();
     const path = key === undefined ? [] : pathTo(key);
     const signature = JSON.stringify(path);
-    if (signature !== selectionPath) {
-      selectionPath = signature;
-      // A click may select a synthetic child (e.g. a preset's regex folder).
-      // Do not undo that same click's collapse by revealing its selection.
-      if (clickedKey !== undefined && path.includes(clickedKey)) return;
-      expandedKeys.value = [...new Set([...expandedKeys.value, ...path])];
-    }
+    if (signature === selectionPath) return;
+    selectionPath = signature;
+    // A click selecting a synthetic child must not undo that click's collapse.
+    if (clickedKey !== undefined && path.includes(clickedKey)) return;
+    expandedKeys.value = [...new Set([...expandedKeys.value, ...path])];
   };
-
   const refresh = async () => {
     const nextParents = new Map<TreeKey, TreeKey | undefined>();
-    const clone = (nodes: any[], parent?: TreeKey): any[] => nodes.map(node => {
-      const key = node[options.key()] as TreeKey;
-      nextParents.set(key, parent);
-      const children = node[options.children()];
-      return { ...node, ...(Array.isArray(children) ? { [options.children()]: clone(children, key) } : {}) };
-    });
-    data.value = clone(options.data());
+    const index = (nodes: any[], parent?: TreeKey) => {
+      for (const node of nodes) {
+        const key = node[options.key()] as TreeKey;
+        nextParents.set(key, parent);
+        const children = node[options.children()];
+        if (Array.isArray(children)) index(children, key);
+      }
+    };
+    data.value = options.data();
+    index(data.value);
     parents = nextParents;
-    expandedKeys.value = expandedKeys.value.filter(key => parents.has(key));
+    movement.prune(new Set(parents.keys()));
+    expandedKeys.value = expandedKeys.value.filter((key) => parents.has(key));
     for (const key of options.defaults()) {
-      if (parents.has(key) && !appliedDefaults.has(key)) {
-        appliedDefaults.add(key);
-        expandedKeys.value = [...new Set([...expandedKeys.value, ...pathTo(key)])];
-      }
+      if (!parents.has(key) || appliedDefaults.has(key)) continue;
+      appliedDefaults.add(key);
+      expandedKeys.value = [...new Set([...expandedKeys.value, ...pathTo(key)])];
     }
-    if (!initialized && data.value.length) {
-      initialized = true;
-      if (options.autoExpandFirst()) {
-        expandedKeys.value = [...new Set([...expandedKeys.value, data.value[0][options.key()]])];
-      }
+    if (!initialized && data.value.length && options.autoExpandFirst()) {
+      expandedKeys.value = [...new Set([...expandedKeys.value, data.value[0][options.key()]])];
     }
+    initialized ||= data.value.length > 0;
     revealSelection();
     await apply();
   };
-
+  const movement = useTreeMove({
+    nodes: () =>
+      [...parents.keys()]
+        .map((key) => options.tree()?.getNode(key))
+        .filter(Boolean),
+    key: (node) => node.data[options.key()],
+    ancestors: (key) => pathTo(key).slice(0, -1),
+    visible: (node) =>
+      node.visible !== false &&
+      pathTo(node.data[options.key()])
+        .slice(0, -1)
+        .every((key) => expandedKeys.value.includes(key)),
+    canDrag: (node) => options.canDrag?.(node) ?? true,
+    canDrop: (source, target, type) =>
+      options.canDrop?.(source, target, type) ?? true,
+    commit: options.drop,
+    innerPosition: options.innerPosition,
+    root: () => options.tree()?.$el,
+    settled: async (target, type, moved) => {
+      const targetKey = target.data[options.key()];
+      const destination = type === "inner" ? targetKey : parents.get(targetKey);
+      await refresh();
+      if (moved && destination !== undefined) await open(destination);
+    },
+  });
+  const { busy } = movement;
+  const move = (sourceKey: TreeKey, targetKey: TreeKey, type: TreeMoveType) => {
+    const tree = options.tree();
+    const source = tree?.getNode(sourceKey);
+    const target = tree?.getNode(targetKey);
+    return source && target
+      ? movement.move(source, target, type)
+      : Promise.resolve(false);
+  };
   const onExpand = (node: any) => {
     const key = node[options.key()];
     if (!expandedKeys.value.includes(key)) expandedKeys.value.push(key);
   };
   const onCollapse = (node: any) => {
-    expandedKeys.value = expandedKeys.value.filter(key => key !== node[options.key()]);
+    expandedKeys.value = expandedKeys.value.filter(
+      (key) => key !== node[options.key()],
+    );
   };
   const onClick = (node: any) => {
     clickedKey = node[options.key()];
-    // Parent selection updates are queued after the node-click emit.
-    void nextTick().then(() => nextTick()).then(() => { clickedKey = undefined; });
-  };
-  const startDrag = (node: any) => {
-    // ElTree replaces nodes before node-drop; keep the original source parent and UI state.
-    dragSource = { data: node.data, parent: node.parent };
-    dragExpansion = [...expandedKeys.value];
-  };
-  const move = async (sourceKey: TreeKey, targetKey: TreeKey, type: TreeDropType) => {
-    const tree = options.tree();
-    const source = tree?.getNode(sourceKey);
-    const target = tree?.getNode(targetKey);
-    if (!source || !target) return false;
-    return drop(source, target, type);
-  };
-  const drop = async (source: any, target: any, type: TreeDropType): Promise<boolean> => {
-    if (busy.value) return false;
-    busy.value = true;
-    const targetKey = target.data[options.key()] as TreeKey;
-    const destination = type === 'inner' ? targetKey : parents.get(targetKey);
-    const preserved = dragExpansion ?? [...expandedKeys.value];
-    const originalSource = dragSource ?? source;
-    dragSource = undefined;
-    dragExpansion = undefined;
-    let success = false;
-    try {
-      success = await options.drop(originalSource, target, type);
-      return success;
-    } finally {
-      try {
-        expandedKeys.value = preserved;
-        await refresh();
-        if (success && destination !== undefined) await open(destination);
-      } finally {
-        busy.value = false;
-      }
-    }
-  };
-  const endDrag = () => {
-    // node-drop runs synchronously after node-drag-end in Element Plus.
-    void nextTick(async () => {
-      if (busy.value || !dragExpansion) return;
-      expandedKeys.value = dragExpansion;
-      dragSource = undefined;
-      dragExpansion = undefined;
-      await refresh();
-    });
+    void nextTick()
+      .then(() => nextTick())
+      .then(() => {
+        clickedKey = undefined;
+      });
   };
 
-  watch([options.data, options.defaults], () => { void refresh(); }, { immediate: true });
-  watch(options.current, () => { revealSelection(); void apply(); }, { flush: 'post' });
-  watch(options.filter, async value => {
+  watch(
+    [options.data, options.defaults],
+    () => {
+      if (!busy.value) void refresh();
+    },
+    { immediate: true },
+  );
+  watch(
+    options.current,
+    () => {
+      revealSelection();
+      void apply();
+    },
+    { flush: "post" },
+  );
+  watch(options.filter, async (value) => {
     await nextTick();
     options.tree()?.filter(value);
     if (!value) await apply();
   });
 
-  return { data, expandedKeys, busy, open, close, toggle, refresh, move, drop, startDrag, endDrag, onExpand, onCollapse, onClick };
+  return {
+    data,
+    expandedKeys,
+    movement,
+    open,
+    close,
+    toggle,
+    refresh,
+    move,
+    onExpand,
+    onCollapse,
+    onClick,
+  };
 }

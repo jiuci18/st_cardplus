@@ -17,12 +17,12 @@
         <template #pane-list>
           <PresetList :presets="presets" :active-preset-id="activePresetId" :selected-prompt-index="selectedPromptIndex"
             :selected-regex-index="selectedRegexIndex" :selected-is-header="selectedIsHeader"
-            :multi-selected-node-keys="multiSelectedNodeKeys" :drag-drop-handlers="dragDropHandlers"
+            :drag-drop-handlers="dragDropHandlers"
             :is-batch-settings-active="activeView === 'batch'" @create-preset="createPreset"
             @rename-preset="handleRenamePreset" @delete-preset="handleDeletePreset" @select-preset="handleSelectPreset"
             @select-header="handleSelectHeader" @select-batch-settings="handleSelectBatchSettings"
             @select-prompt="handleSelectPrompt" @select-regex="handleSelectRegex"
-            @toggle-prompt-enabled="togglePromptEnabled" @toggle-node-selection="handleToggleNodeSelection"
+            @toggle-prompt-enabled="togglePromptEnabled"
             @add-prompt="addPrompt" @add-regex="addRegexScript" @duplicate-prompt="duplicatePrompt"
             @delete-prompt="removePrompt" @delete-regex="removeRegexScript" @export-preset="handleExportPreset"
             @import-preset="handleImportPreset" />
@@ -44,12 +44,12 @@
       <pane min-size="10" size="15">
         <PresetList :presets="presets" :active-preset-id="activePresetId" :selected-prompt-index="selectedPromptIndex"
           :selected-regex-index="selectedRegexIndex" :selected-is-header="selectedIsHeader"
-          :multi-selected-node-keys="multiSelectedNodeKeys" :drag-drop-handlers="dragDropHandlers"
+          :drag-drop-handlers="dragDropHandlers"
           :is-batch-settings-active="activeView === 'batch'" @create-preset="createPreset"
           @rename-preset="handleRenamePreset" @delete-preset="handleDeletePreset" @select-preset="handleSelectPreset"
           @select-header="handleSelectHeader" @select-batch-settings="handleSelectBatchSettings"
           @select-prompt="handleSelectPrompt" @select-regex="handleSelectRegex"
-          @toggle-prompt-enabled="togglePromptEnabled" @toggle-node-selection="handleToggleNodeSelection"
+          @toggle-prompt-enabled="togglePromptEnabled"
           @add-prompt="addPrompt" @add-regex="addRegexScript" @duplicate-prompt="duplicatePrompt"
           @delete-prompt="removePrompt" @delete-regex="removeRegexScript" @export-preset="handleExportPreset"
           @import-preset="handleImportPreset" />
@@ -100,7 +100,7 @@ import { usePresetEditorState } from '@/composables/preset/usePresetEditorState'
 import { usePresetPageNavigation } from '@/composables/preset/usePresetPageNavigation';
 import { usePresetStore } from '@/composables/preset/usePresetStore';
 import type { PresetPromptBatchDraft, PresetPromptBatchField } from '@/composables/preset/usePresetStore';
-import { usePresetTreeSelectionDnD } from '@/composables/preset/usePresetTreeSelectionDnD';
+import { usePresetTreeMove } from '@/composables/preset/usePresetTreeMove';
 import {
   buildPromptOrderList,
   getPromptOrderIdentifiers,
@@ -178,7 +178,7 @@ const { activeEditorTab, editorState, presetAutoSave, handleManualSave } = usePr
   updatePrompt,
 });
 
-const { multiSelectedNodeKeys, handleToggleNodeSelection, dragDropHandlers } = usePresetTreeSelectionDnD({
+const dragDropHandlers = usePresetTreeMove({
   presets,
   reorderPresets,
   updatePromptOrder,

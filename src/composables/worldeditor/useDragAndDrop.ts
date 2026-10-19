@@ -42,7 +42,7 @@ export function useDragAndDrop(
         }
       : undefined;
   };
-  return createTreeMoveHandlers<Context, boolean>({
+  return createTreeMoveHandlers<Context>({
     locate,
     container: (node, source) => {
       const kind = source.bucket.context.kind;
@@ -70,7 +70,7 @@ export function useDragAndDrop(
     },
     commit: (move) => {
       const { kind, projectId, parentId } = move.target.context;
-      const id = move.movingKeys[0];
+      const id = move.key;
       const list = lists[kind] as Ref<Item[]>;
       const item = list.value.find((item) => item.id === id)!;
       if (kind === 'landmark') {

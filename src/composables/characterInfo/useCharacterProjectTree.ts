@@ -74,7 +74,7 @@ export function useCharacterProjectTree(options: UseCharacterProjectTreeOptions)
       .filter((character) => (character.meta.projectId ?? null) === projectId && !!character.meta.starred === starred)
       .map((character) => character.meta.id!),
   });
-  const handlers = createTreeMoveHandlers<CharacterBucket | null, boolean>({
+  const handlers = createTreeMoveHandlers<CharacterBucket | null>({
     locate: (node) => {
       if (node.data.nodeType === 'project')
         return {
@@ -104,15 +104,16 @@ export function useCharacterProjectTree(options: UseCharacterProjectTreeOptions)
       return to?.nodeType === 'character' && !!from.raw.meta.starred === !!to.raw.meta.starred;
     },
     commit: (move) => {
-      if (!move.source.context) options.onReorderProjects(move.targetKeys);
-      else {
-        const patches = (keys: string[], projectId: string | null) =>
-          keys.map((id, order) => ({ id, order, projectId }));
-        options.onReorderCharacters([
-          ...(!move.sameBucket ? patches(move.sourceKeys, move.source.context.projectId) : []),
-          ...patches(move.targetKeys, move.target.context!.projectId),
-        ]);
+      if (!move.source.context) {
+        options.onReorderProjects(move.targetKeys);
+        return true;
       }
+      const patches = (keys: string[], projectId: string | null) =>
+        keys.map((id, order) => ({ id, order, projectId }));
+      options.onReorderCharacters([
+        ...(!move.sameBucket ? patches(move.sourceKeys, move.source.context.projectId) : []),
+        ...patches(move.targetKeys, move.target.context!.projectId),
+      ]);
       return true;
     },
   });

@@ -6,10 +6,7 @@
     :tree-props="treeProps"
     node-key="nodeKey"
     :current-node-key="currentNodeKey"
-    :draggable="true"
-    :allow-drag="(node) => !node.data?.isBatchSettings && props.dragDropHandlers.allowDrag(node)"
-    :allow-drop="allowDrop"
-    :handle-node-drop="props.dragDropHandlers.handleNodeDrop"
+    :move-handlers="props.dragDropHandlers"
     @node-click="handleNodeClick"
     :node-menu-items="getNodeMenuItems"
     @node-menu-select="handleNodeMenuSelect"
@@ -35,7 +32,6 @@
         :class="{
           'is-header': data.isHeader,
           'is-disabled': data.isPrompt && data.enabled === false,
-          'is-multi-selected': data?.nodeKey && props.multiSelectedNodeKeys.includes(data.nodeKey),
         }"
       >
         <div class="sidebar-tree-node-main">
@@ -71,7 +67,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { ElTooltip } from 'element-plus';
-import type { AllowDropType } from 'element-plus/es/components/tree/src/tree.type';
 import type { TreeMoveHandlers } from '@/utils/treeMove';
 import { Icon } from '@iconify/vue';
 import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
@@ -95,12 +90,10 @@ interface Props {
   selectedRegexIndex: number | null;
   selectedIsHeader: boolean;
   isBatchSettingsActive?: boolean;
-  multiSelectedNodeKeys?: string[];
   dragDropHandlers: TreeMoveHandlers;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  multiSelectedNodeKeys: () => [],
   isBatchSettingsActive: false,
 });
 
@@ -111,7 +104,6 @@ const emit = defineEmits<{
   (e: 'select-prompt', presetId: string, promptIndex: number): void;
   (e: 'select-regex', presetId: string, regexIndex?: number): void;
   (e: 'toggle-prompt-enabled', presetId: string, promptIndex: number): void;
-  (e: 'toggle-node-selection', data: any, additive: boolean): void;
   (e: 'create-preset'): void;
   (e: 'rename-preset', id: string): void;
   (e: 'delete-preset', id: string): void;
@@ -198,8 +190,6 @@ const handleNodeMenuSelect = (key: string, data: any) => {
   const index = siblings.findIndex((node) => node.nodeKey === data.nodeKey);
   const target = key === 'top' ? 0 : key === 'bottom' ? siblings.length - 1 : index + (key === 'up' ? -1 : 1);
   if (index < 0 || !siblings[target]) return;
-  // 菜单排序只移动当前节点，不沿用拖拽的多选集合。
-  emit('toggle-node-selection', data, false);
   void sidebarRef.value?.move(data.nodeKey, siblings[target].nodeKey, target < index ? 'before' : 'after');
 };
 
@@ -230,9 +220,7 @@ const currentNodeKey = computed(() => {
   return getRegexFolderNodeKey(props.activePresetId);
 });
 
-const handleNodeClick = (data: any, context?: { event?: MouseEvent; node?: any }) => {
-  const event = context?.event;
-  const additive = Boolean(event && (event.ctrlKey || event.metaKey));
+const handleNodeClick = (data: any) => {
   if (data.isGroup) return;
 
   if (data.isBatchSettings) {
@@ -240,7 +228,6 @@ const handleNodeClick = (data: any, context?: { event?: MouseEvent; node?: any }
     return;
   }
 
-  emit('toggle-node-selection', data, additive);
   if (data.isHeader) {
     emit('select-header', data.presetId);
   } else if (data.isRegexFolder) {
@@ -252,11 +239,6 @@ const handleNodeClick = (data: any, context?: { event?: MouseEvent; node?: any }
   } else {
     emit('select-preset', data.id);
   }
-};
-
-const allowDrop = (draggingNode: any, dropNode: any, type: AllowDropType) => {
-  if (draggingNode.data?.isBatchSettings || dropNode.data?.isBatchSettings) return false;
-  return props.dragDropHandlers.allowDrop(draggingNode, dropNode, type);
 };
 
 const handleNodeDblClick = (data: any) => {
@@ -316,8 +298,4 @@ const isFullyLockedPrompt = (prompt: Record<string, any> | undefined) => {
   opacity: 0.65;
 }
 
-.sidebar-tree-node.is-multi-selected .sidebar-tree-node-label,
-.sidebar-tree-node.is-multi-selected .sidebar-tree-node-icon {
-  color: var(--el-color-primary);
-}
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="sidebar-panel">
+  <div class="sidebar-panel" :class="{ 'is-dragging': dragging }">
     <div class="sidebar-panel-header">
       <h3 class="sidebar-panel-title">{{ title }}</h3>
       <div class="sidebar-panel-actions">
@@ -13,16 +13,39 @@
     <el-scrollbar class="sidebar-panel-scrollbar">
       <el-tree ref="treeRef" :data="renderData" :props="treeProps" :node-key="nodeKey"
         :default-expanded-keys="expandedKeys" :current-node-key="currentNodeKey" :highlight-current="highlightCurrent"
-        :expand-on-click-node="true" :auto-expand-parent="false" :draggable="draggable && !busy" :filter-node-method="filterNodeMethod"
-        :allow-drag="allowDrag" :allow-drop="allowDrop" class="sidebar-tree" @node-click="handleNodeClick"
-        @node-drop="handleNodeDrop" @node-drag-start="startDrag" @node-drag-end="endDrag"
-        @node-expand="handleNodeExpand" @node-collapse="handleNodeCollapse">
+        :expand-on-click-node="true" :auto-expand-parent="false" :filter-node-method="filterNodeMethod"
+        class="sidebar-tree" @node-click="handleNodeClick" @node-expand="handleNodeExpand"
+        @node-collapse="handleNodeCollapse">
         <template #default="{ node, data }">
-          <div class="sidebar-tree-node-slot" @dblclick.stop="handleNodeDblClick(data, node, $event)">
-            <button v-if="draggable" class="sidebar-tree-node-drag-handle" type="button" aria-label="拖拽排序" @click.stop>
+          <div class="sidebar-tree-node-slot" :data-tree-key="data[nodeKey]" :class="{
+            'has-touch-checkbox': isMobileOrTablet && draggable,
+            'is-multi-selected': selectedKeys.includes(data[nodeKey]),
+            'drop-before':
+              dropHint?.key === data[nodeKey] && dropHint?.type === 'before',
+            'drop-after':
+              dropHint?.key === data[nodeKey] && dropHint?.type === 'after',
+            'drop-inner':
+              dropHint?.key === data[nodeKey] && dropHint?.type === 'inner',
+          }" :draggable="false"
+            @click.capture="handleSelectionClick(node, $event)"
+            @pointerdown="handlePointerDown(node, $event)"
+            @pointermove="movement.pointerMove" @pointerup="movement.pointerUp"
+            @pointercancel="movement.cancel()" @lostpointercapture="movement.cancel()"
+            @dblclick.stop="handleNodeDblClick(data, node, $event)">
+            <button v-if="draggable && isMobileOrTablet" class="sidebar-tree-node-checkbox" type="button"
+              role="checkbox" :aria-checked="selectedKeys.includes(data[nodeKey])" aria-label="选择条目，长按拖动"
+              data-tree-select :disabled="!movement.canDrag(node)" @contextmenu.stop.prevent>
+              <Icon :icon="selectedKeys.includes(data[nodeKey])
+                  ? 'ph:check-square-fill'
+                  : 'ph:square'
+                " />
+            </button>
+            <button v-else-if="draggable" class="sidebar-tree-node-drag-handle" type="button" aria-label="拖拽排序"
+              @click.stop>
               <Icon icon="ph:dots-six-vertical-bold" class="sidebar-tree-node-drag-handle-icon" />
             </button>
-            <TreeNodeMenu :items="nodeMenuItems?.(data, node) ?? []" @select="emit('node-menu-select', $event, data, node)">
+            <TreeNodeMenu :items="nodeMenuItems?.(data, node) ?? []"
+              @select="emit('node-menu-select', $event, data, node)">
               <slot name="node" :node="node" :data="data" />
             </TreeNodeMenu>
           </div>
@@ -37,15 +60,14 @@
 </template>
 
 <script setup lang="ts">
-import { Icon } from '@iconify/vue';
-import TreeNodeMenu from './TreeNodeMenu.vue';
-import type { TreeMenuItem } from './treeMenu';
-import { ElScrollbar, ElTree } from 'element-plus';
-import { ref } from 'vue';
-import { useSidebarTree } from './useSidebarTree';
-import type { AllowDropType, NodeDropType } from 'element-plus/es/components/tree/src/tree.type';
-
-type ActualNodeDropType = Exclude<NodeDropType, 'none'>;
+import { Icon } from "@iconify/vue";
+import TreeNodeMenu from "./TreeNodeMenu.vue";
+import type { TreeMenuItem } from "./treeMenu";
+import { ElScrollbar, ElTree } from "element-plus";
+import { computed, ref } from "vue";
+import type { TreeMoveHandlers } from '@/utils/treeMove';
+import { useDevice } from "@/composables/useDevice";
+import { useSidebarTree } from "./useSidebarTree";
 
 interface Props {
   title: string;
@@ -55,10 +77,7 @@ interface Props {
   nodeKey?: string;
   currentNodeKey?: string | number;
   highlightCurrent?: boolean;
-  draggable?: boolean;
-  allowDrag?: (draggingNode: any) => boolean;
-  allowDrop?: (draggingNode: any, dropNode: any, type: AllowDropType) => boolean;
-  handleNodeDrop?: (draggingNode: any, dropNode: any, type: ActualNodeDropType) => boolean | Promise<boolean>;
+  moveHandlers?: TreeMoveHandlers;
   filterNodeMethod?: (value: string, data: any, node: any) => boolean;
   filterValue?: string;
   autoExpandFirst?: boolean;
@@ -66,55 +85,85 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  treeProps: () => ({ children: 'children', label: 'label' }),
-  nodeKey: 'id',
+  treeProps: () => ({ children: "children", label: "label" }),
+  nodeKey: "id",
   highlightCurrent: true,
-  draggable: false,
-  filterValue: '',
+  filterValue: "",
   autoExpandFirst: false,
   defaultExpandedKeys: () => [],
 });
 
 const emit = defineEmits<{
-  (e: 'node-menu-select', key: string, data: any, node: any): void;
-  (e: 'node-click', data: any, context?: { node: any; component: any; event: MouseEvent | undefined }): void;
-  (e: 'node-dblclick', data: any, context?: { node: any; event: MouseEvent | undefined }): void;
+  (e: "node-menu-select", key: string, data: any, node: any): void;
+  (
+    e: "node-click",
+    data: any,
+    context?: { node: any; component: any; event: MouseEvent | undefined },
+  ): void;
+  (
+    e: "node-dblclick",
+    data: any,
+    context?: { node: any; event: MouseEvent | undefined },
+  ): void;
 }>();
 
+const draggable = computed(() => Boolean(props.moveHandlers));
+const { isMobileOrTablet } = useDevice();
 const treeRef = ref<InstanceType<typeof ElTree> | null>(null);
 const controller = useSidebarTree({
   data: () => props.treeData,
   key: () => props.nodeKey,
-  children: () => typeof props.treeProps.children === 'string' ? props.treeProps.children : 'children',
+  children: () =>
+    typeof props.treeProps.children === "string"
+      ? props.treeProps.children
+      : "children",
   defaults: () => props.defaultExpandedKeys,
   current: () => props.currentNodeKey,
   filter: () => props.filterValue,
   autoExpandFirst: () => props.autoExpandFirst,
   tree: () => treeRef.value,
-  drop: (source, target, type) => {
-    const allowedType = type === 'before' ? 'prev' : type === 'after' ? 'next' : 'inner';
-    if (props.allowDrag && !props.allowDrag(source)) return false;
-    if (props.allowDrop && !props.allowDrop(source, target, allowedType)) return false;
-    return props.handleNodeDrop?.(source, target, type) ?? false;
-  },
+  canDrag: (node) => props.moveHandlers?.allowDrag(node) ?? false,
+  canDrop: (source, target, type) => props.moveHandlers?.allowDrop(source, target, type) ?? false,
+  innerPosition: () => props.moveHandlers?.innerPosition ?? 'start',
+  drop: (source, target, type) => props.moveHandlers?.handleNodeDrop(source, target, type) ?? false,
 });
-const { data: renderData, expandedKeys, busy, startDrag, endDrag,
-  onExpand: handleNodeExpand, onCollapse: handleNodeCollapse } = controller;
-defineExpose({ open: controller.open, close: controller.close, toggle: controller.toggle,
-  refresh: controller.refresh, move: controller.move });
+const {
+  data: renderData,
+  expandedKeys,
+  movement,
+  onExpand: handleNodeExpand,
+  onCollapse: handleNodeCollapse,
+} = controller;
+const { selectedKeys, dragging, dropHint } = movement;
+defineExpose({
+  open: controller.open,
+  close: controller.close,
+  toggle: controller.toggle,
+  refresh: controller.refresh,
+  move: controller.move,
+});
 
-const handleNodeDrop = (draggingNode: any, dropNode: any, dropType: ActualNodeDropType) =>
-  controller.drop(draggingNode, dropNode, dropType);
+const handlePointerDown = (node: any, event: PointerEvent) => {
+  if (!shouldIgnoreTreeNodeEvent(event)) movement.pointerDown(node, event);
+};
+const handleSelectionClick = (node: any, event: MouseEvent) => {
+  if (!shouldIgnoreTreeNodeEvent(event) && draggable.value) movement.selectionClick(node, event);
+};
 
-const handleNodeClick = (data: any, node: any, component: any, event: MouseEvent) => {
+const handleNodeClick = (
+  data: any,
+  node: any,
+  component: any,
+  event: MouseEvent,
+) => {
   if (shouldIgnoreTreeNodeEvent(event)) return;
   controller.onClick(data);
-  emit('node-click', data, { node, component, event });
+  emit("node-click", data, { node, component, event });
 };
 
 const handleNodeDblClick = (data: any, node: any, event: MouseEvent) => {
   if (shouldIgnoreTreeNodeEvent(event)) return;
-  emit('node-dblclick', data, { node, event });
+  emit("node-dblclick", data, { node, event });
 };
 
 const shouldIgnoreTreeNodeEvent = (event?: MouseEvent) => {
@@ -122,12 +171,11 @@ const shouldIgnoreTreeNodeEvent = (event?: MouseEvent) => {
   const target = event.target as HTMLElement | null;
   if (!target) return false;
   return Boolean(
-    target.closest('.sidebar-tree-node-action-button') ||
-    target.closest('.sidebar-tree-node-actions') ||
-    target.closest('.el-upload')
+    target.closest(".sidebar-tree-node-action-button") ||
+    target.closest(".sidebar-tree-node-actions") ||
+    target.closest(".el-upload"),
   );
 };
-
 </script>
 
 <style>
@@ -207,6 +255,23 @@ const shouldIgnoreTreeNodeEvent = (event?: MouseEvent) => {
   align-items: center;
   padding-left: 22px;
   width: 100%;
+}
+
+.sidebar-tree-node-slot.is-multi-selected {
+  background-color: var(--el-color-primary-light-9);
+  box-shadow: inset 3px 0 var(--el-color-primary);
+}
+
+.sidebar-tree-node-slot.drop-before {
+  box-shadow: 0 -2px var(--el-color-primary);
+}
+
+.sidebar-tree-node-slot.drop-after {
+  box-shadow: 0 2px var(--el-color-primary);
+}
+
+.sidebar-tree-node-slot.drop-inner {
+  outline: 2px solid var(--el-color-primary);
 }
 
 .sidebar-tree .el-tree-node__content {
@@ -310,7 +375,10 @@ const shouldIgnoreTreeNodeEvent = (event?: MouseEvent) => {
   opacity: 0.55;
   flex-shrink: 0;
   border-radius: 4px;
-  transition: color 0.15s ease, opacity 0.15s ease, background-color 0.15s ease;
+  transition:
+    color 0.15s ease,
+    opacity 0.15s ease,
+    background-color 0.15s ease;
 }
 
 .sidebar-tree-node-drag-handle:active {
@@ -322,6 +390,41 @@ const shouldIgnoreTreeNodeEvent = (event?: MouseEvent) => {
   opacity: 0.95;
   color: var(--el-text-color-primary);
   background-color: var(--el-fill-color-light);
+}
+
+.sidebar-tree-node-slot.has-touch-checkbox {
+  padding-left: 36px;
+}
+
+.sidebar-tree-node-checkbox {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--el-text-color-secondary);
+  font-size: 22px;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+}
+
+.sidebar-tree-node-checkbox[aria-checked="true"] {
+  color: var(--el-color-primary);
+}
+
+.sidebar-tree-node-checkbox:disabled {
+  opacity: 0.3;
+}
+
+.is-dragging .sidebar-tree-node-slot.is-multi-selected {
+  opacity: 0.65;
 }
 
 .sidebar-tree-node-drag-handle-icon {

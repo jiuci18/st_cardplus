@@ -102,14 +102,14 @@ test('native click expansion survives selection updates and data refreshes acros
   }
 });
 
-test('ElTree structural mutations do not mutate business tree arrays', async t => {
+test('sidebar renders business data directly without maintaining a second tree', async t => {
   const { controller, source } = setup(t);
-  const moved = controller.data.value[0].children.pop();
-  controller.data.value[1].children.push(moved);
-  assert.equal(source.value[0].children?.length, 1);
-  assert.equal(source.value[1].children?.length, 1);
-  await controller.refresh();
-  assert.equal(controller.data.value[0].children.length, 1);
+  await tick();
+  assert.equal(controller.data.value, source.value);
+  source.value = [{ id: 'c' }];
+  await tick();
+  assert.equal(controller.data.value, source.value);
+  assert.deepEqual(controller.expandedKeys.value, []);
 });
 
 test('cross-parent drop waits for async data, keeps source open and opens destination', async t => {
@@ -123,45 +123,43 @@ test('cross-parent drop waits for async data, keeps source open and opens destin
   });
   await tick();
   const original = { data: { id: 'a1' }, parent: { data: { id: 'a' } } };
-  controller.startDrag(original);
-  original.parent = { data: { id: 'b' } };
-  controller.endDrag();
-  const pending = controller.drop(original, { data: { id: 'b' } }, 'inner');
-  assert.equal(controller.busy.value, true);
+  const { movement } = controller;
+  movement.startDrag(original);
+  const pending = movement.drop(original, { data: { id: 'b' } }, 'inner');
+  assert.equal(movement.busy.value, true);
   assert.equal(received.parent.data.id, 'a');
   release();
   assert.equal(await pending, true);
-  assert.equal(controller.busy.value, false);
+  assert.equal(movement.busy.value, false);
   assert.equal(nodes.get('a').expanded, true);
   assert.equal(nodes.get('b').expanded, true);
 });
 
 for (const failure of ['reject', 'throw'] as const) {
-  test(`failed drop (${failure}) restores structure and expansion`, async t => {
+  test(`failed drop (${failure}) leaves business data and expansion untouched`, async t => {
     const { controller } = setup(t, () => {
       if (failure === 'throw') throw new Error('save failed');
       return false;
     });
     await tick();
-    controller.startDrag({ data: { id: 'a1' }, parent: { data: { id: 'a' } } });
-    controller.data.value[0].children.pop();
-    controller.onExpand({ id: 'b' });
-    const operation = controller.drop({ data: { id: 'a1' } }, { data: { id: 'b' } }, 'inner');
+    const { movement } = controller;
+    movement.startDrag({ data: { id: 'a1' }, parent: { data: { id: 'a' } } });
+    const operation = movement.drop({ data: { id: 'a1' } }, { data: { id: 'b' } }, 'inner');
     if (failure === 'throw') await assert.rejects(operation, /save failed/);
     else assert.equal(await operation, false);
     assert.deepEqual(controller.expandedKeys.value, ['a']);
     assert.equal(controller.data.value[0].children.length, 1);
-    assert.equal(controller.busy.value, false);
+    assert.equal(movement.busy.value, false);
   });
 }
 
-test('cancelled drag restores snapshot without calling business handler', async t => {
-  const { controller } = setup(t, () => { throw new Error('must not run'); });
+test('cancelled drag leaves data and expansion untouched without calling the business handler', async t => {
+  const { controller, source } = setup(t, () => { throw new Error('must not run'); });
   await tick();
-  controller.startDrag({ data: { id: 'a' } });
-  controller.onExpand({ id: 'b' });
-  controller.endDrag();
+  controller.movement.startDrag({ data: { id: 'a' } });
+  controller.movement.cancel();
   await tick();
+  assert.equal(controller.data.value, source.value);
   assert.deepEqual(controller.expandedKeys.value, ['a']);
 });
 

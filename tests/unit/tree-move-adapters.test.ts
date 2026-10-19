@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { registerHooks } from 'node:module';
-import { effectScope, ref } from 'vue';
+import { ref } from 'vue';
+import type { TreeMoveHandlers } from '../../src/utils/treeMove.ts';
+import { useTreeMove } from '../../src/composables/tree/useTreeMove.ts';
 
 const bookServiceStub =
   'data:text/javascript,' +
@@ -33,7 +35,8 @@ const hooks = registerHooks({
 const { useWorldBookDragDrop } = await import('../../src/composables/worldbook/useWorldBookDragDrop.ts');
 const { useRegexDragDrop } = await import('../../src/composables/regex/useRegexDragDrop.ts');
 const { useCharacterProjectTree } = await import('../../src/composables/characterInfo/useCharacterProjectTree.ts');
-const { usePresetTreeSelectionDnD } = await import('../../src/composables/preset/usePresetTreeSelectionDnD.ts');
+const { usePresetTreeMove } = await import('../../src/composables/preset/usePresetTreeMove.ts');
+const { useDragAndDrop } = await import('../../src/composables/worldeditor/useDragAndDrop.ts');
 const { useWorldBookCollection } = await import('../../src/composables/worldbook/useWorldBookCollection.ts');
 hooks.deregister();
 
@@ -177,7 +180,7 @@ test('character moves keep star buckets separate and emit only affected project 
   });
   const character = (index: number) =>
     node({ nodeType: 'character', id: characters.value[index].meta.id, raw: characters.value[index] });
-  assert.equal(handlers.allowDrop(character(0), character(2), 'prev'), false);
+  assert.equal(handlers.allowDrop(character(0), character(2), 'before'), false);
   assert.equal(handlers.handleNodeDrop(character(0), node({ nodeType: 'project', projectId: 'p2' }), 'inner'), true);
   assert.deepEqual(patches, [
     { id: 'b', order: 0, projectId: 'p2' },
@@ -193,9 +196,94 @@ test('character moves keep star buckets separate and emit only affected project 
   ]);
 });
 
-function presetSetup(t: { after: (fn: () => void) => void }) {
-  const scope = effectScope();
-  t.after(() => scope.stop());
+function session(handlers: TreeMoveHandlers, nodes: any[]) {
+  return useTreeMove({
+    nodes: () => nodes, key: node => node.data.id, ancestors: () => [], visible: () => true,
+    canDrag: handlers.allowDrag,
+    canDrop: handlers.allowDrop,
+    commit: handlers.handleNodeDrop, innerPosition: () => handlers.innerPosition,
+  });
+}
+
+test('worldbook batch moves from multiple books with colliding local UIDs', async t => {
+  t.mock.method(console, 'warn', () => {});
+  const collection = useWorldBookCollection();
+  collection.worldBookCollection.value.books = {
+    a: { id: 'a', order: 0, entries: [{ uid: 0, content: 'a0' }] },
+    b: { id: 'b', order: 1, entries: [{ uid: 0, content: 'b0' }] },
+    c: { id: 'c', order: 2, entries: [{ uid: 0, content: 'c0' }] },
+  } as any;
+  const handlers = useWorldBookDragDrop(collection.worldBookCollection, collection.moveEntryBetweenBooks,
+    collection.updateBookEntries, collection.updateBookOrder);
+  const nodes = ['a', 'b'].map(bookId => node({ id: bookId + ':0', isEntry: true, bookId,
+    raw: collection.worldBookCollection.value.books[bookId].entries[0] }));
+  const drag = session(handlers, nodes);
+  drag.select(nodes[1]);
+  drag.select(nodes[0], { ctrlKey: true });
+  drag.startDrag(nodes[0]);
+  assert.equal(await drag.drop(nodes[0], node({ id: 'c' }), 'inner'), true);
+  const books = collection.worldBookCollection.value.books;
+  assert.deepEqual(books.a.entries, []);
+  assert.deepEqual(books.b.entries, []);
+  assert.deepEqual(books.c.entries.map(entry => entry.content), ['a0', 'b0', 'c0']);
+  assert.equal(new Set(books.c.entries.map(entry => entry.uid)).size, 3);
+});
+
+test('regex batch persists each script move against the latest category contents', async () => {
+  const categories: any = {
+    a: { id: 'a', order: 0, scripts: [{ id: 's1' }, { id: 's2' }] },
+    b: { id: 'b', order: 1, scripts: [{ id: 's3' }] },
+  };
+  const handlers = useRegexDragDrop({ value: { categories } } as any,
+    (from, source, to, target) => { categories[from].scripts = source; categories[to].scripts = target; return true; },
+    (id, scripts) => { categories[id].scripts = scripts; });
+  const nodes = ['s1', 's2'].map(id => node({ id, isScript: true, scriptId: id, categoryId: 'a' }));
+  const drag = session(handlers, nodes);
+  nodes.forEach(item => drag.select(item, { ctrlKey: true }));
+  drag.startDrag(nodes[0]);
+  assert.equal(await drag.drop(nodes[0], node({ id: 'b' }), 'inner'), true);
+  assert.deepEqual(categories.a.scripts, []);
+  assert.deepEqual(categories.b.scripts.map((script: any) => script.id), ['s1', 's2', 's3']);
+});
+
+test('character batch appends in order and preserves star buckets', async () => {
+  const characters: any = ref(['a', 'b', 'c'].map((id, order) => ({
+    meta: { id, order, projectId: id === 'c' ? 'p2' : 'p1', starred: true }, data: {},
+  })));
+  const handlers = useCharacterProjectTree({
+    characters, projects: ref([{ id: 'p1' }, { id: 'p2' }]) as any,
+    onReorderCharacters: patches => patches.forEach(patch => Object.assign(
+      characters.value.find((item: any) => item.meta.id === patch.id).meta, patch)),
+    onReorderProjects: () => {}, onSelectCharacter: () => {},
+  });
+  const nodes = characters.value.slice(0, 2).map((raw: any) => node({ id: raw.meta.id, nodeType: 'character', raw }));
+  const drag = session(handlers, nodes);
+  nodes.forEach((item: any) => drag.select(item, { ctrlKey: true }));
+  drag.startDrag(nodes[0]);
+  assert.equal(await drag.drop(nodes[0], node({ id: 'project:p2', nodeType: 'project', projectId: 'p2' }), 'inner'), true);
+  const destination = handlers.treeData.value[1];
+  assert.ok('children' in destination);
+  assert.deepEqual(destination.children.map(item => item.id), ['c', 'a', 'b']);
+});
+
+test('world editor batch moves subtrees sequentially to the destination project', async () => {
+  const landmarks: any = ref([
+    { id: 'a', projectId: 'p1', parentLandmarkIds: [], childLandmarkIds: ['child'] },
+    { id: 'child', projectId: 'p1', parentLandmarkIds: ['a'], childLandmarkIds: [] },
+    { id: 'b', projectId: 'p1', parentLandmarkIds: [], childLandmarkIds: [] },
+    { id: 'c', projectId: 'p2', parentLandmarkIds: [], childLandmarkIds: [] },
+  ]);
+  const handlers = useDragAndDrop(landmarks, ref([]), ref([]));
+  const nodes = ['a', 'b'].map(id => node({ id, type: 'landmark' }));
+  const drag = session(handlers, nodes);
+  nodes.forEach(item => drag.select(item, { ctrlKey: true }));
+  drag.startDrag(nodes[0]);
+  assert.equal(await drag.drop(nodes[0], node({ id: 'p2', type: 'project' }), 'inner'), true);
+  assert.ok(landmarks.value.every((item: any) => item.projectId === 'p2'));
+  assert.deepEqual(landmarks.value.filter((item: any) => item.id !== 'child').map((item: any) => item.id), ['c', 'a', 'b']);
+});
+
+function presetSetup() {
   const presets: any = ref(
     ['p1', 'p2', 'p3'].map((id, order) => ({
       id,
@@ -209,56 +297,45 @@ function presetSetup(t: { after: (fn: () => void) => void }) {
     })),
   );
   let saved: string[] = [];
-  let release: (() => void) | undefined;
-  const api = scope.run(() =>
-    usePresetTreeSelectionDnD({
+  const handlers = usePresetTreeMove({
       presets,
       reorderPresets: async (ids) => {
         saved = ids;
+        ids.forEach((id, order) => { presets.value.find((preset: any) => preset.id === id).order = order; });
       },
-      updatePromptOrder: async (_id, ids) => {
+      updatePromptOrder: async (presetId, ids) => {
         saved = ids;
-        await new Promise<void>((resolve) => {
-          release = resolve;
-        });
+        presets.value.find((preset: any) => preset.id === presetId).data.prompt_order[0].order =
+          ids.map(identifier => ({ identifier, enabled: true }));
       },
-    }),
-  )!;
-  const prompt = (id: string) => node({ isPrompt: true, presetId: 'p1', raw: { identifier: id } });
-  return { ...api, prompt, saved: () => saved, release: () => release?.() };
+    });
+  const presetNodes = ['p1', 'p2', 'p3'].map(id => node({ id, isPreset: true }));
+  const prompts = ['a', 'b', 'c', 'd'].map(id => node({ id, isPrompt: true, presetId: 'p1', raw: { identifier: id } }));
+  return { handlers, presetNodes, prompts, saved: () => saved };
 }
 
-test('preset multi-selection moves in display order rather than click order', async (t) => {
-  const api = presetSetup(t);
-  api.handleToggleNodeSelection({ isPreset: true, id: 'p3' }, true);
-  api.handleToggleNodeSelection({ isPreset: true, id: 'p1' }, true);
-  assert.equal(
-    await api.dragDropHandlers.handleNodeDrop(
-      node({ isPreset: true, id: 'p1' }),
-      node({ isPreset: true, id: 'p2' }),
-      'after',
-    ),
-    true,
-  );
+test('preset multi-selection uses the shared drag session and sequential persistence', async () => {
+  const api = presetSetup();
+  const [a, b, c] = api.presetNodes;
+  const drag = session(api.handlers, api.presetNodes);
+  drag.select(c, { ctrlKey: true });
+  drag.select(a, { ctrlKey: true });
+  drag.startDrag(a);
+  assert.equal(await drag.drop(a, b, 'after'), true);
   assert.deepEqual(api.saved(), ['p2', 'p1', 'p3']);
 });
 
-test('prompt multi-selection, insertion and uninserted boundary preserve membership semantics', async (t) => {
-  const api = presetSetup(t);
-  api.handleToggleNodeSelection(api.prompt('c').data, true);
-  api.handleToggleNodeSelection(api.prompt('a').data, true);
-  let pending = api.dragDropHandlers.handleNodeDrop(api.prompt('a'), api.prompt('b'), 'after');
+test('prompt batches preserve insertion and uninserted membership semantics', async () => {
+  const api = presetSetup();
+  const [a, b, c, d] = api.prompts;
+  const drag = session(api.handlers, api.prompts);
+  drag.select(c, { ctrlKey: true });
+  drag.select(a, { ctrlKey: true });
+  drag.startDrag(a);
+  assert.equal(await drag.drop(a, b, 'after'), true);
   assert.deepEqual(api.saved(), ['b', 'a', 'c']);
-  api.release();
-  assert.equal(await pending, true);
-  api.handleToggleNodeSelection(api.prompt('d').data, false);
-  pending = api.dragDropHandlers.handleNodeDrop(api.prompt('d'), api.prompt('a'), 'before');
-  assert.deepEqual(api.saved(), ['d', 'a', 'b', 'c']);
-  api.release();
-  assert.equal(await pending, true);
-  // C already precedes D visually, but dropping it onto uninserted D removes C from prompt_order.
-  pending = api.dragDropHandlers.handleNodeDrop(api.prompt('c'), api.prompt('d'), 'before');
-  assert.deepEqual(api.saved(), ['a', 'b']);
-  api.release();
-  assert.equal(await pending, true);
+  assert.equal(await drag.move(c, d, 'before'), true);
+  assert.deepEqual(api.saved(), ['b', 'a']);
+  assert.equal(await drag.move(d, a, 'before'), true);
+  assert.deepEqual(api.saved(), ['b', 'd', 'a']);
 });

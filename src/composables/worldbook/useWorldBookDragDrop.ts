@@ -28,27 +28,27 @@ export function useWorldBookDragDrop(
       const { source, target, sourceKeys, targetKeys, sameBucket } = move;
       if (!source.context) {
         await updateBookOrder(targetKeys);
-      } else if (sameBucket) {
+        return true;
+      }
+      if (sameBucket) {
         const byId = new Map(source.context.entries.map((entry) => [entryKey(source.context!.id, entry), entry]));
         const entries = targetKeys.map((id, order) => ({ ...byId.get(id)!, order }));
         await updateBookEntries(source.context.id, entries);
-      } else {
-        const byId = new Map(
-          [source.context, target.context!].flatMap((book) =>
-            book.entries.map((entry) => [entryKey(book.id, entry), entry] as const),
-          ),
-        );
-        if (
-          !(await moveEntryBetweenBooks(
-            source.context.id,
-            sourceKeys.map((id) => byId.get(id)!),
-            target.context!.id,
-            targetKeys.map((id) => byId.get(id)!),
-          ))
-        )
-          return false;
-        ElMessage.success(`条目已移至 "${target.context!.name}"`);
+        return true;
       }
+      const byId = new Map(
+        [source.context, target.context!].flatMap((book) =>
+          book.entries.map((entry) => [entryKey(book.id, entry), entry] as const),
+        ),
+      );
+      const moved = await moveEntryBetweenBooks(
+        source.context.id,
+        sourceKeys.map((id) => byId.get(id)!),
+        target.context!.id,
+        targetKeys.map((id) => byId.get(id)!),
+      );
+      if (!moved) return false;
+      ElMessage.success(`条目已移至 "${target.context!.name}"`);
       return true;
     },
   });

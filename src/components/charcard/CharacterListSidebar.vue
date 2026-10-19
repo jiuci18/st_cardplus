@@ -1,7 +1,7 @@
 <template>
   <SidebarTreePanel ref="sidebarRef" title="角色列表" :tree-data="treeData" :tree-props="treeProps"
-    :default-expanded-keys="defaultExpandedKeys" :current-node-key="activeCharacterId ?? undefined" :draggable="true"
-    :allow-drag="allowDrag" :allow-drop="allowDrop" :handle-node-drop="handleNodeDrop"
+    :default-expanded-keys="defaultExpandedKeys" :current-node-key="activeCharacterId ?? undefined"
+    :move-handlers="treeHandlers"
     :node-menu-items="getNodeMenuItems" @node-menu-select="handleNodeMenuSelect" @node-click="handleNodeClick">
     <template #header-actions>
       <div class="split-create-actions">
@@ -96,20 +96,14 @@ const defaultExpandedKeys = computed<Array<string | number>>(() =>
   props.projects.map((project) => `project:${project.id}`)
 );
 
-const {
-  treeProps,
-  treeData,
-  allowDrag,
-  allowDrop,
-  handleNodeDrop,
-  handleNodeClick,
-} = useCharacterProjectTree({
+const treeHandlers = useCharacterProjectTree({
   characters: computed(() => props.characters),
   projects: computed(() => props.projects),
   onReorderCharacters: (patches) => emit('reorder', patches),
   onReorderProjects: (orderedIds) => emit('reorder-projects', orderedIds),
   onSelectCharacter: (id) => emit('select', id),
 });
+const { treeProps, treeData, handleNodeClick } = treeHandlers;
 
 type MenuNode = (typeof treeData.value)[number] | NonNullable<Extract<(typeof treeData.value)[number], { children: unknown }>['children']>[number];
 

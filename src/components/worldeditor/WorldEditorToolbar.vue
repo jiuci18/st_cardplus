@@ -8,12 +8,9 @@
       node-key="id"
       :default-expanded-keys="expandedKeys"
       :current-node-key="currentNodeKey"
-      :draggable="true"
       :filter-node-method="filterNode"
       :filter-value="searchQuery"
-      :allow-drag="props.dragDropHandlers.allowDrag"
-      :allow-drop="props.dragDropHandlers.allowDrop"
-      :handle-node-drop="handleNodeDrop"
+      :move-handlers="{ ...props.dragDropHandlers, handleNodeDrop }"
       :node-menu-items="getNodeMenuItems"
       @node-menu-select="handleNodeMenuSelect"
       @node-click="handleNodeClick"
@@ -79,7 +76,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { ElTooltip, ElInput, ElDropdown, ElDropdownMenu, ElDropdownItem } from 'element-plus';
-import type { TreeMoveHandlers } from '@/utils/treeMove';
+import type { TreeMoveHandlers, TreeMoveType } from '@/utils/treeMove';
 import { Icon } from '@iconify/vue';
 import { Search } from '@element-plus/icons-vue';
 import SidebarTreePanel from '@/components/ui/layout/common/SidebarTreePanel.vue';
@@ -95,7 +92,6 @@ import { getLandmarkTypeIcon } from '@/utils/worldeditor/typeMeta';
 import { getParentLandmarkId } from '@/utils/worldeditor/landmarkHierarchy';
 
 type SelectableItem = Project | EnhancedLandmark | EnhancedForce | EnhancedRegion | ProjectIntegration;
-type ActualNodeDropType = Exclude<import('element-plus/es/components/tree/src/tree.type').NodeDropType, 'none'>;
 
 interface Props {
   projects: Project[];
@@ -187,7 +183,7 @@ const handleNodeMenuSelect = (key: string, data: any, node: any) => {
     !props.dragDropHandlers.allowDrop(
       node,
       target,
-      dropType === 'before' ? 'prev' : dropType === 'after' ? 'next' : 'inner',
+      dropType,
     )
   )
     return;
@@ -359,8 +355,8 @@ const handleNodeClick = (data: any) => {
   }
 };
 
-const handleNodeDrop = (draggingNode: any, dropNode: any, dropType: ActualNodeDropType) => {
-  const success = props.dragDropHandlers.handleNodeDrop(draggingNode, dropNode, dropType);
+const handleNodeDrop = async (draggingNode: any, dropNode: any, dropType: TreeMoveType) => {
+  const success = await props.dragDropHandlers.handleNodeDrop(draggingNode, dropNode, dropType);
   if (success) {
     emit('node-drop');
   }
