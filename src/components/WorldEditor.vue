@@ -25,7 +25,7 @@
         <WorldEditorMainPanel v-else :selected-item="selectedItem" :all-tags="allTags" :all-regions="allRegions"
           :landmarks="landmarks" :forces="forces" :regions="regions" :create-region="createRegion" :projects="projects"
           :export-project="exportProject" :import-project-overwrite="importProjectOverwrite"
-          @update:selected-item="handleSelectionFromChild" @create-project="handleCreateProjectFromPanel" />
+          @update:selected-item="handleSelectionFromChild" @create-project="handleAddProject" />
       </div>
 
       <MobileBookmarkDrawer v-model:visible="mobileDrawerVisible" v-model:active-tab="mobilePanelTab"
@@ -55,7 +55,7 @@
             <WorldEditorMainPanel v-else :selected-item="selectedItem" :all-tags="allTags" :all-regions="allRegions"
               :landmarks="landmarks" :forces="forces" :regions="regions" :create-region="createRegion"
               :projects="projects" :export-project="exportProject" :import-project-overwrite="importProjectOverwrite"
-              @update:selected-item="handleSelectionFromChild" @create-project="handleCreateProjectFromPanel" />
+              @update:selected-item="handleSelectionFromChild" @create-project="handleAddProject" />
           </div>
         </Pane>
       </Splitpanes>
@@ -169,10 +169,6 @@ const handleAdd = (type: 'project' | 'landmark' | 'force' | 'region') => {
   if (isMobile.value) {
     mobileDrawerVisible.value = false;
   }
-};
-
-const handleCreateProjectFromPanel = () => {
-  handleAddProject();
 };
 
 const handleEdit = (item: Project | EnhancedLandmark | EnhancedForce | EnhancedRegion | ProjectIntegration) => {

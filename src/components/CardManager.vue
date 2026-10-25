@@ -111,7 +111,7 @@
                   <CardEditor v-if="currentCardInTab" :key="`card-${currentEditorCardId}`" :character="currentDraft"
                     :image-preview-url="imagePreviewUrl" :avatar-url="avatarUrl" :is-desktop-app="isDesktopApp"
                     :selected-provider="selectedProvider" :all-tags="allTags"
-                    v-model:advanced-options-visible="advancedOptionsVisible" @image-change="handleImageUpdate"
+                    v-model:advanced-options-visible="advancedOptionsVisible" @image-change="setCurrentSessionImageFile"
                     @image-url-change="setCurrentSessionAvatarUrl" @provider-change="selectedProvider = $event"
                     @upload-to-hosting="handleUploadToHosting" @update-field="handleCardEditorFieldUpdate" />
                 </div>
@@ -163,6 +163,7 @@ import {
   ElTabPane,
   ElTabs,
 } from "element-plus";
+import { autoSaveModeMessage, nextAutoSaveMode } from '@/composables/useAutoSaveSettings';
 import { computed, onUnmounted, ref, watch } from "vue";
 
 import CardEditor from "@/components/cardManager/CardEditor.vue";
@@ -336,30 +337,12 @@ const handleRegexScriptsUpdate = (scripts: SillyTavernRegexScript[]) => {
 };
 
 const toggleAutoSaveMode = () => {
-  const modes: AutoSaveMode[] = ["auto", "watch", "manual"];
-  const currentIndex = modes.indexOf(autoSaveMode.value);
-  const nextIndex = (currentIndex + 1) % modes.length;
-  autoSaveMode.value = modes[nextIndex];
-
-  const intervalSeconds = Math.max(
-    1,
-    Math.round(getSetting("autoSaveInterval")),
-  );
-  const debounceSeconds = Math.max(
-    0.1,
-    Math.round(getSetting("autoSaveDebounce") * 10) / 10,
-  );
-  const messages = {
-    auto: `已切换到自动保存模式：每 ${intervalSeconds} 秒自动保存`,
-    watch: `已切换到监听模式：检测到修改后 ${debounceSeconds} 秒自动保存`,
-    manual: "已切换到手动模式：自动保存已禁用",
-  };
-
-  ElMessage.info(messages[autoSaveMode.value]);
-};
-
-const handleImageUpdate = (file: File) => {
-  setCurrentSessionImageFile(file);
+  autoSaveMode.value = nextAutoSaveMode(autoSaveMode.value);
+  ElMessage.info(autoSaveModeMessage(
+    autoSaveMode.value,
+    getSetting("autoSaveInterval") * 1000,
+    getSetting("autoSaveDebounce") * 1000,
+  ));
 };
 
 const isDesktopApp = isTauriApp();
@@ -400,7 +383,7 @@ const { isUploading, uploadProgress, handleFileSelected } = useCardImport(
     replaceCurrentSessionDraft(card, { markAsPersisted: false });
     rightEditorTab.value = "card";
   },
-  handleImageUpdate,
+  setCurrentSessionImageFile,
   {
     isDesktopApp,
     selectedProvider,

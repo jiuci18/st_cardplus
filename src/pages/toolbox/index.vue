@@ -48,18 +48,13 @@ const refreshHiddenItems = () => {
   hiddenMenuItems.value = getHiddenMenuItems();
 };
 
-// 监听导航栏配置变化
-const handleSidebarConfigChange = () => {
-  refreshHiddenItems();
-};
-
 onMounted(() => {
   refreshHiddenItems();
-  window.addEventListener('sidebarConfigChange', handleSidebarConfigChange as EventListener);
+  window.addEventListener('sidebarConfigChange', refreshHiddenItems);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('sidebarConfigChange', handleSidebarConfigChange as EventListener);
+  window.removeEventListener('sidebarConfigChange', refreshHiddenItems);
 });
 </script>
 

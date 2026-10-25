@@ -1,5 +1,6 @@
 import { ref, computed, onMounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import { normalizeRegexScript } from './regexScript';
 import type { RegexCategory, RegexScriptCollection, SillyTavernRegexScript } from './types';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -203,19 +204,7 @@ export function useRegexCollection() {
     }
 
     const newScript: SillyTavernRegexScript = {
-      id: `script-${Date.now()}-${uuidv4()}`,
-      scriptName,
-      findRegex: '',
-      replaceString: '',
-      trimStrings: [],
-      placement: [],
-      disabled: false,
-      markdownOnly: false,
-      promptOnly: false,
-      runOnEdit: false,
-      substituteRegex: 0,
-      minDepth: null,
-      maxDepth: null,
+      ...normalizeRegexScript({ scriptName }, { id: `script-${Date.now()}-${uuidv4()}` }),
       categoryId: activeCategory.value.id,
     };
 

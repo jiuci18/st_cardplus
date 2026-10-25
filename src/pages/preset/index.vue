@@ -1,31 +1,36 @@
 <template>
+  <DefineEditor>
+    <PresetBatchSettings v-if="activeView === 'batch'" :preset="activePreset" :hide-targets="!isMobileOrTablet"
+      v-model:checked-prompt-indexes="batchCheckedPromptIndexes" @apply="handleApplyBatchSettings" />
+    <PresetEditor v-else v-model:active-tab="activeEditorTab" v-model:editor-state="editorState"
+      :active-preset="activePreset" :selected-prompt="selectedPrompt" :selected-regex-index="selectedRegexIndex"
+      :has-previous-preset="hasPreviousPreset" :has-next-preset="hasNextPreset"
+      :has-previous-prompt="hasPreviousPrompt" :has-next-prompt="hasNextPrompt"
+      :save-status="presetAutoSave.saveStatus.value" :auto-save-mode="presetAutoSave.autoSaveMode.value"
+      @save="handleManualSave" @toggle-mode="presetAutoSave.toggleAutoSaveMode" @add-clipboard="addEditorToClipboard"
+      @open-first-prompt="handleOpenFirstPrompt" @select-regex="selectRegex" @add-regex="handleAddRegexFromEditor"
+      @delete-regex="handleDeleteRegexFromEditor" @go-previous="goToPrevious" @go-next="goToNext" />
+  </DefineEditor>
+  <DefineList>
+    <PresetList :presets="presets" :active-preset-id="activePresetId" :selected-prompt-index="selectedPromptIndex"
+      :selected-regex-index="selectedRegexIndex" :selected-is-header="selectedIsHeader"
+      :drag-drop-handlers="dragDropHandlers" :is-batch-settings-active="activeView === 'batch'"
+      @create-preset="createPreset" @rename-preset="handleRenamePreset" @delete-preset="handleDeletePreset"
+      @select-preset="handleSelectPreset" @select-header="handleSelectHeader"
+      @select-batch-settings="handleSelectBatchSettings" @select-prompt="handleSelectPrompt"
+      @select-regex="handleSelectRegex" @toggle-prompt-enabled="togglePromptEnabled"
+      @add-prompt="addPrompt" @add-regex="addRegexScript" @duplicate-prompt="duplicatePrompt"
+      @delete-prompt="removePrompt" @delete-regex="removeRegexScript" @export-preset="handleExportPreset"
+      @import-preset="handleImportPreset" />
+  </DefineList>
   <div class="preset-page">
     <div v-if="isMobileOrTablet" class="preset-mobile-layout">
-      <PresetBatchSettings v-if="activeView === 'batch'" :preset="activePreset"
-        v-model:checked-prompt-indexes="batchCheckedPromptIndexes" @apply="handleApplyBatchSettings" />
-      <PresetEditor v-else v-model:active-tab="activeEditorTab" v-model:editor-state="editorState"
-        :active-preset="activePreset" :selected-prompt="selectedPrompt" :selected-regex-index="selectedRegexIndex"
-        :has-previous-preset="hasPreviousPreset" :has-next-preset="hasNextPreset"
-        :has-previous-prompt="hasPreviousPrompt" :has-next-prompt="hasNextPrompt"
-        :save-status="presetAutoSave.saveStatus.value" :auto-save-mode="presetAutoSave.autoSaveMode.value"
-        @save="handleManualSave" @toggle-mode="presetAutoSave.toggleAutoSaveMode" @add-clipboard="addEditorToClipboard"
-        @open-first-prompt="handleOpenFirstPrompt" @select-regex="selectRegex" @add-regex="handleAddRegexFromEditor"
-        @delete-regex="handleDeleteRegexFromEditor" @go-previous="goToPrevious" @go-next="goToNext" />
+      <ReuseEditor />
 
       <MobileBookmarkDrawer v-model:visible="mobileDrawerVisible" v-model:active-tab="mobilePanelTab"
         :items="mobileBookmarkItems">
         <template #pane-list>
-          <PresetList :presets="presets" :active-preset-id="activePresetId" :selected-prompt-index="selectedPromptIndex"
-            :selected-regex-index="selectedRegexIndex" :selected-is-header="selectedIsHeader"
-            :drag-drop-handlers="dragDropHandlers"
-            :is-batch-settings-active="activeView === 'batch'" @create-preset="createPreset"
-            @rename-preset="handleRenamePreset" @delete-preset="handleDeletePreset" @select-preset="handleSelectPreset"
-            @select-header="handleSelectHeader" @select-batch-settings="handleSelectBatchSettings"
-            @select-prompt="handleSelectPrompt" @select-regex="handleSelectRegex"
-            @toggle-prompt-enabled="togglePromptEnabled"
-            @add-prompt="addPrompt" @add-regex="addRegexScript" @duplicate-prompt="duplicatePrompt"
-            @delete-prompt="removePrompt" @delete-regex="removeRegexScript" @export-preset="handleExportPreset"
-            @import-preset="handleImportPreset" />
+          <ReuseList />
         </template>
 
         <template #pane-clipboard>
@@ -42,31 +47,11 @@
 
     <splitpanes v-else class="default-theme preset-split" :horizontal="false">
       <pane min-size="10" size="15">
-        <PresetList :presets="presets" :active-preset-id="activePresetId" :selected-prompt-index="selectedPromptIndex"
-          :selected-regex-index="selectedRegexIndex" :selected-is-header="selectedIsHeader"
-          :drag-drop-handlers="dragDropHandlers"
-          :is-batch-settings-active="activeView === 'batch'" @create-preset="createPreset"
-          @rename-preset="handleRenamePreset" @delete-preset="handleDeletePreset" @select-preset="handleSelectPreset"
-          @select-header="handleSelectHeader" @select-batch-settings="handleSelectBatchSettings"
-          @select-prompt="handleSelectPrompt" @select-regex="handleSelectRegex"
-          @toggle-prompt-enabled="togglePromptEnabled"
-          @add-prompt="addPrompt" @add-regex="addRegexScript" @duplicate-prompt="duplicatePrompt"
-          @delete-prompt="removePrompt" @delete-regex="removeRegexScript" @export-preset="handleExportPreset"
-          @import-preset="handleImportPreset" />
+        <ReuseList />
       </pane>
 
       <pane min-size="40" size="60">
-        <PresetBatchSettings v-if="activeView === 'batch'" :preset="activePreset" hide-targets
-          v-model:checked-prompt-indexes="batchCheckedPromptIndexes" @apply="handleApplyBatchSettings" />
-        <PresetEditor v-else v-model:active-tab="activeEditorTab" v-model:editor-state="editorState"
-          :active-preset="activePreset" :selected-prompt="selectedPrompt" :selected-regex-index="selectedRegexIndex"
-          :has-previous-preset="hasPreviousPreset" :has-next-preset="hasNextPreset"
-          :has-previous-prompt="hasPreviousPrompt" :has-next-prompt="hasNextPrompt"
-          :save-status="presetAutoSave.saveStatus.value" :auto-save-mode="presetAutoSave.autoSaveMode.value"
-          @save="handleManualSave" @toggle-mode="presetAutoSave.toggleAutoSaveMode"
-          @add-clipboard="addEditorToClipboard" @open-first-prompt="handleOpenFirstPrompt" @select-regex="selectRegex"
-          @add-regex="handleAddRegexFromEditor" @delete-regex="handleDeleteRegexFromEditor" @go-previous="goToPrevious"
-          @go-next="goToNext" />
+        <ReuseEditor />
       </pane>
 
       <pane min-size="15" size="25">
@@ -88,6 +73,7 @@
 </template>
 
 <script setup lang="ts">
+import { createReusableTemplate } from '@vueuse/core';
 import PresetEditor from '@/components/preset/PresetEditor.vue';
 import PresetBatchSettings from '@/components/preset/PresetBatchSettings.vue';
 import PresetBatchTargetSelector from '@/components/preset/PresetBatchTargetSelector.vue';
@@ -115,6 +101,8 @@ import 'splitpanes/dist/splitpanes.css';
 import { v4 as uuidv4 } from 'uuid';
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
+const [DefineEditor, ReuseEditor] = createReusableTemplate();
+const [DefineList, ReuseList] = createReusableTemplate();
 const { isMobileOrTablet } = useDevice();
 const mobileBookmarkItems = [
   { key: 'list', label: '预设', icon: 'ph:tree-structure-duotone' },
@@ -148,7 +136,6 @@ const {
   batchUpdatePrompts,
 } = usePresetStore();
 
-const activeView = ref<'editor' | 'batch'>('editor');
 const batchCheckedPromptIndexes = ref<number[]>([]);
 
 const {
@@ -185,14 +172,15 @@ const dragDropHandlers = usePresetTreeMove({
 });
 
 const {
+  activeView,
   mobileDrawerVisible,
   mobilePanelTab,
   handleRenamePreset,
   handleDeletePreset,
-  handleSelectPreset: navigateSelectPreset,
-  handleSelectHeader: navigateSelectHeader,
-  handleSelectPrompt: navigateSelectPrompt,
-  handleSelectRegex: navigateSelectRegex,
+  handleSelectPreset,
+  handleSelectHeader,
+  handleSelectPrompt,
+  handleSelectRegex,
   hasPreviousPreset,
   hasNextPreset,
   hasPreviousPrompt,
@@ -214,28 +202,8 @@ const {
   removePreset,
 });
 
-const handleSelectPreset = (presetId: string) => {
-  activeView.value = 'editor';
-  navigateSelectPreset(presetId);
-};
-
-const handleSelectHeader = (presetId: string) => {
-  activeView.value = 'editor';
-  navigateSelectHeader(presetId);
-};
-
-const handleSelectPrompt = (presetId: string, promptIndex: number) => {
-  activeView.value = 'editor';
-  navigateSelectPrompt(presetId, promptIndex);
-};
-
-const handleSelectRegex = (presetId: string, regexIndex?: number) => {
-  activeView.value = 'editor';
-  navigateSelectRegex(presetId, regexIndex);
-};
-
 const handleSelectBatchSettings = (presetId: string) => {
-  navigateSelectPreset(presetId);
+  handleSelectPreset(presetId);
   batchCheckedPromptIndexes.value = [];
   activeView.value = 'batch';
 };

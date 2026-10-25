@@ -3,19 +3,9 @@
     <div class="project-selector">
       <div class="selector-section">
         <label class="selector-label">当前项目</label>
-        <el-select
-          :model-value="store.currentProjectId"
-          @change="handleProjectChange"
-          placeholder="选择项目"
-          class="project-select"
-          style="width: 100%"
-        >
-          <el-option
-            v-for="project in store.projects"
-            :key="project.id"
-            :label="project.name"
-            :value="project.id"
-          >
+        <el-select :model-value="store.currentProjectId" @change="handleProjectChange" placeholder="选择项目"
+          class="project-select" style="width: 100%">
+          <el-option v-for="project in store.projects" :key="project.id" :label="project.name" :value="project.id">
             <div class="project-option">
               <span class="project-name">{{ project.name }}</span>
               <span class="project-date">{{ formatDateTime(project.updatedAt) }}</span>
@@ -25,39 +15,22 @@
       </div>
 
       <div class="action-buttons">
-        <el-button
-          :icon="Plus"
-          size="small"
-          @click="handleCreateProject"
-          type="primary"
-          style="width: 100%"
-        >
+        <el-button :icon="Plus" size="small" @click="handleCreateProject" type="primary" style="width: 100%">
           新建项目
         </el-button>
       </div>
       <div class="action-buttons">
-        <el-button
-          :icon="Setting"
-          size="small"
-          @click="showProjectDialog = true"
-          :disabled="!store.currentProjectId"
-          style="width: 100%"
-        >
+        <el-button :icon="Setting" size="small" @click="showProjectDialog = true" :disabled="!store.currentProjectId"
+          style="width: 100%">
           项目管理
         </el-button>
       </div>
     </div>
 
-    <div
-      v-if="store.currentProject"
-      class="project-info"
-    >
+    <div v-if="store.currentProject" class="project-info">
       <div class="project-title">
         <h4>{{ store.currentProject.name }}</h4>
-        <el-tag
-          size="small"
-          type="info"
-        >
+        <el-tag size="small" type="info">
           {{ totalStagesCount }} 个阶段
         </el-tag>
       </div>
@@ -67,97 +40,41 @@
       </div>
     </div>
 
-    <div
-      v-if="store.currentProject"
-      class="stage-scheme-section"
-    >
+    <div v-if="store.currentProject" class="stage-scheme-section">
       <div class="scheme-content">
         <div class="scheme-meta-tags">
-          <el-tag
-            v-if="store.currentScheme"
-            size="small"
-            type="success"
-          >
+          <el-tag v-if="store.currentScheme" size="small" type="success">
             当前方案: {{ store.currentScheme.name }}
           </el-tag>
-          <el-tag
-            size="small"
-            type="info"
-          >
+          <el-tag size="small" type="info">
             {{ store.currentProjectSchemes.length }} 个方案
           </el-tag>
         </div>
 
         <div class="scheme-quick-actions">
-          <el-button
-            :icon="Plus"
-            size="small"
-            @click="handleSaveCurrentAsScheme"
-            type="primary"
-            style="width: 100%"
-          >
+          <el-button :icon="Plus" size="small" @click="handleSaveCurrentAsScheme" type="primary" style="width: 100%">
             保存当前为新方案
           </el-button>
         </div>
 
-        <div
-          v-if="store.currentProjectSchemes.length > 0"
-          class="scheme-list"
-        >
-          <div
-            v-for="scheme in store.currentProjectSchemes"
-            :key="scheme.id"
-            class="scheme-item"
-            :class="{ 'is-active': scheme.id === store.currentSchemeId }"
-            @click="handleSchemeChange(scheme.id)"
-          >
+        <div v-if="store.currentProjectSchemes.length > 0" class="scheme-list">
+          <div v-for="scheme in store.currentProjectSchemes" :key="scheme.id" class="scheme-item"
+            :class="{ 'is-active': scheme.id === store.currentSchemeId }" @click="handleSchemeChange(scheme.id)">
             <div class="scheme-info">
               <span class="scheme-name">{{ scheme.name }}</span>
             </div>
-            <div
-              class="scheme-actions"
-              @click.stop
-            >
-              <el-button
-                size="small"
-                :icon="Edit"
-                circle
-                @click="handleRenameScheme(scheme.id)"
-                title="重命名方案"
-              />
-              <el-button
-                size="small"
-                :icon="CopyDocument"
-                circle
-                @click="handleCopyScheme(scheme.id)"
-                title="复制方案"
-              />
-              <el-button
-                size="small"
-                :icon="Delete"
-                circle
-                type="danger"
-                @click="handleDeleteScheme(scheme.id)"
-                title="删除方案"
-                :disabled="store.currentProjectSchemes.length <= 1"
-              />
+            <div class="scheme-actions" @click.stop>
+              <el-button size="small" :icon="Edit" circle @click="handleRenameScheme(scheme.id)" title="重命名方案" />
+              <el-button size="small" :icon="CopyDocument" circle @click="handleCopyScheme(scheme.id)" title="复制方案" />
+              <el-button size="small" :icon="Delete" circle type="danger" @click="handleDeleteScheme(scheme.id)"
+                title="删除方案" :disabled="store.currentProjectSchemes.length <= 1" />
             </div>
           </div>
         </div>
 
-        <div
-          v-else
-          class="empty-schemes"
-        >
-          <el-empty
-            description="暂无方案"
-            :image-size="40"
-          >
-            <el-button
-              size="small"
-              type="primary"
-              @click="handleSaveCurrentAsScheme"
-            >
+        <div v-else class="empty-schemes">
+          <el-empty description="暂无方案" :image-size="40">
+            <el-button size="small" type="primary" @click="handleSaveCurrentAsScheme">
               创建第一个方案
             </el-button>
           </el-empty>
@@ -165,28 +82,13 @@
       </div>
     </div>
 
-    <el-dialog
-      v-model="showProjectDialog"
-      title="项目管理"
-      width="600px"
-      :close-on-click-modal="false"
-    >
+    <el-dialog v-model="showProjectDialog" title="项目管理" width="600px" :close-on-click-modal="false">
       <div class="project-management">
-        <div
-          v-if="store.currentProject"
-          class="current-project-edit"
-        >
+        <div v-if="store.currentProject" class="current-project-edit">
           <h5>当前项目</h5>
-          <el-form
-            :model="currentProjectForm"
-            label-width="80px"
-          >
+          <el-form :model="currentProjectForm" label-width="80px">
             <el-form-item label="项目名称">
-              <el-input
-                v-model="currentProjectForm.name"
-                placeholder="输入项目名称"
-                @blur="handleRenameCurrentProject"
-              />
+              <el-input v-model="currentProjectForm.name" placeholder="输入项目名称" @blur="handleRenameCurrentProject" />
             </el-form-item>
             <el-form-item label="创建时间">
               <span>{{ formatDateTime(store.currentProject.createdAt) }}</span>
@@ -196,43 +98,18 @@
             </el-form-item>
             <el-form-item label="项目操作">
               <el-button-group>
-                <el-tooltip
-                  content="导入项目/工作区"
-                  placement="top"
-                >
-                  <el-button
-                    :icon="Download"
-                    @click="handleImport"
-                  />
+                <el-tooltip content="导入项目/工作区" placement="top">
+                  <el-button :icon="Download" @click="store.importProjectsFromFile" />
                 </el-tooltip>
-                <el-tooltip
-                  content="导出当前项目"
-                  placement="top"
-                >
-                  <el-button
-                    :icon="Upload"
-                    @click="handleExportProject"
-                  />
+                <el-tooltip content="导出当前项目" placement="top">
+                  <el-button :icon="Upload" @click="store.exportCurrentProject" />
                 </el-tooltip>
-                <el-tooltip
-                  content="导出工作区"
-                  placement="top"
-                >
-                  <el-button
-                    :icon="FolderOpened"
-                    @click="handleExportWorkspace"
-                  />
+                <el-tooltip content="导出工作区" placement="top">
+                  <el-button :icon="FolderOpened" @click="store.exportWorkspace" />
                 </el-tooltip>
-                <el-tooltip
-                  content="删除当前项目"
-                  placement="top"
-                >
-                  <el-button
-                    type="danger"
-                    :icon="Delete"
-                    @click="handleDeleteCurrentProject"
-                    :disabled="store.projects.length <= 1"
-                  />
+                <el-tooltip content="删除当前项目" placement="top">
+                  <el-button type="danger" :icon="Delete" @click="handleDeleteCurrentProject"
+                    :disabled="store.projects.length <= 1" />
                 </el-tooltip>
               </el-button-group>
             </el-form-item>
@@ -243,65 +120,36 @@
 
         <div class="all-projects">
           <h5>所有项目</h5>
-          <el-table
-            :data="store.projects"
-            style="width: 100%"
-          >
-            <el-table-column
-              prop="name"
-              label="项目名称"
-              min-width="120"
-            >
+          <el-table :data="store.projects" style="width: 100%">
+            <el-table-column prop="name" label="项目名称" min-width="120">
               <template #default="scope">
                 <div class="project-name-cell">
                   <span>{{ scope.row.name }}</span>
-                  <el-tag
-                    v-if="scope.row.id === store.currentProjectId"
-                    size="small"
-                    type="primary"
-                  >
+                  <el-tag v-if="scope.row.id === store.currentProjectId" size="small" type="primary">
                     当前
                   </el-tag>
                 </div>
               </template>
             </el-table-column>
-            <el-table-column
-              prop="createdAt"
-              label="创建时间"
-              width="120"
-            >
+            <el-table-column prop="createdAt" label="创建时间" width="120">
               <template #default="scope">
                 {{ formatDateTime(scope.row.createdAt) }}
               </template>
             </el-table-column>
-            <el-table-column
-              prop="updatedAt"
-              label="更新时间"
-              width="120"
-            >
+            <el-table-column prop="updatedAt" label="更新时间" width="120">
               <template #default="scope">
                 {{ formatDateTime(scope.row.updatedAt) }}
               </template>
             </el-table-column>
-            <el-table-column
-              label="操作"
-              width="120"
-            >
+            <el-table-column label="操作" width="120">
               <template #default="scope">
                 <el-button-group size="small">
-                  <el-button
-                    v-if="scope.row.id !== store.currentProjectId"
-                    @click="handleSwitchProject(scope.row.id)"
-                    size="small"
-                  >
+                  <el-button v-if="scope.row.id !== store.currentProjectId" @click="handleSwitchProject(scope.row.id)"
+                    size="small">
                     切换
                   </el-button>
-                  <el-button
-                    type="danger"
-                    @click="handleDeleteProject(scope.row.id)"
-                    :disabled="store.projects.length <= 1"
-                    size="small"
-                  >
+                  <el-button type="danger" @click="handleDeleteProject(scope.row.id)"
+                    :disabled="store.projects.length <= 1" size="small">
                     删除
                   </el-button>
                 </el-button-group>
@@ -578,17 +426,6 @@ async function handleDeleteScheme(schemeId: string) {
   } catch {
   }
 }
-const handleImport = () => {
-  store.importProjectsFromFile();
-};
-
-const handleExportProject = () => {
-  store.exportCurrentProject();
-};
-
-const handleExportWorkspace = () => {
-  store.exportWorkspace();
-};
 </script>
 
 <style scoped>

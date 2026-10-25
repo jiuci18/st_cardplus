@@ -6,11 +6,11 @@
           已从云端获取新数据
           <br />
           您可以在这里
-          <el-button type="primary" link @click="handleRevert">
+          <el-button type="primary" link @click="sync.actions.revertLastPull">
             撤销
           </el-button>
           此操作，本次会话有效 ，或者
-          <el-button type="primary" style="color: red" link @click="handleHideSnapshotNotice">
+          <el-button type="primary" style="color: red" link @click="sync.actions.clearSnapshot">
             隐藏
           </el-button>
           这条消息。
@@ -39,14 +39,6 @@ import SyncCard from "./datamanage/SyncCard.vue";
 
 const sync = useSync();
 provide(syncInjectionKey, sync);
-
-const handleHideSnapshotNotice = () => {
-  sync.actions.clearSnapshot();
-};
-
-const handleRevert = async () => {
-  await sync.actions.revertLastPull();
-};
 
 onMounted(sync.actions.init);
 </script>

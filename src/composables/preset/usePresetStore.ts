@@ -4,6 +4,7 @@ import { defaultOpenAIPreset } from '@/types/openai-preset';
 import { presetService } from '@/database/appdb/presetService';
 import type { StoredPresetFile } from '@/database/db';
 import { nowIso } from '@/utils/datetime';
+import { normalizeRegexScript } from '@/composables/regex/regexScript';
 import { SUBSTITUTE_FIND_REGEX, type SillyTavernRegexScript } from '@/composables/regex/types';
 import {
   buildPromptOrderListFromIdentifiers,
@@ -48,25 +49,6 @@ export interface PresetSelection {
   regexIndex?: number;
 }
 
-const normalizeRegexScript = (script: any, index: number): SillyTavernRegexScript => {
-  return {
-    id: typeof script?.id === 'string' && script.id.trim() ? script.id : presetService.createPresetId(),
-    scriptName:
-      typeof script?.scriptName === 'string' && script.scriptName.trim() ? script.scriptName : `正则脚本 ${index + 1}`,
-    findRegex: typeof script?.findRegex === 'string' ? script.findRegex : '',
-    replaceString: typeof script?.replaceString === 'string' ? script.replaceString : '',
-    trimStrings: Array.isArray(script?.trimStrings) ? script.trimStrings.map((item: any) => String(item)) : [],
-    placement: Array.isArray(script?.placement) ? script.placement : [],
-    disabled: Boolean(script?.disabled),
-    markdownOnly: Boolean(script?.markdownOnly),
-    promptOnly: Boolean(script?.promptOnly),
-    runOnEdit: Boolean(script?.runOnEdit),
-    substituteRegex: typeof script?.substituteRegex === 'number' ? script.substituteRegex : SUBSTITUTE_FIND_REGEX.NONE,
-    minDepth: typeof script?.minDepth === 'number' ? script.minDepth : null,
-    maxDepth: typeof script?.maxDepth === 'number' ? script.maxDepth : null,
-  };
-};
-
 const ensurePresetDataShape = (preset: StoredPresetFile) => {
   const data = preset.data as Record<string, any>;
   if (!data.extensions || typeof data.extensions !== 'object') {
@@ -74,7 +56,10 @@ const ensurePresetDataShape = (preset: StoredPresetFile) => {
   }
   const extensions = data.extensions as Record<string, any>;
   const scripts = Array.isArray(extensions.regex_scripts) ? extensions.regex_scripts : [];
-  extensions.regex_scripts = scripts.map((script, index) => normalizeRegexScript(script, index));
+  extensions.regex_scripts = scripts.map((script, index) => normalizeRegexScript(script, {
+    id: typeof script?.id === 'string' && script.id.trim() ? script.id : presetService.createPresetId(),
+    scriptName: `正则脚本 ${index + 1}`,
+  }));
 };
 
 export function usePresetStore() {

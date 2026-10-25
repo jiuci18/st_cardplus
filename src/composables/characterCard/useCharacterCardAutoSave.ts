@@ -1,11 +1,11 @@
-import { computed, onBeforeUnmount, onMounted, ref, watch, type Ref } from 'vue';
+import { computed, onBeforeUnmount, ref, watch, type Ref } from 'vue';
 
-import { getSetting } from '@/utils/localStorageUtils';
+import { useAutoSaveSettings, type AutoSaveMode } from '../useAutoSaveSettings';
 
 import type { CharacterCardEditorSession, SessionSaveStatus } from './useCharacterCardEditorSessions';
 import { normalizeCharacterCardData } from './useV3CharacterCard';
 
-export type AutoSaveMode = 'auto' | 'watch' | 'manual';
+export type { AutoSaveMode } from '../useAutoSaveSettings';
 export type SaveStatus = SessionSaveStatus;
 
 export interface AutoSaveOptions {
@@ -25,12 +25,7 @@ export function useCharacterCardAutoSave(options: AutoSaveOptions) {
     autoSaveIntervalMs,
   } = options;
 
-  const intervalMs = ref<number>(
-    typeof autoSaveIntervalMs === 'number' ? autoSaveIntervalMs : getSetting('autoSaveInterval') * 1000
-  );
-  const debounceMs = ref<number>(
-    typeof watchDebounceMs === 'number' ? watchDebounceMs : getSetting('autoSaveDebounce') * 1000
-  );
+  const { intervalMs, debounceMs } = useAutoSaveSettings({ autoSaveIntervalMs, watchDebounceMs });
 
   const saveStatus = computed<SaveStatus>(() => currentSession.value?.saveStatus ?? 'idle');
 
@@ -158,31 +153,11 @@ export function useCharacterCardAutoSave(options: AutoSaveOptions) {
     }
   };
 
-  watch(autoSaveMode, syncAutoSaveTimer, { immediate: true });
-
-  const handleIntervalChange = (event: Event) => {
-    const detail = (event as CustomEvent<number>).detail;
-    if (typeof detail !== 'number' || !Number.isFinite(detail)) return;
-    intervalMs.value = detail * 1000;
-    syncAutoSaveTimer();
-  };
-
-  const handleDebounceChange = (event: Event) => {
-    const detail = (event as CustomEvent<number>).detail;
-    if (typeof detail !== 'number' || !Number.isFinite(detail)) return;
-    debounceMs.value = detail * 1000;
-  };
-
-  onMounted(() => {
-    window.addEventListener('autoSaveIntervalChange', handleIntervalChange);
-    window.addEventListener('autoSaveDebounceChange', handleDebounceChange);
-  });
+  watch([autoSaveMode, intervalMs], syncAutoSaveTimer, { immediate: true });
 
   onBeforeUnmount(() => {
     clearAutoSaveTimer();
     clearDebounceTimer();
-    window.removeEventListener('autoSaveIntervalChange', handleIntervalChange);
-    window.removeEventListener('autoSaveDebounceChange', handleDebounceChange);
   });
 
   return {

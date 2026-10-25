@@ -41,28 +41,29 @@ export function usePresetPageNavigation(options: UsePresetPageNavigationOptions)
     removePreset,
   } = options;
 
+  const activeView = ref<'editor' | 'batch'>('editor');
   const mobileDrawerVisible = ref(false);
   const mobilePanelTab = ref<MobilePanelTab>('list');
 
   const orderedPresets = computed(() => presets.value.slice().sort((a, b) => (a.order ?? 0) - (b.order ?? 0)));
   const activePresetOrderIndex = computed(() =>
-    orderedPresets.value.findIndex((item) => item.id === activePresetId.value)
+    orderedPresets.value.findIndex((item) => item.id === activePresetId.value),
   );
   const hasPreviousPreset = computed(() => activePresetOrderIndex.value > 0);
   const hasNextPreset = computed(
-    () => activePresetOrderIndex.value >= 0 && activePresetOrderIndex.value < orderedPresets.value.length - 1
+    () => activePresetOrderIndex.value >= 0 && activePresetOrderIndex.value < orderedPresets.value.length - 1,
   );
 
   const sidebarPromptIndexes = computed(() =>
-    activePreset.value ? getPresetPromptSidebarEntries(activePreset.value).map((entry) => entry.promptIndex) : []
+    activePreset.value ? getPresetPromptSidebarEntries(activePreset.value).map((entry) => entry.promptIndex) : [],
   );
   const selectedPromptSidebarIndex = computed(() =>
-    selectedPromptIndex.value === null ? -1 : sidebarPromptIndexes.value.indexOf(selectedPromptIndex.value)
+    selectedPromptIndex.value === null ? -1 : sidebarPromptIndexes.value.indexOf(selectedPromptIndex.value),
   );
   const hasPreviousPrompt = computed(() => selectedPromptSidebarIndex.value > 0);
   const hasNextPrompt = computed(
     () =>
-      selectedPromptSidebarIndex.value >= 0 && selectedPromptSidebarIndex.value < sidebarPromptIndexes.value.length - 1
+      selectedPromptSidebarIndex.value >= 0 && selectedPromptSidebarIndex.value < sidebarPromptIndexes.value.length - 1,
   );
 
   const withPresetById = (presetId: string, handler: (preset: StoredPresetFile) => void | Promise<void>) => {
@@ -85,25 +86,18 @@ export function usePresetPageNavigation(options: UsePresetPageNavigationOptions)
   const handleRenamePreset = (presetId: string) => withPresetById(presetId, renamePreset);
   const handleDeletePreset = (presetId: string) => withPresetById(presetId, removePreset);
 
-  const handleSelectPreset = (presetId: string) => {
-    selectPreset(presetId);
-    closeMobileDrawerOnTouchDevice();
-  };
+  const selectInEditor =
+    <Args extends unknown[]>(select: (...args: Args) => void) =>
+    (...args: Args) => {
+      activeView.value = 'editor';
+      select(...args);
+      closeMobileDrawerOnTouchDevice();
+    };
 
-  const handleSelectHeader = (presetId: string) => {
-    selectHeader(presetId);
-    closeMobileDrawerOnTouchDevice();
-  };
-
-  const handleSelectPrompt = (presetId: string, promptIndex: number) => {
-    selectPrompt(presetId, promptIndex);
-    closeMobileDrawerOnTouchDevice();
-  };
-
-  const handleSelectRegex = (presetId: string, regexIndex?: number) => {
-    selectRegex(presetId, regexIndex);
-    closeMobileDrawerOnTouchDevice();
-  };
+  const handleSelectPreset = selectInEditor(selectPreset);
+  const handleSelectHeader = selectInEditor(selectHeader);
+  const handleSelectPrompt = selectInEditor(selectPrompt);
+  const handleSelectRegex = selectInEditor(selectRegex);
 
   const navigatePrompt = (step: -1 | 1) => {
     if (!activePresetId.value || selectedPromptIndex.value === null) return;
@@ -134,6 +128,7 @@ export function usePresetPageNavigation(options: UsePresetPageNavigationOptions)
   const goToNext = () => navigateByEditorTab('next');
 
   return {
+    activeView,
     mobileDrawerVisible,
     mobilePanelTab,
     mobilePanelTitle,

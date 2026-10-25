@@ -170,6 +170,8 @@
 
 <script setup lang="ts">
 import { type SillyTavernRegexScript } from '@/composables/regex/types';
+import { normalizeRegexScript } from '@/composables/regex/regexScript';
+import { findRegexScript, prepareRegexExport } from '@/composables/regex/regexExport';
 import { useRegexCollection } from '@/composables/regex/useRegexCollection';
 import { useRegexDragDrop } from '@/composables/regex/useRegexDragDrop';
 import { useRegexSimulator } from '@/composables/regex/useRegexSimulator';
@@ -198,9 +200,9 @@ const {
   activeCategoryId,
   activeCategory,
   handleSelectCategory,
-  handleCreateCategory: createCategory,
-  handleRenameCategory: renameCategory,
-  handleDeleteCategory: deleteCategory,
+  handleCreateCategory,
+  handleRenameCategory,
+  handleDeleteCategory,
   handleCreateScript: createScriptInCategory,
   handleUpdateScript: updateScript,
   handleDeleteScript: deleteScriptFromCollection,
@@ -211,26 +213,12 @@ const {
 
 // 拖拽功能
 const dragDropHandlers = useRegexDragDrop(regexCollection, moveScriptBetweenCategories, updateCategoryScripts);
-const handleCreateCategory = createCategory;
-const handleRenameCategory = renameCategory;
-const handleDeleteCategory = deleteCategory;
 const selectedScript = ref<SillyTavernRegexScript | null>(null);
 const selectedScriptId = computed(() => selectedScript.value?.id ?? null);
 
-const createDefaultScript = (): SillyTavernRegexScript => ({
+const createDefaultScript = () => normalizeRegexScript(null, {
   id: `new-script-${Date.now()}`,
   scriptName: '新规则',
-  findRegex: '',
-  replaceString: '',
-  trimStrings: [],
-  placement: [],
-  disabled: false,
-  markdownOnly: false,
-  promptOnly: false,
-  runOnEdit: false,
-  substituteRegex: 0,
-  minDepth: null,
-  maxDepth: null,
 });
 
 const formState = ref<SillyTavernRegexScript>(createDefaultScript());
@@ -317,54 +305,35 @@ async function handleImportScript() {
   }
 }
 
-async function handleExportScript() {
-  if (!selectedScript.value) return;
-
+async function exportScript(script: SillyTavernRegexScript, message: string) {
   try {
-    const scriptToExport = { ...selectedScript.value };
-    scriptToExport.trimStrings = trimStrings.value.split('\n').filter((s) => s.length > 0);
-
-    if (scriptToExport.minDepth === null) delete scriptToExport.minDepth;
-    if (scriptToExport.maxDepth === null) delete scriptToExport.maxDepth;
-    delete scriptToExport.categoryId;
-
-    const jsonString = JSON.stringify(scriptToExport, null, 2);
+    const { data, fileName } = prepareRegexExport(script);
     await saveFile({
-      data: new TextEncoder().encode(jsonString),
-      fileName: `${scriptToExport.scriptName.replace(/[\s./\\?*]/g, '_') || 'regex-script'}.json`,
+      data: new TextEncoder().encode(data),
+      fileName,
       mimeType: 'application/json',
     });
-    ElMessage.success('导出成功!');
-  } catch (error) {
+    ElMessage.success(message);
+  } catch {
     ElMessage.error('导出失败!');
   }
 }
 
-async function handleExportSingleScript(scriptId: string) {
-  let script: SillyTavernRegexScript | undefined;
-  for (const category of Object.values(regexCollection.value.categories)) {
-    script = category.scripts.find((s) => s.id === scriptId);
-    if (script) break;
-  }
+async function handleExportScript() {
+  if (!selectedScript.value) return;
+  await exportScript({
+    ...selectedScript.value,
+    trimStrings: trimStrings.value.split('\n').filter((s) => s.length > 0),
+  }, '导出成功!');
+}
 
+async function handleExportSingleScript(scriptId: string) {
+  const script = findRegexScript(regexCollection.value, scriptId);
   if (!script) {
     ElMessage.error('未找到要导出的脚本');
     return;
   }
-
-  try {
-    const cleanScript = { ...script };
-    delete cleanScript.categoryId;
-    const jsonString = JSON.stringify(cleanScript, null, 2);
-    await saveFile({
-      data: new TextEncoder().encode(jsonString),
-      fileName: `${cleanScript.scriptName.replace(/[\s./\\?*]/g, '_') || 'regex-script'}.json`,
-      mimeType: 'application/json',
-    });
-    ElMessage.success(`脚本 "${cleanScript.scriptName}" 导出成功!`);
-  } catch (error) {
-    ElMessage.error('导出失败!');
-  }
+  await exportScript(script, `脚本 "${script.scriptName}" 导出成功!`);
 }
 
 function handleCreateScript() {
@@ -411,12 +380,7 @@ function loadSelectedScript() {
 }
 
 async function handleRenameScript(scriptId: string) {
-  // 在所有类别中查找该脚本
-  let script: SillyTavernRegexScript | undefined;
-  for (const category of Object.values(regexCollection.value.categories)) {
-    script = category.scripts.find((s) => s.id === scriptId);
-    if (script) break;
-  }
+  const script = findRegexScript(regexCollection.value, scriptId);
 
   if (!script) {
     ElMessage.error('未找到要重命名的脚本');

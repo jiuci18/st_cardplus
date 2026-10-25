@@ -1,4 +1,24 @@
 <template>
+  <DefineList>
+    <WorldBookList :collection="mockCollection" :active-book-id="worldbookDraft?.id || null"
+      @select-book="selectEntry(null)" @select-entry="onListSelectEntry" @create-book="handleCreateBookFromList"
+      @rename-book="handleRenameCurrentWorldBook" @delete-book="handleDeleteCurrentWorldBook" @add-entry="addEntry"
+      @duplicate-entry="onListDuplicateEntry" @delete-entry="onListDeleteEntry" @copy-book="copyWorldBookToClipboard"
+      @export-json="exportToJson" @import-book-file="handleUnsupportedImportBook" @clear-all="handleClearAllEntries"
+      :selected-entry="selectedEntry" :drag-drop-handlers="dragDropHandlers" hide-book-selector />
+  </DefineList>
+  <DefineEntryEditor>
+    <div class="worldbook-editor-container">
+      <WorldBookEditor v-if="selectedEntry" :entry="selectedEntry" v-model="editableEntry" :all-keywords="allKeywords"
+        :current-entry-index="currentEntryIndex" :total-entries="totalEntries" @go-to-previous="goToPreviousEntry"
+        @go-to-next="goToNextEntry" :is-next-entry-in-different-book="false"
+        :is-previous-entry-in-different-book="false" :save-status="saveStatus" />
+      <div v-else class="editor-empty-state">
+        <el-empty :description="isMobileOrTablet ? '请从左侧选择一个条目进行编辑' : '请选择一个条目进行编辑'"
+          :image-size="isMobileOrTablet ? 80 : 100" />
+      </div>
+    </div>
+  </DefineEntryEditor>
   <div class="card-worldbook-panel">
     <div v-if="!hasWorldBook" class="empty-state">
       <el-empty description="当前角色卡未绑定世界书">
@@ -26,17 +46,10 @@
     </div>
 
     <div v-else class="worldbook-editor-wrapper">
-      <div class="worldbook-layout worldbook-layout-desktop">
+      <div v-if="!isMobileOrTablet" class="worldbook-layout worldbook-layout-desktop">
         <Splitpanes class="default-theme">
           <Pane size="15" min-size="10" max-size="30">
-            <WorldBookList :collection="mockCollection" :active-book-id="worldbookDraft?.id || null"
-              @select-book="handleSelectCurrentBook" @select-entry="onListSelectEntry"
-              @create-book="handleCreateBookFromList" @rename-book="handleRenameCurrentWorldBook"
-              @delete-book="handleDeleteCurrentWorldBook" @add-entry="onListAddEntry"
-              @duplicate-entry="onListDuplicateEntry" @delete-entry="onListDeleteEntry"
-              @copy-book="copyWorldBookToClipboard" @export-json="exportToJson"
-              @import-book-file="handleUnsupportedImportBook" @clear-all="handleClearAllEntries"
-              :selected-entry="selectedEntry" :drag-drop-handlers="dragDropHandlers" :hide-book-selector="true" />
+            <ReuseList />
           </Pane>
           <Pane size="85" min-size="70">
             <div class="worldbook-editor-panel">
@@ -59,44 +72,28 @@
                       <Icon :icon="autoSaveMode === 'auto' ? 'ph:floppy-disk-duotone' : 'ph:hand-eye-duotone'" />
                       {{ autoSaveMode === 'auto' ? '自动保存' : '监听模式' }}
                     </el-button>
-                    <el-button v-if="selectedEntry" @click="saveCurrentEntry" :disabled="saveStatus === 'saved'">
+                    <el-button v-if="selectedEntry" @click="saveEntry" :disabled="saveStatus === 'saved'">
                       <Icon icon="ph:floppy-disk-duotone" />
                       保存
                     </el-button>
-                    <el-button v-if="selectedEntry" type="danger" @click="deleteSelectedEntry">
+                    <el-button v-if="selectedEntry" type="danger" @click="deleteSelectedEntry()">
                       <Icon icon="ph:trash-duotone" />
                       删除
                     </el-button>
                   </el-button-group>
                 </div>
               </div>
-              <div class="worldbook-editor-container">
-                <WorldBookEditor v-if="selectedEntry" :entry="selectedEntry" v-model="editableEntry"
-                  :all-keywords="allKeywords" :current-entry-index="currentEntryIndex" :total-entries="totalEntries"
-                  @go-to-previous="goToPreviousEntry" @go-to-next="goToNextEntry"
-                  :is-next-entry-in-different-book="false" :is-previous-entry-in-different-book="false"
-                  :save-status="saveStatus" />
-                <div v-else class="editor-empty-state">
-                  <el-empty description="请选择一个条目进行编辑" :image-size="100" />
-                </div>
-              </div>
+              <ReuseEntryEditor />
             </div>
           </Pane>
         </Splitpanes>
       </div>
 
       <!-- 移动端：标签页布局 -->
-      <div class="worldbook-layout worldbook-layout-mobile">
+      <div v-else class="worldbook-layout worldbook-layout-mobile">
         <el-tabs v-model="mobileActiveTab" type="border-card" class="worldbook-mobile-tabs">
           <el-tab-pane name="list" label="条目列表">
-            <WorldBookList :collection="mockCollection" :active-book-id="worldbookDraft?.id || null"
-              @select-book="handleSelectCurrentBook" @select-entry="handleMobileSelectEntry"
-              @create-book="handleCreateBookFromList" @rename-book="handleRenameCurrentWorldBook"
-              @delete-book="handleDeleteCurrentWorldBook" @add-entry="onListAddEntry"
-              @duplicate-entry="onListDuplicateEntry" @delete-entry="onListDeleteEntry"
-              @copy-book="copyWorldBookToClipboard" @export-json="exportToJson"
-              @import-book-file="handleUnsupportedImportBook" @clear-all="handleClearAllEntries"
-              :selected-entry="selectedEntry" :drag-drop-handlers="dragDropHandlers" :hide-book-selector="true" />
+            <ReuseList />
           </el-tab-pane>
           <el-tab-pane name="editor" :label="selectedEntry ? selectedEntry.comment || '新条目' : '编辑器'">
             <div class="worldbook-editor-panel-mobile">
@@ -132,16 +129,7 @@
                   </el-dropdown>
                 </div>
               </div>
-              <div class="worldbook-editor-container">
-                <WorldBookEditor v-if="selectedEntry" :entry="selectedEntry" v-model="editableEntry"
-                  :all-keywords="allKeywords" :current-entry-index="currentEntryIndex" :total-entries="totalEntries"
-                  @go-to-previous="goToPreviousEntry" @go-to-next="goToNextEntry"
-                  :is-next-entry-in-different-book="false" :is-previous-entry-in-different-book="false"
-                  :save-status="saveStatus" />
-                <div v-else class="editor-empty-state">
-                  <el-empty description="请从左侧选择一个条目进行编辑" :image-size="80" />
-                </div>
-              </div>
+              <ReuseEntryEditor />
             </div>
           </el-tab-pane>
         </el-tabs>
@@ -162,6 +150,7 @@
 </template>
 
 <script setup lang="ts">
+import { createReusableTemplate } from '@vueuse/core';
 import { Icon } from '@iconify/vue';
 import {
   ElButton,
@@ -185,6 +174,8 @@ import WorldBookEditor from '@/components/worldbook/WorldBookEditor.vue';
 import WorldBookList from '@/components/worldbook/WorldBookList.vue';
 import WorldBookSelectorDialog from '@/components/cardManager/components/WorldBookSelectorDialog.vue';
 import { useWorldBookDragDrop } from '@/composables/worldbook/useWorldBookDragDrop';
+import { useDevice } from '@/composables/useDevice';
+import { useWorldBookEntryNavigation } from '@/composables/worldbook/useWorldBookEntryNavigation';
 import { useWorldBookEntry } from '@/composables/worldbook/useWorldBookEntry';
 import { worldBookService } from '@/database/appdb/worldBookService';
 import type { CharacterBook } from '@/types/character/character-book';
@@ -194,6 +185,9 @@ import { convertCharacterBookToWorldBook, convertWorldBookToCharacterBook } from
 import ConfirmDialog from '../components/ConfirmDialog.vue';
 
 // 移动端状态
+const [DefineList, ReuseList] = createReusableTemplate();
+const [DefineEntryEditor, ReuseEntryEditor] = createReusableTemplate();
+const { isMobileOrTablet } = useDevice();
 const mobileActiveTab = ref<'list' | 'editor'>('list');
 
 interface Props {
@@ -382,29 +376,13 @@ const dragDropHandlers = useWorldBookDragDrop(
   }
 );
 
-// 计算属性
-const allKeywords = computed(() => {
-  if (!worldbookDraft.value) return [];
-  const keywords = new Set<string>();
-  worldbookDraft.value.entries.forEach((entry) => {
-    if (entry.key && Array.isArray(entry.key)) {
-      entry.key.forEach((k) => keywords.add(k));
-    }
-    if (entry.keysecondary && Array.isArray(entry.keysecondary)) {
-      entry.keysecondary.forEach((k) => keywords.add(k));
-    }
+const { allKeywords, currentEntryIndex, totalEntries, goToPreviousEntry, goToNextEntry } =
+  useWorldBookEntryNavigation({
+    books: computed(() => worldbookDraft.value ? [worldbookDraft.value] : []),
+    activeBook: worldbookDraft,
+    selectedEntry,
+    selectEntry: (_bookId, index) => selectEntry(index === null ? null : String(index)),
   });
-  return Array.from(keywords);
-});
-
-const currentEntryIndex = computed(() => {
-  if (!worldbookDraft.value || !selectedEntry.value) return -1;
-  return worldbookDraft.value.entries.findIndex((e) => e.uid === selectedEntry.value!.uid);
-});
-
-const totalEntries = computed(() => {
-  return worldbookDraft.value?.entries.length || 0;
-});
 
 const saveStatusType = computed(() => {
   // 未保存时给出提示色
@@ -435,29 +413,19 @@ const saveStatusText = computed(() => {
   }
 });
 
-const onListAddEntry = (_bookId: string) => {
-  addEntry();
-};
-
 const onListSelectEntry = (_bookId: string, entryIndex: number | null) => {
   selectEntry(entryIndex === null ? null : String(entryIndex));
+  if (isMobileOrTablet.value && entryIndex !== null) mobileActiveTab.value = 'editor';
 };
 
-const handleSelectCurrentBook = () => {
-  selectEntry(null);
-};
-
-const saveCurrentEntry = () => {
-  saveEntry();
-};
-
-const deleteSelectedEntry = async () => {
+const deleteSelectedEntry = async (entryIndex?: number) => {
   try {
     await ElMessageBox.confirm('确定要删除这个条目吗？', '确认删除', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
     });
+    if (entryIndex !== undefined) selectEntry(String(entryIndex));
     await deleteEntry();
   } catch {
     // 用户取消
@@ -468,33 +436,8 @@ const onListDuplicateEntry = (_bookId: string, entryIndex: number) => {
   duplicateEntryAction(entryIndex);
 };
 
-const onListDeleteEntry = async (_bookId: string, entryIndex: number) => {
-  try {
-    await ElMessageBox.confirm('确定要删除这个条目吗？', '确认删除', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning',
-    });
-    selectEntry(String(entryIndex));
-    await deleteEntry();
-  } catch {
-    // 用户取消
-  }
-};
+const onListDeleteEntry = (_bookId: string, entryIndex: number) => deleteSelectedEntry(entryIndex);
 
-const goToPreviousEntry = () => {
-  if (currentEntryIndex.value > 0 && worldbookDraft.value) {
-    const prevIndex = currentEntryIndex.value - 1;
-    selectEntry(String(prevIndex));
-  }
-};
-
-const goToNextEntry = () => {
-  if (worldbookDraft.value && currentEntryIndex.value < worldbookDraft.value.entries.length - 1) {
-    const nextIndex = currentEntryIndex.value + 1;
-    selectEntry(String(nextIndex));
-  }
-};
 
 const handleCreateNewWorldBook = () => {
   initializeWorldBookDraft({
@@ -634,13 +577,6 @@ const handleBindWorldBook = async (bookId: string) => {
   }
 };
 
-const handleMobileSelectEntry = (bookId: string, entryIndex: number | null) => {
-  onListSelectEntry(bookId, entryIndex);
-  if (entryIndex !== null) {
-    mobileActiveTab.value = 'editor';
-  }
-};
-
 // 移动端下拉菜单命令处理
 const handleMobileActionCommand = (command: string) => {
   switch (command) {
@@ -648,7 +584,7 @@ const handleMobileActionCommand = (command: string) => {
       toggleAutoSaveMode();
       break;
     case 'save':
-      saveCurrentEntry();
+      saveEntry();
       break;
     case 'delete':
       deleteSelectedEntry();

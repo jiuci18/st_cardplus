@@ -15,8 +15,8 @@
           <CharacterListSidebar :characters="characters" :projects="projects" :active-character-id="activeCharacterId"
             @select="handleSelectCharacterWithTabSwitch" @create-project="handleCreateProject"
             @create="handleCreateCharacter" @delete="handleDeleteCharacter" @import="handleImportCharacter"
-            @reorder="handleReorderCharacterPatches" @reorder-projects="handleReorderProjects"
-            @toggle-star="handleToggleStar" @rename-project="handleRenameProject"
+            @reorder="applyCharacterOrderPatches" @reorder-projects="reorderProjects"
+            @toggle-star="setCharacterStar" @rename-project="handleRenameProject"
             @delete-project="handleDeleteProject" />
         </template>
       </MobileBookmarkDrawer>
@@ -27,8 +27,8 @@
         <Pane size="15" min-size="10" max-size="25">
           <CharacterListSidebar :characters="characters" :projects="projects" :active-character-id="activeCharacterId"
             @select="handleSelectCharacter" @create-project="handleCreateProject" @create="handleCreateCharacter"
-            @delete="handleDeleteCharacter" @import="handleImportCharacter" @reorder="handleReorderCharacterPatches"
-            @reorder-projects="handleReorderProjects" @toggle-star="handleToggleStar"
+            @delete="handleDeleteCharacter" @import="handleImportCharacter" @reorder="applyCharacterOrderPatches"
+            @reorder-projects="reorderProjects" @toggle-star="setCharacterStar"
             @rename-project="handleRenameProject" @delete-project="handleDeleteProject" />
         </Pane>
         <Pane size="85">
@@ -108,20 +108,6 @@ const handleUpdateCharacter = (updatedCharacter: CharacterCard) => {
   const characterId = updatedCharacter.meta?.id || activeCharacterId.value;
   if (!characterId) return;
   updateCharacter(characterId, updatedCharacter);
-};
-
-const handleReorderCharacterPatches = (patches: Array<{ id: string; order: number; projectId: string | null }>) => {
-  if (!patches.length) return;
-  applyCharacterOrderPatches(patches);
-};
-
-const handleReorderProjects = (orderedIds: string[]) => {
-  if (!orderedIds.length) return;
-  reorderProjects(orderedIds);
-};
-
-const handleToggleStar = (characterId: string, starred: boolean) => {
-  setCharacterStar(characterId, starred);
 };
 
 // Watch for changes in the active character and update the document title

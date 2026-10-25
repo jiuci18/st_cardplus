@@ -1,4 +1,27 @@
 <template>
+  <DefineRegexForm>
+    <el-form :model="currentScriptRequired" label-position="top">
+      <RegexEditorCore
+        :script-name="currentScriptRequired.scriptName || ''"
+        :find-regex="currentScriptRequired.findRegex || ''"
+        :replace-string="currentScriptRequired.replaceString || ''"
+        :trim-strings="trimStringsText"
+        :substitute-regex="currentScriptRequired.substituteRegex"
+        @update:script-name="updateCurrentScriptField('scriptName', $event)"
+        @update:find-regex="updateCurrentScriptField('findRegex', $event)"
+        @update:replace-string="updateCurrentScriptField('replaceString', $event)"
+        @update:trim-strings="trimStringsText = $event"
+        @update:substitute-regex="updateCurrentScriptField('substituteRegex', $event)"
+      />
+      <RegexAdvancedSettings :model-value="currentScriptRequired" @update:model-value="updateCurrentScript" />
+      <el-divider />
+      <RegexSimulatorPanel
+        v-model:test-string="testString" v-model:render-html="renderHtml"
+        v-model:user-macro-value="userMacroValue" v-model:char-macro-value="charMacroValue"
+        :simulated-result="simulatedResult"
+      />
+    </el-form>
+  </DefineRegexForm>
   <div class="card-regex-panel">
     <!-- 空状态 -->
     <div
@@ -28,7 +51,7 @@
       class="regex-editor-wrapper"
     >
       <!-- 桌面端 -->
-      <div class="regex-layout regex-layout-desktop">
+      <div v-if="!isMobileOrTablet" class="regex-layout regex-layout-desktop">
         <Splitpanes class="default-theme">
           <!-- 左侧：脚本列表 -->
           <Pane
@@ -121,41 +144,7 @@
                 </div>
 
                 <el-scrollbar class="editor-scrollbar">
-                  <div class="editor-form">
-                    <el-form
-                      :model="currentScriptRequired"
-                      label-position="top"
-                    >
-                      <RegexEditorCore
-                        :script-name="currentScriptRequired.scriptName || ''"
-                        :find-regex="currentScriptRequired.findRegex || ''"
-                        :replace-string="currentScriptRequired.replaceString || ''"
-                        :trim-strings="trimStringsText"
-                        :substitute-regex="currentScriptRequired.substituteRegex"
-                        @update:script-name="updateCurrentScriptField('scriptName', $event)"
-                        @update:find-regex="updateCurrentScriptField('findRegex', $event)"
-                        @update:replace-string="updateCurrentScriptField('replaceString', $event)"
-                        @update:trim-strings="trimStringsText = $event"
-                        @update:substitute-regex="updateCurrentScriptField('substituteRegex', $event)"
-                      />
-
-                      <RegexAdvancedSettings
-                        :model-value="currentScriptRequired"
-                        @update:model-value="updateCurrentScript($event)"
-                      />
-
-                      <el-divider />
-
-                      <!-- 测试面板 -->
-                      <RegexSimulatorPanel
-                        v-model:test-string="testString"
-                        v-model:render-html="renderHtml"
-                        v-model:user-macro-value="userMacroValue"
-                        v-model:char-macro-value="charMacroValue"
-                        :simulated-result="simulatedResult"
-                      />
-                    </el-form>
-                  </div>
+                  <div class="editor-form"><ReuseRegexForm /></div>
                 </el-scrollbar>
               </div>
             </div>
@@ -164,7 +153,7 @@
       </div>
 
       <!-- 移动端：标签页布局 -->
-      <div class="regex-layout regex-layout-mobile">
+      <div v-else class="regex-layout regex-layout-mobile">
         <el-tabs
           v-model="mobileActiveTab"
           type="border-card"
@@ -246,41 +235,7 @@
                 </div>
 
                 <el-scrollbar class="editor-scrollbar-mobile">
-                  <div class="editor-form">
-                    <el-form
-                      :model="currentScriptRequired"
-                      label-position="top"
-                    >
-                      <RegexEditorCore
-                        :script-name="currentScriptRequired.scriptName || ''"
-                        :find-regex="currentScriptRequired.findRegex || ''"
-                        :replace-string="currentScriptRequired.replaceString || ''"
-                        :trim-strings="trimStringsText"
-                        :substitute-regex="currentScriptRequired.substituteRegex"
-                        @update:script-name="updateCurrentScriptField('scriptName', $event)"
-                        @update:find-regex="updateCurrentScriptField('findRegex', $event)"
-                        @update:replace-string="updateCurrentScriptField('replaceString', $event)"
-                        @update:trim-strings="trimStringsText = $event"
-                        @update:substitute-regex="updateCurrentScriptField('substituteRegex', $event)"
-                      />
-
-                      <RegexAdvancedSettings
-                        :model-value="currentScriptRequired"
-                        @update:model-value="updateCurrentScript($event)"
-                      />
-
-                      <el-divider />
-
-                      <!-- 测试面板 -->
-                      <RegexSimulatorPanel
-                        v-model:test-string="testString"
-                        v-model:render-html="renderHtml"
-                        v-model:user-macro-value="userMacroValue"
-                        v-model:char-macro-value="charMacroValue"
-                        :simulated-result="simulatedResult"
-                      />
-                    </el-form>
-                  </div>
+                  <div class="editor-form"><ReuseRegexForm /></div>
                 </el-scrollbar>
               </div>
             </div>
@@ -305,6 +260,7 @@
 </template>
 
 <script setup lang="ts">
+import { createReusableTemplate } from '@vueuse/core';
 import { Icon } from '@iconify/vue';
 import {
   ElButton,
@@ -327,6 +283,8 @@ import RegexEditorCore from '@/components/regex/RegexEditorCore.vue';
 import RegexSimulatorPanel from '@/components/regex/RegexSimulatorPanel.vue';
 import type { SillyTavernRegexScript } from '@/composables/regex/types';
 import { SUBSTITUTE_FIND_REGEX, type RegexScript } from '@/composables/regex/types';
+import { normalizeRegexScript } from '@/composables/regex/regexScript';
+import { useDevice } from '@/composables/useDevice';
 import { useRegexCollection } from '@/composables/regex/useRegexCollection';
 import { useRegexSimulator } from '@/composables/regex/useRegexSimulator';
 import type { CharacterCardV3 } from '@/types/character/character-card-v3';
@@ -341,6 +299,9 @@ interface Emits {
   (e: 'regexChanged'): void;
   (e: 'update:regexScripts', value: SillyTavernRegexScript[]): void;
 }
+
+const { isMobileOrTablet } = useDevice();
+const [DefineRegexForm, ReuseRegexForm] = createReusableTemplate();
 
 const props = defineProps<Props>();
 const emit = defineEmits<Emits>();
@@ -364,36 +325,18 @@ const handleMobileSelectScript = (scriptId: string) => {
 const { handleImportFromCharacterCard } = useRegexCollection();
 
 // 模拟器状态
-const testString = ref('测试文本');
 const renderHtml = ref(false);
 const userMacroValue = ref('User');
 const charMacroValue = ref('Character');
 
 // 计算属性：正则脚本列表
-const cloneRegexScript = (script: SillyTavernRegexScript, index: number = 0): SillyTavernRegexScript => ({
-  id: script.id || `regex-script-${index}`,
-  scriptName: script.scriptName || '',
-  findRegex: script.findRegex || '',
-  replaceString: script.replaceString || '',
-  trimStrings: [...(script.trimStrings ?? [])],
-  placement: [...(script.placement ?? [])],
-  disabled: script.disabled ?? false,
-  markdownOnly: script.markdownOnly ?? false,
-  promptOnly: script.promptOnly ?? false,
-  runOnEdit: script.runOnEdit ?? false,
-  substituteRegex: script.substituteRegex ?? SUBSTITUTE_FIND_REGEX.NONE,
-  minDepth: script.minDepth ?? null,
-  maxDepth: script.maxDepth ?? null,
-});
+const cloneRegexScript = (script: SillyTavernRegexScript, index = 0) =>
+  normalizeRegexScript(script, { id: `regex-script-${index}` });
 
-const serializeRegexScripts = (scripts: SillyTavernRegexScript[]) => {
-  return JSON.stringify(
-    scripts.map((script, index) => cloneRegexScript(script, index))
-  );
-};
+const serializeRegexScripts = (scripts: SillyTavernRegexScript[]) => JSON.stringify(scripts.map(cloneRegexScript));
 
 const initializeRegexDraft = (scripts: SillyTavernRegexScript[]) => {
-  regexDraft.value = scripts.map((script, index) => cloneRegexScript(script, index));
+  regexDraft.value = scripts.map(cloneRegexScript);
   lastCommittedSnapshot.value = serializeRegexScripts(regexDraft.value);
 
   if (regexDraft.value.length === 0) {
@@ -412,10 +355,10 @@ const initializeRegexDraft = (scripts: SillyTavernRegexScript[]) => {
 };
 
 const emitRegexScripts = (scripts: SillyTavernRegexScript[]) => {
-  const normalizedScripts = scripts.map((script, index) => cloneRegexScript(script, index));
+  const normalizedScripts = scripts.map(cloneRegexScript);
   regexDraft.value = normalizedScripts;
   lastCommittedSnapshot.value = serializeRegexScripts(normalizedScripts);
-  emit('update:regexScripts', normalizedScripts.map((script, index) => cloneRegexScript(script, index)));
+  emit('update:regexScripts', normalizedScripts.map(cloneRegexScript));
   emit('regexChanged');
 };
 
@@ -452,9 +395,8 @@ const currentScriptRequired = computed(() => {
 const updateCurrentScript = (script: SillyTavernRegexScript) => {
   if (currentScriptIndex.value === null || !regexScripts.value[currentScriptIndex.value]) return;
 
-  const nextScripts = regexScripts.value.map((item, index) =>
-    index === currentScriptIndex.value ? cloneRegexScript(script, index) : cloneRegexScript(item, index)
-  );
+  const nextScripts = [...regexScripts.value];
+  nextScripts[currentScriptIndex.value] = script;
   emitRegexScripts(nextScripts);
 };
 
@@ -464,7 +406,7 @@ const updateCurrentScriptField = <K extends keyof SillyTavernRegexScript>(
 ) => {
   if (!currentScript.value) return;
   updateCurrentScript({
-    ...cloneRegexScript(currentScript.value),
+    ...currentScript.value,
     [field]: value,
   });
 };
@@ -502,14 +444,8 @@ const simulatorScript = computed<RegexScript>(() => ({
   substituteRegex: currentScript.value?.substituteRegex ?? SUBSTITUTE_FIND_REGEX.NONE,
 }));
 
-const { testString: simTestString, simulatedResult } = useRegexSimulator(simulatorScript);
-// 将 testString 代理到外层使用的变量
-watch(simTestString, (val) => {
-  testString.value = val;
-});
-watch(testString, (val) => {
-  simTestString.value = val;
-});
+const { testString, simulatedResult } = useRegexSimulator(simulatorScript);
+testString.value = '测试文本';
 
 watch(
   () => regexScripts.value.length,
@@ -548,8 +484,7 @@ const handleCreateNew = () => {
     disabled: false,
   };
 
-  const nextScripts = [...regexScripts.value.map((script, index) => cloneRegexScript(script, index)), newScript];
-  emitRegexScripts(nextScripts);
+  emitRegexScripts([...regexScripts.value, newScript]);
   currentScriptId.value = newScript.id;
 
   ElMessage.success('新建脚本成功');
@@ -560,32 +495,9 @@ const handleAddFromLibrary = () => {
 };
 
 const handleAddScriptsFromLibrary = (scripts: SillyTavernRegexScript[]) => {
-  // 深拷贝并移除 categoryId，追加到当前角色卡脚本列表
-  const clones = scripts.map(
-    (s) =>
-      ({
-        id: s.id,
-        scriptName: s.scriptName,
-        findRegex: s.findRegex,
-        replaceString: s.replaceString,
-        trimStrings: s.trimStrings ?? [],
-        placement: s.placement ?? [],
-        disabled: s.disabled ?? false,
-        markdownOnly: s.markdownOnly ?? false,
-        promptOnly: s.promptOnly ?? false,
-        runOnEdit: s.runOnEdit ?? false,
-        substituteRegex: s.substituteRegex ?? SUBSTITUTE_FIND_REGEX.NONE,
-        minDepth: s.minDepth ?? null,
-        maxDepth: s.maxDepth ?? null,
-      }) as SillyTavernRegexScript
-  );
-
-  const nextScripts = [...regexScripts.value.map((script, index) => cloneRegexScript(script, index)), ...clones];
-  emitRegexScripts(nextScripts);
-  if (nextScripts.length > 0) {
-    currentScriptId.value = nextScripts[nextScripts.length - 1].id;
-  }
-  ElMessage.success(`已添加 ${clones.length} 个脚本`);
+  emitRegexScripts([...regexScripts.value, ...scripts]);
+  currentScriptId.value = regexDraft.value.at(-1)?.id ?? null;
+  ElMessage.success(`已添加 ${scripts.length} 个脚本`);
 };
 
 const handleDeleteScript = async (index: number) => {
@@ -596,9 +508,7 @@ const handleDeleteScript = async (index: number) => {
       type: 'warning',
     });
 
-    const nextScripts = regexScripts.value
-      .filter((_, scriptIndex) => scriptIndex !== index)
-      .map((script, scriptIndex) => cloneRegexScript(script, scriptIndex));
+    const nextScripts = regexScripts.value.filter((_, scriptIndex) => scriptIndex !== index);
     const deletedScriptId = regexScripts.value[index]?.id ?? null;
     emitRegexScripts(nextScripts);
 
@@ -659,33 +569,9 @@ const handleReplaceScriptsFromLibrary = async (scripts: SillyTavernRegexScript[]
       }
     );
 
-    // 深拷贝并移除 categoryId
-    const clones = scripts.map(
-      (s) =>
-        ({
-          id: s.id,
-          scriptName: s.scriptName,
-          findRegex: s.findRegex,
-          replaceString: s.replaceString,
-          trimStrings: s.trimStrings ?? [],
-          placement: s.placement ?? [],
-          disabled: s.disabled ?? false,
-          markdownOnly: s.markdownOnly ?? false,
-          promptOnly: s.promptOnly ?? false,
-          runOnEdit: s.runOnEdit ?? false,
-          substituteRegex: s.substituteRegex ?? SUBSTITUTE_FIND_REGEX.NONE,
-          minDepth: s.minDepth ?? null,
-          maxDepth: s.maxDepth ?? null,
-        }) as SillyTavernRegexScript
-    );
-
-    // 完全替换
-    emitRegexScripts(clones);
-
-    // 选中第一个脚本
-    currentScriptId.value = clones[0]?.id || null;
-
-    ElMessage.success(`已替换为 ${clones.length} 个脚本`);
+    emitRegexScripts(scripts);
+    currentScriptId.value = regexDraft.value[0]?.id ?? null;
+    ElMessage.success(`已替换为 ${scripts.length} 个脚本`);
   } catch {
     // 用户取消
   }

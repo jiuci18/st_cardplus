@@ -1,8 +1,8 @@
 import { ref, watch, type Ref } from 'vue';
 import { ElMessage } from 'element-plus';
-import { getSetting } from '@/utils/localStorageUtils';
+import { autoSaveModeMessage, nextAutoSaveMode, useAutoSaveSettings, type AutoSaveMode } from '../useAutoSaveSettings';
 
-export type AutoSaveMode = 'auto' | 'watch' | 'manual';
+export type { AutoSaveMode } from '../useAutoSaveSettings';
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 export interface PresetAutoSaveOptions {
@@ -26,12 +26,10 @@ export function usePresetAutoSave(options: PresetAutoSaveOptions) {
     autoSaveIntervalMs,
   } = options;
 
-  const intervalMs = ref<number>(
-    typeof autoSaveIntervalMs === 'number' ? autoSaveIntervalMs : getSetting('autoSaveInterval') * 1000
-  );
-  const debounceMs = ref<number>(
-    typeof watchDebounceMs === 'number' ? watchDebounceMs : getSetting('autoSaveDebounce') * 1000
-  );
+  const { intervalMs, debounceMs, cleanup: cleanupSettings } = useAutoSaveSettings({
+    autoSaveIntervalMs,
+    watchDebounceMs,
+  });
 
   const saveStatus = ref<SaveStatus>('idle');
   const lastSavedSnapshot = ref<string>('');
@@ -113,18 +111,8 @@ export function usePresetAutoSave(options: PresetAutoSaveOptions) {
   };
 
   const toggleAutoSaveMode = () => {
-    const modes: Array<AutoSaveMode> = ['auto', 'watch', 'manual'];
-    const currentIndex = modes.indexOf(autoSaveMode.value);
-    const nextIndex = (currentIndex + 1) % modes.length;
-    autoSaveMode.value = modes[nextIndex];
-
-    const messages = {
-      auto: `已切换到自动保存模式：每 ${Math.max(1, Math.round(intervalMs.value / 1000))} 秒自动保存`,
-      watch: `已切换到监听模式：检测到修改后 ${Math.max(0.1, Math.round((debounceMs.value / 1000) * 10) / 10)} 秒自动保存`,
-      manual: '已切换到手动模式：自动保存已禁用',
-    } as const;
-
-    ElMessage.info(messages[autoSaveMode.value]);
+    autoSaveMode.value = nextAutoSaveMode(autoSaveMode.value);
+    ElMessage.info(autoSaveModeMessage(autoSaveMode.value, intervalMs.value, debounceMs.value));
   };
 
   let debounceTimer: number | null = null;
@@ -175,21 +163,6 @@ export function usePresetAutoSave(options: PresetAutoSaveOptions) {
     }
   });
 
-  const handleDebounceChange = (event: Event) => {
-    const detail = (event as CustomEvent<number>).detail;
-    if (typeof detail !== 'number' || !Number.isFinite(detail)) return;
-    debounceMs.value = detail * 1000;
-  };
-  window.addEventListener('autoSaveDebounceChange', handleDebounceChange);
-
-  const handleIntervalChange = (event: Event) => {
-    const detail = (event as CustomEvent<number>).detail;
-    if (typeof detail !== 'number' || !Number.isFinite(detail)) return;
-    intervalMs.value = detail * 1000;
-  };
-
-  window.addEventListener('autoSaveIntervalChange', handleIntervalChange);
-
   const cleanup = () => {
     if (autoSaveTimer !== null) {
       clearInterval(autoSaveTimer);
@@ -199,8 +172,7 @@ export function usePresetAutoSave(options: PresetAutoSaveOptions) {
       clearTimeout(debounceTimer);
       debounceTimer = null;
     }
-    window.removeEventListener('autoSaveIntervalChange', handleIntervalChange);
-    window.removeEventListener('autoSaveDebounceChange', handleDebounceChange);
+    cleanupSettings();
   };
 
   return {
