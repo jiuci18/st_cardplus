@@ -2,8 +2,7 @@
   <el-divider><h3>模拟器</h3></el-divider>
   <el-form-item label="测试字符串 (Test String)">
     <el-input
-      :model-value="testString"
-      @update:model-value="$emit('update:testString', $event)"
+      v-model="testString"
       type="textarea"
       :rows="5"
     />
@@ -18,8 +17,7 @@
         复制处理后的 CSS
       </el-button>
       <el-switch
-        :model-value="renderHtml"
-        @update:model-value="$emit('update:renderHtml', $event)"
+        v-model="renderHtml"
         active-text="渲染HTML"
         inactive-text="显示源码"
         size="small"
@@ -49,14 +47,12 @@
   <el-form-item label="宏测试 (Macros)">
     <div class="macro-grid">
       <el-input
-        :model-value="userMacroValue"
-        @update:model-value="$emit('update:userMacroValue', $event)"
+        v-model="userMacroValue"
       >
         <template #prepend>{{ user }}</template>
       </el-input>
       <el-input
-        :model-value="charMacroValue"
-        @update:model-value="$emit('update:charMacroValue', $event)"
+        v-model="charMacroValue"
       >
         <template #prepend>{{ char }}</template>
       </el-input>
@@ -69,22 +65,18 @@ import { computed } from 'vue';
 import { copyToClipboard } from '@/utils/clipboard';
 import { prepareRegexPreview } from './regexPreview';
 
-const props = defineProps<{
-  testString: string;
-  simulatedResult: string;
-  renderHtml: boolean;
-  userMacroValue: string;
-  charMacroValue: string;
-}>();
-
-defineEmits(['update:testString', 'update:renderHtml', 'update:userMacroValue', 'update:charMacroValue']);
+const { simulatedResult } = defineProps<{ simulatedResult: string }>();
+const testString = defineModel<string>('testString', { required: true });
+const renderHtml = defineModel<boolean>('renderHtml', { required: true });
+const userMacroValue = defineModel<string>('userMacroValue', { required: true });
+const charMacroValue = defineModel<string>('charMacroValue', { required: true });
 
 const user = '{{user}}';
 const char = '{{char}}';
 
 const preview = computed(() => {
   try {
-    return { ...prepareRegexPreview(props.simulatedResult), error: '' };
+    return { ...prepareRegexPreview(simulatedResult), error: '' };
   } catch (error) {
     // Never render the unprocessed CSS on failure: it could affect the editor.
     const detail = error instanceof Error ? error.message : '未知错误';

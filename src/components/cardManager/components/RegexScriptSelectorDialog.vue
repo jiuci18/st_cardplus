@@ -137,27 +137,10 @@ import { useRegexCollection } from '@/composables/regex/useRegexCollection';
 import { useRouter } from 'vue-router';
 import type { SillyTavernRegexScript, RegexCategory } from '@/composables/regex/types';
 
-interface Props {
-  modelValue: boolean;
-  defaultSelectedIds?: string[]; // 默认选中的脚本ID列表
-}
-
-interface Emits {
-  (e: 'update:modelValue', value: boolean): void;
-  (e: 'confirm', scripts: SillyTavernRegexScript[]): void;
-}
-
-const props = withDefaults(defineProps<Props>(), {
-  defaultSelectedIds: () => [],
-});
-
-const emit = defineEmits<Emits>();
+const { defaultSelectedIds = [] } = defineProps<{ defaultSelectedIds?: string[] }>();
+const emit = defineEmits<{ confirm: [scripts: SillyTavernRegexScript[]] }>();
 const router = useRouter();
-
-const dialogVisible = computed({
-  get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value),
-});
+const dialogVisible = defineModel<boolean>({ required: true });
 
 const { regexCollection } = useRegexCollection();
 const isLoading = ref(false);
@@ -196,7 +179,7 @@ const handleConfirm = () => {
 
 // 关闭对话框
 const handleClose = () => {
-  emit('update:modelValue', false);
+  dialogVisible.value = false;
 };
 
 // 前往正则编辑器页面
@@ -208,8 +191,7 @@ const handleGoToRegexEditor = () => {
 // 监听对话框打开，初始化选中状态
 watch(dialogVisible, (newValue) => {
   if (newValue) {
-    // 使用默认选中的ID或者初始化为空数组
-    selectedScriptIds.value = [...props.defaultSelectedIds];
+    selectedScriptIds.value = [...defaultSelectedIds];
   }
 });
 </script>

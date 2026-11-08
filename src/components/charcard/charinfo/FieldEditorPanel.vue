@@ -11,7 +11,7 @@
           <Icon icon="ph:pencil-simple-duotone" width="18" height="18" />
           <span>{{ label }}</span>
         </div>
-        <el-button text size="small" :disabled="!modelValue" title="清空该字段内容" @click="clearValue">
+        <el-button text size="small" :disabled="!modelValue" title="清空该字段内容" @click="modelValue = ''">
           <Icon icon="material-symbols:backspace-outline" width="16" height="16" />
           <span style="margin-left: 4px">清空</span>
         </el-button>
@@ -42,10 +42,10 @@
 
       <!-- 多行输入 -->
       <div class="panel-input">
-        <el-input :model-value="modelValue" type="textarea" resize="vertical" class="panel-textarea"
-          :placeholder="`请输入 ${label} 内容`" @update:model-value="emit('update:modelValue', $event)" />
+        <el-input v-model="modelValue" type="textarea" resize="vertical" class="panel-textarea"
+          :placeholder="`请输入 ${label} 内容`" />
         <div class="panel-input-footer">
-          <span>{{ (modelValue || '').length }} 字</span>
+          <span>{{ modelValue.length }} 字</span>
           <span v-if="presetGroups.length > 0">点击预设可追加 / 移除，多条以「，」分隔</span>
         </div>
       </div>
@@ -58,21 +58,15 @@ import { Icon } from '@iconify/vue';
 import { ElButton, ElInput, ElScrollbar } from 'element-plus';
 import { computed, onBeforeUnmount, ref } from 'vue';
 
-const props = defineProps<{
+const { presetGroups = [] } = defineProps<{
   fieldKey: string | null;
   label: string;
-  modelValue: string;
   presetGroups?: { label: string; items: string[] }[];
 }>();
-
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void;
-}>();
+const modelValue = defineModel<string>({ required: true });
 
 const MIN_PRESET_HEIGHT = 120;
 const MAX_PRESET_HEIGHT = 520;
-
-const presetGroups = computed(() => props.presetGroups ?? []);
 
 const SEPARATOR = '，';
 const splitTokens = (value: string): string[] =>
@@ -81,20 +75,17 @@ const splitTokens = (value: string): string[] =>
     .map((token) => token.trim())
     .filter((token) => token.length > 0);
 
-const activeTokens = computed(() => new Set(splitTokens(props.modelValue || '')));
+const activeTokens = computed(() => new Set(splitTokens(modelValue.value)));
 
 const togglePreset = (item: string) => {
-  const current = props.modelValue || '';
+  const current = modelValue.value;
   if (activeTokens.value.has(item)) {
-    const next = splitTokens(current).filter((token) => token !== item);
-    emit('update:modelValue', next.join(SEPARATOR));
+    modelValue.value = splitTokens(current).filter((token) => token !== item).join(SEPARATOR);
     return;
   }
   const trimmed = current.trim();
-  emit('update:modelValue', trimmed ? `${trimmed}${SEPARATOR}${item}` : item);
+  modelValue.value = trimmed ? `${trimmed}${SEPARATOR}${item}` : item;
 };
-
-const clearValue = () => emit('update:modelValue', '');
 
 // 分隔条拖动
 const presetHeight = ref(240);

@@ -98,41 +98,7 @@
           />
         </button>
       </el-tooltip>
-      <el-tooltip
-        :content="getTooltipText()"
-        placement="bottom"
-        :show-arrow="false"
-        :offset="8"
-        :hide-after="0"
-      >
-        <div
-          class="save-status-badge"
-          :class="getBadgeClass()"
-          @click="$emit('toggle-mode')"
-        >
-          <Icon
-            v-if="saveStatus === 'saving'"
-            icon="eos-icons:loading"
-            class="badge-icon spinning"
-          />
-          <Icon
-            v-else-if="saveStatus === 'saved'"
-            icon="ph:check-circle-fill"
-            class="badge-icon"
-          />
-          <Icon
-            v-else-if="saveStatus === 'error'"
-            icon="ph:warning-circle-fill"
-            class="badge-icon"
-          />
-          <Icon
-            v-else
-            :icon="getModeIcon()"
-            class="badge-icon"
-          />
-          <span class="badge-text">{{ getBadgeText() }}</span>
-        </div>
-      </el-tooltip>
+      <SaveStatusBadge :status="saveStatus" :mode="autoSaveMode" @toggle="$emit('toggle-mode')" />
     </div>
 
     <el-tooltip
@@ -178,6 +144,7 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue';
 import { ElTooltip } from 'element-plus';
+import SaveStatusBadge from '@/components/ui/common/SaveStatusBadge.vue';
 import BrowserFilePicker from '@/components/ui/common/BrowserFilePicker.vue';
 
 interface Props {
@@ -187,7 +154,7 @@ interface Props {
   autoSaveMode?: 'auto' | 'watch' | 'manual';
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const emit = defineEmits<{
   (e: 'import-file', file: File): void;
@@ -201,65 +168,6 @@ const emit = defineEmits<{
 }>();
 
 
-const getModeIcon = () => {
-  switch (props.autoSaveMode) {
-    case 'auto':
-      return 'ph:clock-countdown-duotone';
-    case 'watch':
-      return 'ph:eye-duotone';
-    case 'manual':
-      return 'ph:hand-duotone';
-    default:
-      return 'ph:eye-duotone';
-  }
-};
-
-const getBadgeText = () => {
-  if (props.saveStatus === 'saving') return '保存中';
-  if (props.saveStatus === 'saved') return '已保存';
-  if (props.saveStatus === 'error') return '失败';
-
-  switch (props.autoSaveMode) {
-    case 'auto':
-      return '自动保存';
-    case 'watch':
-      return '监听中';
-    case 'manual':
-      return '已禁用';
-    default:
-      return '监听中';
-  }
-};
-
-const getBadgeClass = () => {
-  if (props.saveStatus && props.saveStatus !== 'idle') {
-    return `status-${props.saveStatus}`;
-  }
-
-  switch (props.autoSaveMode) {
-    case 'auto':
-      return 'status-auto';
-    case 'watch':
-      return 'status-watch';
-    case 'manual':
-      return 'status-manual';
-    default:
-      return 'status-watch';
-  }
-};
-
-const getTooltipText = () => {
-  switch (props.autoSaveMode) {
-    case 'auto':
-      return '点击切换到监听模式';
-    case 'watch':
-      return '点击切换到手动模式';
-    case 'manual':
-      return '点击切换到自动保存模式';
-    default:
-      return '点击切换保存模式';
-  }
-};
 </script>
 
 <style scoped>
@@ -346,15 +254,6 @@ const getTooltipText = () => {
   .save-button-group {
     gap: 4px;
   }
-
-  .save-status-badge {
-    padding: 4px 10px;
-    font-size: 12px;
-  }
-
-  .badge-icon {
-    font-size: 14px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -387,91 +286,5 @@ const getTooltipText = () => {
   align-items: center;
   gap: 8px;
   position: relative;
-}
-
-.save-status-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: 16px;
-  font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
-  transition: all 0.3s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  user-select: none;
-}
-
-.save-status-badge:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-
-.save-status-badge:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-/* 自动保存模式 */
-.save-status-badge.status-auto {
-  background-color: var(--el-color-primary-light-9);
-  color: var(--el-color-primary);
-  border: 1px solid var(--el-color-primary-light-5);
-}
-
-/* 监听模式 */
-.save-status-badge.status-watch {
-  background-color: var(--el-fill-color);
-  color: var(--el-text-color-secondary);
-  border: 1px solid var(--el-border-color);
-}
-
-/* 手动模式 */
-.save-status-badge.status-manual {
-  background-color: var(--el-color-warning-light-9);
-  color: var(--el-color-warning-dark-2);
-  border: 1px solid var(--el-color-warning-light-5);
-}
-
-.save-status-badge.status-saving {
-  background-color: var(--el-color-info-light-9);
-  color: var(--el-color-info);
-  border: 1px solid var(--el-color-info-light-5);
-}
-
-.save-status-badge.status-saved {
-  background-color: var(--el-color-success-light-9);
-  color: var(--el-color-success-dark-2);
-  border: 1px solid var(--el-color-success-light-5);
-}
-
-.save-status-badge.status-error {
-  background-color: var(--el-color-danger-light-9);
-  color: var(--el-color-danger);
-  border: 1px solid var(--el-color-danger-light-5);
-}
-
-.badge-icon {
-  font-size: 16px;
-  flex-shrink: 0;
-}
-
-.badge-icon.spinning {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.badge-text {
-  line-height: 1;
 }
 </style>

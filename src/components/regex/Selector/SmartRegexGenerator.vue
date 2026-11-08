@@ -2,8 +2,7 @@
   <el-divider><h3>智能正则生成器</h3></el-divider>
   <el-form-item label="原始文本 (用于智能选择)">
     <el-input
-      :model-value="inputText"
-      @update:model-value="$emit('update:inputText', $event)"
+      v-model="inputText"
       type="textarea"
       :rows="6"
       placeholder="在这里输入你要分析的原始文本..."
@@ -18,9 +17,7 @@
 <script setup lang="ts">
 import SmartTextSelector from './SmartTextSelector.vue';
 
-defineProps<{
-  inputText: string;
-}>();
+const inputText = defineModel<string>('inputText', { required: true });
 
-defineEmits(['update:inputText', 'regex-generated']);
+defineEmits(['regex-generated']);
 </script>

@@ -51,13 +51,9 @@
 <script setup lang="ts">
 import { REGEX_PLACEMENT, SUBSTITUTE_FIND_REGEX, type SillyTavernRegexScript } from '@/composables/regex/types';
 
-const props = defineProps<{
-  modelValue: SillyTavernRegexScript;
-}>();
-
-const emit = defineEmits(['update:modelValue']);
+const modelValue = defineModel<SillyTavernRegexScript>({ required: true });
 
 const update = (key: keyof SillyTavernRegexScript, value: any) => {
-  emit('update:modelValue', { ...props.modelValue, [key]: value });
+  modelValue.value = { ...modelValue.value, [key]: value };
 };
 </script>

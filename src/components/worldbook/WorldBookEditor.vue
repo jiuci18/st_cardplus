@@ -4,7 +4,7 @@
       <div v-if="!entry" class="worldbook-editor-empty-state">
         <el-empty description="请先选择或新增一个条目进行编辑" :image-size="80"></el-empty>
       </div>
-      <el-form v-if="entry && modelValue" :model="localModel" label-position="top" ref="entryFormRef"
+      <el-form v-if="entry" :model="localModel" label-position="top" ref="entryFormRef"
         class="worldbook-editor-form">
         <section class="form-section">
           <h3 class="form-section-title">
@@ -291,7 +291,6 @@ import { bindDelimitedPaste, mergeUniqueValues } from '@/utils/multiValuePaste';
 
 const props = defineProps<{
   entry: WorldBookEntry | null;
-  modelValue: Partial<WorldBookEntry>;
   allKeywords?: string[];
   currentEntryIndex: number;
   totalEntries: number;
@@ -303,7 +302,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: Partial<WorldBookEntry>): void;
   (e: 'goToPrevious'): void;
   (e: 'goToNext'): void;
 }>();
@@ -320,21 +318,10 @@ const primaryKeywordSelectRef = ref<SelectComponentInstance | null>(null);
 const secondaryKeywordSelectRef = ref<SelectComponentInstance | null>(null);
 const keywordPasteCleanupFns = ref<Array<() => void>>([]);
 
-const localModel = computed({
-  get: () => props.modelValue || {},
-  set: (value) => {
-    console.log('[WorldBookEditor] localModel set 被触发:', {
-      newValue: value,
-      oldValue: props.modelValue,
-    });
-    emit('update:modelValue', value);
-  },
-});
+const localModel = defineModel<Partial<WorldBookEntry>>({ required: true });
 
-const updateBooleanField = (field: keyof WorldBookEntry, value: boolean) => {
-  const newModel = { ...localModel.value };
-  (newModel as any)[field] = value;
-  localModel.value = newModel;
+const updateBooleanField = (field: 'caseSensitive' | 'matchWholeWords' | 'useGroupScoring', value: boolean) => {
+  localModel.value = { ...localModel.value, [field]: value };
 };
 
 const updateKeywordField = (field: 'key' | 'keysecondary', incomingValues: string[]) => {

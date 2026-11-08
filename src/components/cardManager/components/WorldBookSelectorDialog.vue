@@ -136,30 +136,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, watch } from 'vue';
 import { ElDialog, ElScrollbar, ElButton, ElTag, ElEmpty, ElCollapse, ElCollapseItem } from 'element-plus';
 import { Icon } from '@iconify/vue';
 import { worldBookService } from '@/database/appdb/worldBookService';
 import type { WorldBook } from '@/types/worldbook';
 import { useRouter } from 'vue-router';
 
-interface Props {
-  modelValue: boolean;
-}
-
-interface Emits {
-  (e: 'update:modelValue', value: boolean): void;
-  (e: 'confirm', bookId: string): void;
-}
-
-const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
+const emit = defineEmits<{ confirm: [bookId: string] }>();
 const router = useRouter();
-
-const dialogVisible = computed({
-  get: () => props.modelValue,
-  set: (value) => emit('update:modelValue', value),
-});
+const dialogVisible = defineModel<boolean>({ required: true });
 
 const isLoading = ref(false);
 const worldBooks = ref<WorldBook[]>([]);
@@ -199,7 +185,7 @@ const handleConfirm = () => {
 // 关闭对话框
 const handleClose = () => {
   selectedBookId.value = null;
-  emit('update:modelValue', false);
+  dialogVisible.value = false;
 };
 
 // 前往世界书管理页面

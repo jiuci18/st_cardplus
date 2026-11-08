@@ -1,7 +1,7 @@
 import { ref } from 'vue';
-import type { Project, EnhancedLandmark, EnhancedForce } from '@/types/worldeditor/world-editor';
+import type { Project, ProjectInput, EnhancedLandmark, EnhancedForce } from '@/types/worldeditor/world-editor';
 
-export function useWorldEditorUI(handleProjectSubmit: (projectData: Project, editingProject: Project | null) => void) {
+export function useWorldEditorUI(handleProjectSubmit: (projectData: ProjectInput, editingProject: Project | null) => void) {
   const isModalVisible = ref(false);
   const editingProject = ref<Project | null>(null);
 
@@ -19,7 +19,7 @@ export function useWorldEditorUI(handleProjectSubmit: (projectData: Project, edi
     // Selection of landmarks/forces will be handled by useWorldEditor
   };
 
-  const handleModalSubmit = (projectData: Project) => {
+  const handleModalSubmit = (projectData: ProjectInput) => {
     handleProjectSubmit(projectData, editingProject.value);
     editingProject.value = null; // Reset after submit
   };

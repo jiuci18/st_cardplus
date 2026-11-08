@@ -11,6 +11,8 @@ export interface Project {
   updatedAt: string; // 更新时间
 }
 
+export type ProjectInput = Pick<Project, 'name' | 'description'>;
+
 /**
  * 项目整合视图接口 - 用于统一管理项目下的地标和势力
  */

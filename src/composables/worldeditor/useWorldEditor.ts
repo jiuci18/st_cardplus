@@ -1,6 +1,7 @@
 import { ref, onMounted, onBeforeUnmount, watch, computed } from "vue";
 import type {
   Project,
+  ProjectInput,
   EnhancedLandmark,
   EnhancedForce,
   EnhancedRegion,
@@ -125,10 +126,8 @@ export function useWorldEditor() {
     }
   };
 
-  // Data Persistence
   watch([projects, landmarks, forces, regions], scheduleSave, { deep: true });
 
-  // Computed properties
   const allTags = computed(() => {
     const tags = new Set<string>();
     landmarks.value.forEach((item) => {
@@ -366,7 +365,7 @@ export function useWorldEditor() {
   };
 
   const handleProjectSubmit = (
-    projectData: Project,
+    projectData: ProjectInput,
     editingProject: Project | null,
   ) => {
     if (editingProject) {
