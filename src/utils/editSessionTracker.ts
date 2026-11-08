@@ -1,59 +1,41 @@
 import { now, nowIso } from "./datetime.ts";
 
 const EDIT_DIRECTORY_STORAGE_KEY = "ST_CARDPLUS_SESSION_EDIT_DIRECTORY";
-const MAX_EDIT_RECORDS = 500;
 export const EDIT_SESSION_CHANGED_EVENT = "edit-session-changed";
 
-export type EditSessionStorageKind = "localStorage" | "sessionStorage" | "indexedDB";
-
-export type EditSessionOperation =
-  | "set"
-  | "remove"
-  | "clear"
-  | "create"
-  | "update"
-  | "delete";
-
-export interface EditSessionRecord {
-  id: string;
-  storage: EditSessionStorageKind;
-  operation: EditSessionOperation;
-  target: string;
-  key?: string;
-  fields?: string[];
-  updatedAt: string;
-}
-
-export interface EditSessionDirectoryEntry {
-  storage: EditSessionStorageKind;
-  target: string;
-  operations: EditSessionOperation[];
-  count: number;
-  fields: string[];
-  firstEditedAt: string;
-  lastEditedAt: string;
-}
+export type EditEntity =
+  "characterCard" | "character" | "worldbook" | "preset" | "regex";
 
 export interface EditSessionDirectory {
   sessionId: string;
   startedAt: string;
   updatedAt: string;
-  entries: Record<string, EditSessionDirectoryEntry>;
-  records: EditSessionRecord[];
+  /** 实体类型 -> 最近一次修改时间 */
+  entities: Partial<Record<EditEntity, string>>;
 }
 
-interface LocalStorageEditInput {
-  storage: "localStorage" | "sessionStorage";
-  operation: "set" | "remove" | "clear";
-  key?: string;
-}
+const EDIT_ENTITIES: EditEntity[] = [
+  "characterCard",
+  "character",
+  "worldbook",
+  "preset",
+  "regex",
+];
 
-interface IndexedDbEditInput {
-  table: string;
-  operation: "create" | "update" | "delete";
-  primaryKey?: unknown;
-  fields?: string[];
-}
+const ENTITY_BY_STORAGE_KEY: Record<string, EditEntity> = {
+  characterManagerData: "character",
+  "regex-script-collection": "regex",
+};
+
+const ENTITY_BY_TABLE: Record<string, EditEntity> = {
+  characterCards: "characterCard",
+  books: "worldbook",
+  entries: "worldbook",
+  presets: "preset",
+};
+
+const isEditEntity = (value: string): value is EditEntity =>
+  (EDIT_ENTITIES as string[]).includes(value);
 
 const newId = (): string => {
   if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
@@ -69,13 +51,9 @@ const createEmptyDirectory = (): EditSessionDirectory => {
     sessionId: newId(),
     startedAt: now,
     updatedAt: now,
-    entries: {},
-    records: [],
+    entities: {},
   };
 };
-
-const isIgnoredEdit = (storage: EditSessionStorageKind, target?: string): boolean =>
-  storage === "sessionStorage" || target === EDIT_DIRECTORY_STORAGE_KEY;
 
 const readDirectory = (): EditSessionDirectory => {
   if (!canUseSessionStorage()) return createEmptyDirectory();
@@ -83,18 +61,18 @@ const readDirectory = (): EditSessionDirectory => {
   try {
     const raw = window.sessionStorage.getItem(EDIT_DIRECTORY_STORAGE_KEY);
     if (!raw) return createEmptyDirectory();
-    const parsed = JSON.parse(raw) as EditSessionDirectory;
-    if (!parsed || typeof parsed !== "object" || !parsed.sessionId) {
-      return createEmptyDirectory();
-    }
+    const parsed = JSON.parse(raw) as Partial<EditSessionDirectory>;
+    if (!parsed?.sessionId) return createEmptyDirectory();
     return {
-      ...parsed,
-      entries: Object.fromEntries(
-        Object.entries(parsed.entries ?? {}).filter(([, entry]) => !isIgnoredEdit(entry.storage, entry.target)),
+      sessionId: parsed.sessionId,
+      startedAt: parsed.startedAt ?? nowIso(),
+      updatedAt: parsed.updatedAt ?? nowIso(),
+      entities: Object.fromEntries(
+        Object.entries(parsed.entities ?? {}).filter(
+          (entry): entry is [EditEntity, string] =>
+            typeof entry[1] === "string" && isEditEntity(entry[0]),
+        ),
       ),
-      records: Array.isArray(parsed.records)
-        ? parsed.records.filter((record) => !isIgnoredEdit(record.storage, record.target))
-        : [],
     };
   } catch (error) {
     console.error("Failed to read edit session directory:", error);
@@ -106,53 +84,45 @@ const writeDirectory = (directory: EditSessionDirectory): void => {
   if (!canUseSessionStorage()) return;
 
   try {
-    window.sessionStorage.setItem(EDIT_DIRECTORY_STORAGE_KEY, JSON.stringify(directory));
+    window.sessionStorage.setItem(
+      EDIT_DIRECTORY_STORAGE_KEY,
+      JSON.stringify(directory),
+    );
     window.dispatchEvent(new Event(EDIT_SESSION_CHANGED_EVENT));
   } catch (error) {
     console.error("Failed to write edit session directory:", error);
   }
 };
 
-const mergeFields = (left: string[], right: string[]): string[] =>
-  Array.from(new Set([...left, ...right])).sort();
-
-const appendRecord = (record: Omit<EditSessionRecord, "id" | "updatedAt">): void => {
+/** 只记录被修改的实体类型，不记录字段、条目或操作次数。 */
+export const trackEntityEdit = (entity: EditEntity): void => {
+  if (!canUseSessionStorage()) return;
   const directory = readDirectory();
-  const updatedAt = nowIso();
-  const nextRecord: EditSessionRecord = {
-    ...record,
-    id: newId(),
-    updatedAt,
-  };
-  const targetKey = `${record.storage}:${record.target}`;
-  const current = directory.entries[targetKey];
-  const fields = record.fields ?? [];
-
-  directory.entries[targetKey] = current
-    ? {
-      ...current,
-      operations: Array.from(new Set([...current.operations, record.operation])),
-      count: current.count + 1,
-      fields: mergeFields(current.fields, fields),
-      lastEditedAt: updatedAt,
-    }
-    : {
-      storage: record.storage,
-      target: record.target,
-      operations: [record.operation],
-      count: 1,
-      fields: fields.slice().sort(),
-      firstEditedAt: updatedAt,
-      lastEditedAt: updatedAt,
-    };
-
-  directory.records = [...directory.records, nextRecord].slice(-MAX_EDIT_RECORDS);
-  directory.updatedAt = updatedAt;
+  const at = nowIso();
+  directory.entities[entity] = at;
+  directory.updatedAt = at;
   writeDirectory(directory);
 };
 
+/** localStorage/sessionStorage 写入只关注实体相关的 key。 */
+export const trackStorageEdit = (
+  storage: "localStorage" | "sessionStorage",
+  key?: string,
+): void => {
+  if (storage !== "localStorage" || !key) return;
+  const entity = ENTITY_BY_STORAGE_KEY[key];
+  if (entity) trackEntityEdit(entity);
+};
+
+/** IndexedDB 写入只关注实体相关的表。 */
+export const trackIndexedDbEdit = (table: string): void => {
+  const entity = ENTITY_BY_TABLE[table];
+  if (entity) trackEntityEdit(entity);
+};
+
 /** Return the per-browser-session edit directory for local storage and IndexedDB writes. */
-export const getEditSessionDirectory = (): EditSessionDirectory => readDirectory();
+export const getEditSessionDirectory = (): EditSessionDirectory =>
+  readDirectory();
 
 /** Clear the per-browser-session edit directory without modifying application data. */
 export const clearEditSessionDirectory = (): void => {
@@ -163,30 +133,4 @@ export const clearEditSessionDirectory = (): void => {
   } catch (error) {
     console.error("Failed to clear edit session directory:", error);
   }
-};
-
-/** Record a localStorage mutation; sessionStorage is UI/session state, not an edit. */
-export const trackStorageEdit = (input: LocalStorageEditInput): void => {
-  if (isIgnoredEdit(input.storage, input.key)) return;
-
-  appendRecord({
-    storage: input.storage,
-    operation: input.operation,
-    target: input.key ?? input.storage,
-    key: input.key,
-  });
-};
-
-/** Record an IndexedDB mutation in the current edit session. */
-export const trackIndexedDbEdit = (input: IndexedDbEditInput): void => {
-  appendRecord({
-    storage: "indexedDB",
-    operation: input.operation,
-    target:
-      input.primaryKey === undefined || input.primaryKey === null
-        ? input.table
-        : `${input.table}/${String(input.primaryKey)}`,
-    key: input.primaryKey === undefined || input.primaryKey === null ? undefined : String(input.primaryKey),
-    fields: input.fields,
-  });
 };

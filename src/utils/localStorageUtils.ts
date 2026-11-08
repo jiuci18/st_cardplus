@@ -57,19 +57,18 @@ const createStorageStore = (name: "localStorage" | "sessionStorage") => {
       access((storage) => {
         if (storage.getItem(key) === value) return;
         storage.setItem(key, value);
-        trackStorageEdit({ storage: name, operation: "set", key });
+        trackStorageEdit(name, key);
       }, undefined),
     remove: (key: string): void =>
       access((storage) => {
         if (storage.getItem(key) === null) return;
         storage.removeItem(key);
-        trackStorageEdit({ storage: name, operation: "remove", key });
+        trackStorageEdit(name, key);
       }, undefined),
     clear: (): void =>
       access((storage) => {
         if (storage.length === 0) return;
         storage.clear();
-        trackStorageEdit({ storage: name, operation: "clear" });
       }, undefined),
     readJSON: <T>(key: string): T | null =>
       access((storage) => {

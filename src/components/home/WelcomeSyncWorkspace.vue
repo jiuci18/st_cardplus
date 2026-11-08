@@ -8,19 +8,13 @@
         </div>
         <Icon icon="material-symbols:sync" />
       </div>
-      <p class="session-summary">本次会话已编辑 {{ editedItems.length }} 个项目</p>
-      <ul v-if="editedItems.length" class="edit-list" aria-label="本次会话编辑记录">
-        <li v-for="item in editedItems" :key="`${item.storage}:${item.target}`" class="edit-item">
+      <p class="session-summary">本次会话已编辑 {{ editedEntities.length }} 类实体</p>
+      <ul v-if="editedEntities.length" class="edit-list" aria-label="本次会话编辑记录">
+        <li v-for="item in editedEntities" :key="item.entity" class="edit-item">
           <div class="edit-item-heading">
-            <strong>{{ targetLabel(item) }}</strong>
-            <span>{{ item.count }} 次操作</span>
+            <strong>{{ item.label }}</strong>
+            <time :datetime="item.editedAt">{{ formatDateTime(item.editedAt) }}</time>
           </div>
-          <code class="edit-target">{{ item.target }}</code>
-          <div class="edit-meta">
-            <span>{{ item.operations.map(operation => operationLabels[operation]).join(' · ') }}</span>
-            <time :datetime="item.lastEditedAt">{{ formatDateTime(item.lastEditedAt) }}</time>
-          </div>
-          <p v-if="item.fields.length" class="edit-fields">修改字段：{{ item.fields.join('、') }}</p>
         </li>
       </ul>
       <div v-else class="empty-state">
@@ -51,8 +45,7 @@ import { formatDateTime } from "@/utils/datetime";
 import {
   EDIT_SESSION_CHANGED_EVENT,
   getEditSessionDirectory,
-  type EditSessionDirectoryEntry,
-  type EditSessionOperation,
+  type EditEntity,
 } from "@/utils/editSessionTracker";
 
 const directory = shallowRef(getEditSessionDirectory());
@@ -60,32 +53,19 @@ useEventListener(window, EDIT_SESSION_CHANGED_EVENT, () => {
   directory.value = getEditSessionDirectory();
 });
 
-const editedItems = computed(() =>
-  Object.values(directory.value.entries).sort((a, b) => b.lastEditedAt.localeCompare(a.lastEditedAt)),
+const entityLabels: Record<EditEntity, string> = {
+  characterCard: "角色卡",
+  character: "角色",
+  worldbook: "世界书",
+  preset: "预设",
+  regex: "正则",
+};
+const editedEntities = computed(() =>
+  Object.entries(directory.value.entities)
+    .filter((entry): entry is [EditEntity, string] => Boolean(entry[1]))
+    .map(([entity, editedAt]) => ({ entity, editedAt, label: entityLabels[entity] }))
+    .sort((a, b) => b.editedAt.localeCompare(a.editedAt)),
 );
-const operationLabels: Record<EditSessionOperation, string> = {
-  set: "写入",
-  remove: "移除",
-  clear: "清空",
-  create: "新建",
-  update: "修改",
-  delete: "删除",
-};
-const tableLabels: Record<string, string> = {
-  books: "世界书",
-  entries: "世界书条目",
-  characterCards: "角色卡",
-  presets: "预设",
-  worldProjects: "世界项目",
-  worldLandmarks: "地标",
-  worldForces: "势力",
-  worldRegions: "区域",
-};
-const targetLabel = (item: EditSessionDirectoryEntry): string => {
-  if (item.storage !== "indexedDB") return item.storage;
-  const table = item.target.split("/")[0];
-  return tableLabels[table] ?? table;
-};
 </script>
 
 <style scoped>
@@ -161,8 +141,7 @@ const targetLabel = (item: EditSessionDirectoryEntry): string => {
   border-bottom: 1px solid var(--el-border-color-light);
 }
 
-.edit-item-heading,
-.edit-meta {
+.edit-item-heading {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -174,25 +153,10 @@ const targetLabel = (item: EditSessionDirectoryEntry): string => {
   font-size: .9rem;
 }
 
-.edit-item-heading span,
-.edit-meta,
-.edit-fields {
+.edit-item-heading time {
   color: var(--el-text-color-secondary);
   font-size: .78rem;
   line-height: 1.6;
-}
-
-.edit-target {
-  display: block;
-  margin: 6px 0;
-  color: var(--el-text-color-regular);
-  font-size: .8rem;
-  overflow-wrap: anywhere;
-}
-
-.edit-fields {
-  margin: 6px 0 0;
-  overflow-wrap: anywhere;
 }
 
 .empty-state {

@@ -161,21 +161,10 @@ class AppDatabase extends Dexie {
     this.editTrackingHooksRegistered = true;
 
     for (const table of this.tables) {
-      const tableName = table.name;
-      table.hook('creating', (primaryKey) => {
-        trackIndexedDbEdit({ table: tableName, operation: 'create', primaryKey });
-      });
-      table.hook('updating', (modifications, primaryKey) => {
-        trackIndexedDbEdit({
-          table: tableName,
-          operation: 'update',
-          primaryKey,
-          fields: Object.keys(modifications),
-        });
-      });
-      table.hook('deleting', (primaryKey) => {
-        trackIndexedDbEdit({ table: tableName, operation: 'delete', primaryKey });
-      });
+      const track = () => trackIndexedDbEdit(table.name);
+      table.hook('creating', track);
+      table.hook('updating', track);
+      table.hook('deleting', track);
     }
   }
 }

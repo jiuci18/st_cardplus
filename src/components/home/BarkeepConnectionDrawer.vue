@@ -1,106 +1,48 @@
 <template>
-  <el-drawer
-    v-model="visible"
-    title="连接 Barkeep"
-    direction="rtl"
-    :size="drawerSize"
-    class="barkeep-drawer"
-    data-testid="barkeep-connection-drawer"
-  >
+  <el-drawer v-model="visible" title="连接 Barkeep" direction="rtl" :size="drawerSize" class="barkeep-drawer"
+    data-testid="barkeep-connection-drawer">
     <div class="connection-form">
       <div class="field-group">
         <span class="field-label">连接方式</span>
-        <el-segmented
-          v-model="mode"
-          :options="modeOptions"
-          class="mode-selector"
-        />
+        <el-segmented v-model="mode" :options="modeOptions" class="mode-selector" />
       </div>
 
-      <el-input
-        v-model="baseUrl"
-        aria-label="Barkeep 服务地址"
-        :placeholder="
-          mode === 'sillytavern'
-            ? 'http://127.0.0.1:8000'
-            : 'http://127.0.0.1:10024'
-        "
-      >
+      <el-input v-model="baseUrl" aria-label="Barkeep 服务地址" :placeholder="baseUrlPlaceholder">
         <template #prepend>服务地址</template>
       </el-input>
 
       <div class="option-grid">
         <el-checkbox v-model="multiUser">多用户模式</el-checkbox>
-        <el-checkbox
-          v-if="mode === 'sillytavern'"
-          v-model="basicAuthEnabled"
-        >
+        <el-checkbox v-if="mode === 'sillytavern'" v-model="basicAuthEnabled">
           HTTP 基础验证
         </el-checkbox>
         <el-checkbox v-model="savePassword">保存密码</el-checkbox>
       </div>
 
       <template v-if="multiUser">
-        <el-input
-          v-model="handle"
-          aria-label="用户 Handle"
-          placeholder="SillyTavern 用户 Handle"
-        />
-        <el-input
-          v-model="password"
-          aria-label="用户密码"
-          placeholder="SillyTavern 用户密码"
-          type="password"
-          show-password
-        />
+        <el-input v-model="handle" aria-label="用户 Handle" placeholder="SillyTavern 用户 Handle" />
+        <el-input v-model="password" aria-label="用户密码" placeholder="SillyTavern 用户密码" type="password" show-password />
       </template>
 
-      <el-input
-        v-else-if="mode === 'standalone'"
-        v-model="password"
-        aria-label="Barkeep API 密码"
-        placeholder="Barkeep API 密码"
-        type="password"
-        show-password
-      />
+      <el-input v-else-if="mode === 'standalone'" v-model="password" aria-label="Barkeep API 密码"
+        placeholder="Barkeep API 密码" type="password" show-password />
 
       <template v-if="mode === 'sillytavern'">
         <el-divider content-position="left">增强式安全（可选）</el-divider>
         <p class="connection-hint" style="margin-bottom: 8px;">
           如果你的内嵌模式启用了增强式安全（API_PASSWORD_FORCE），请在这里额外填写 Barkeep API 密码。
         </p>
-        <el-input
-          v-if="multiUser"
-          v-model="apiPassword"
-          aria-label="Barkeep API 密码"
-          placeholder="Barkeep API 密码（API_PASSWORD_FORCE）"
-          type="password"
-          show-password
-        />
-        <el-input
-          v-else
-          v-model="password"
-          aria-label="Barkeep API 密码"
-          placeholder="Barkeep API 密码（API_PASSWORD_FORCE）"
-          type="password"
-          show-password
-        />
+        <el-input v-if="multiUser" v-model="apiPassword" aria-label="Barkeep API 密码"
+          placeholder="Barkeep API 密码（API_PASSWORD_FORCE）" type="password" show-password />
+        <el-input v-else v-model="password" aria-label="Barkeep API 密码" placeholder="Barkeep API 密码（API_PASSWORD_FORCE）"
+          type="password" show-password />
       </template>
 
       <template v-if="mode === 'sillytavern' && basicAuthEnabled">
         <el-divider content-position="left">HTTP Basic</el-divider>
-        <el-input
-          v-model="basicUsername"
-          aria-label="HTTP Basic 用户名"
-          placeholder="HTTP Basic 用户名"
-        />
-        <el-input
-          v-model="basicPassword"
-          aria-label="HTTP Basic 密码"
-          placeholder="HTTP Basic 密码"
-          type="password"
-          show-password
-        />
+        <el-input v-model="basicUsername" aria-label="HTTP Basic 用户名" placeholder="HTTP Basic 用户名" />
+        <el-input v-model="basicPassword" aria-label="HTTP Basic 密码" placeholder="HTTP Basic 密码" type="password"
+          show-password />
       </template>
 
       <p class="connection-hint">
@@ -111,29 +53,13 @@
         }}
       </p>
 
-      <el-alert
-        v-if="authenticationWarning"
-        title="服务未启用认证"
-        description="当前独立 Barkeep 接受未认证请求，不建议暴露到公网。"
-        type="warning"
-        :closable="false"
-        show-icon
-      />
+      <el-alert v-if="authenticationWarning" title="服务未启用认证" description="当前独立 Barkeep 接受未认证请求，不建议暴露到公网。" type="warning"
+        :closable="false" show-icon />
 
-      <el-alert
-        v-if="errorMessage"
-        :title="errorMessage"
-        type="error"
-        :closable="false"
-        show-icon
-        data-testid="barkeep-error"
-      />
+      <el-alert v-if="errorMessage" :title="errorMessage" type="error" :closable="false" show-icon
+        data-testid="barkeep-error" />
 
-      <div
-        v-if="status"
-        class="status-card"
-        data-testid="barkeep-status"
-      >
+      <div v-if="status" class="status-card" data-testid="barkeep-status">
         <div class="status-heading">
           <span class="status-dot"></span>
           <strong>连接正常</strong>
@@ -163,29 +89,15 @@
       </div>
 
       <div class="connection-actions">
-        <el-button
-          v-if="status"
-          type="danger"
-          plain
-          @click="logout"
-        >
+        <el-button v-if="status" type="danger" plain @click="logout">
           <Icon icon="material-symbols:logout-rounded" />
           断开
         </el-button>
-        <el-button
-          :loading="busyAction === 'login'"
-          :disabled="isBusy"
-          @click="login"
-        >
+        <el-button :loading="busyAction === 'login'" :disabled="isBusy" @click="login">
           <Icon icon="material-symbols:login-rounded" />
           登录
         </el-button>
-        <el-button
-          type="primary"
-          :loading="busyAction === 'ping'"
-          :disabled="!canPing"
-          @click="ping"
-        >
+        <el-button type="primary" :loading="busyAction === 'ping'" :disabled="!canPing" @click="ping">
           <Icon icon="material-symbols:network-ping" />
           Ping
         </el-button>
@@ -228,6 +140,11 @@ const {
   authenticationWarning,
 } = connection.state;
 const { initialize, login, ping, logout } = connection.actions;
+const baseUrlPlaceholder = computed(() =>
+  mode.value === "sillytavern"
+    ? "http://127.0.0.1:8000"
+    : "http://127.0.0.1:10024",
+);
 
 onMounted(initialize);
 </script>
@@ -302,7 +219,7 @@ onMounted(initialize);
   gap: 8px;
 }
 
-.count-grid > div {
+.count-grid>div {
   display: flex;
   flex-direction: column;
   align-items: center;
