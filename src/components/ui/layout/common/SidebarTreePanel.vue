@@ -56,6 +56,20 @@
     <div v-if="$slots.footer" class="sidebar-panel-footer">
       <slot name="footer" />
     </div>
+
+    <Teleport to="body">
+      <Transition name="sidebar-select-hint">
+        <div v-if="selectHintVisible" ref="selectHintRef" class="sidebar-select-hint" :style="selectHintStyle"
+          role="status" @click="dismissSelectHint">
+          <Icon icon="ph:cursor-click-duotone" class="sidebar-select-hint-icon" />
+          <span class="sidebar-select-hint-text">{{ selectHintText }}</span>
+          <button class="sidebar-select-hint-close" type="button" aria-label="关闭提示"
+            @click.stop="dismissSelectHint">
+            <Icon icon="ph:x-bold" />
+          </button>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -64,9 +78,10 @@ import { Icon } from "@iconify/vue";
 import TreeNodeMenu from "./TreeNodeMenu.vue";
 import type { TreeMenuItem } from "./treeMenu";
 import { ElScrollbar, ElTree } from "element-plus";
-import { computed, ref } from "vue";
+import { computed, nextTick, onUnmounted, ref } from "vue";
 import type { TreeMoveHandlers } from '@/utils/treeMove';
 import { useDevice } from "@/composables/useDevice";
+import { readLocalStorageJSON, writeLocalStorageJSON } from "@/utils/localStorageUtils";
 import { useSidebarTree } from "./useSidebarTree";
 
 interface Props {
@@ -109,6 +124,46 @@ const emit = defineEmits<{
 
 const draggable = computed(() => Boolean(props.moveHandlers));
 const { isMobileOrTablet } = useDevice();
+
+const SELECT_HINT_KEY = "sidebarMultiSelectHintShown";
+const selectHintRef = ref<HTMLElement | null>(null);
+const selectHintVisible = ref(false);
+const selectHintStyle = ref<Record<string, string>>({});
+const selectHintText = computed(() =>
+  isMobileOrTablet.value
+    ? "点击左侧复选框选中条目，按住拖动即可批量排序"
+    : "按住 Ctrl 点击条目可以多选，选中后按住鼠标拖动即可批量排序",
+);
+let selectHintTimer: ReturnType<typeof setTimeout> | undefined;
+const dismissSelectHint = () => {
+  clearTimeout(selectHintTimer);
+  selectHintVisible.value = false;
+};
+const placeSelectHint = (anchor: { x: number; y: number }) => {
+  const hint = selectHintRef.value;
+  if (!hint) return;
+  const margin = 12;
+  const gap = 16;
+  const { offsetWidth: width, offsetHeight: height } = hint;
+  const maxLeft = window.innerWidth - width - margin;
+  const maxTop = window.innerHeight - height - margin;
+  const left = anchor.x + gap + width > maxLeft ? anchor.x - width - gap : anchor.x + gap;
+  const top = anchor.y + gap + height > maxTop ? anchor.y - height - gap : anchor.y + gap;
+  selectHintStyle.value = {
+    left: `${Math.max(margin, Math.min(left, maxLeft))}px`,
+    top: `${Math.max(margin, Math.min(top, maxTop))}px`,
+  };
+};
+const notifySelect = (point?: { x: number; y: number }) => {
+  if (readLocalStorageJSON<boolean>(SELECT_HINT_KEY)) return;
+  writeLocalStorageJSON(SELECT_HINT_KEY, true);
+  selectHintVisible.value = true;
+  const anchor = point ?? { x: window.innerWidth / 2, y: window.innerHeight - 96 };
+  void nextTick(() => placeSelectHint(anchor));
+  clearTimeout(selectHintTimer);
+  selectHintTimer = setTimeout(dismissSelectHint, 10_000);
+};
+onUnmounted(() => clearTimeout(selectHintTimer));
 const treeRef = ref<InstanceType<typeof ElTree> | null>(null);
 const controller = useSidebarTree({
   data: () => props.treeData,
@@ -125,6 +180,7 @@ const controller = useSidebarTree({
   canDrag: (node) => props.moveHandlers?.allowDrag(node) ?? false,
   canDrop: (source, target, type) => props.moveHandlers?.allowDrop(source, target, type) ?? false,
   innerPosition: () => props.moveHandlers?.innerPosition ?? 'start',
+  onSelect: notifySelect,
   drop: (source, target, type) => props.moveHandlers?.handleNodeDrop(source, target, type) ?? false,
 });
 const {
@@ -247,6 +303,9 @@ const shouldIgnoreTreeNodeEvent = (event?: MouseEvent) => {
   background-color: transparent;
   padding: 8px;
   width: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .sidebar-tree-node-slot {
@@ -429,5 +488,67 @@ const shouldIgnoreTreeNodeEvent = (event?: MouseEvent) => {
 
 .sidebar-tree-node-drag-handle-icon {
   font-size: 14px;
+}
+
+.sidebar-select-hint {
+  position: fixed;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100vw - 24px);
+  padding: 10px 10px 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--el-border-color-light);
+  background-color: var(--el-bg-color-overlay);
+  box-shadow: var(--el-box-shadow-light);
+  color: var(--el-text-color-primary);
+  font-size: 13px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.sidebar-select-hint-icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  color: var(--el-color-primary);
+}
+
+.sidebar-select-hint-text {
+  min-width: 0;
+}
+
+.sidebar-select-hint-close {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.sidebar-select-hint-close:hover {
+  background-color: var(--el-fill-color-light);
+  color: var(--el-text-color-primary);
+}
+
+.sidebar-select-hint-enter-active,
+.sidebar-select-hint-leave-active {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.sidebar-select-hint-enter-from,
+.sidebar-select-hint-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
 }
 </style>

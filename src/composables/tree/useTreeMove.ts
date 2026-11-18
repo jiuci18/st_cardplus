@@ -22,6 +22,7 @@ export function useTreeMove(options: {
     type: TreeMoveType,
   ) => boolean | Promise<boolean>;
   innerPosition?: () => "start" | "end";
+  onSelect?: (point?: { x: number; y: number }) => void;
   root?: () => HTMLElement | undefined;
   settled?: (
     target: any,
@@ -49,13 +50,26 @@ export function useTreeMove(options: {
   };
   const select = (
     node: any,
-    event?: { ctrlKey?: boolean; metaKey?: boolean; shiftKey?: boolean },
+    event?: {
+      ctrlKey?: boolean;
+      metaKey?: boolean;
+      shiftKey?: boolean;
+      clientX?: number;
+      clientY?: number;
+    },
   ) => {
     if (busy.value || dragging.value) return;
     if (!canDrag(node)) {
       selectedKeys.value = [];
       return;
     }
+    const notifySelect = () => {
+      const point =
+        event && Number.isFinite(event.clientX) && Number.isFinite(event.clientY)
+          ? { x: event.clientX!, y: event.clientY! }
+          : undefined;
+      if (selectedKeys.value.length) options.onSelect?.(point);
+    };
     const key = options.key(node);
     const additive = event?.ctrlKey || event?.metaKey;
     const visible =
@@ -72,16 +86,19 @@ export function useTreeMove(options: {
       selectedKeys.value = [
         ...new Set([...(additive ? selectedKeys.value : []), ...range]),
       ];
+      notifySelect();
       return;
     }
     anchor = key;
     if (!additive) {
       selectedKeys.value = [key];
+      notifySelect();
       return;
     }
     const selected = new Set(selectedKeys.value);
     if (!selected.delete(key)) selected.add(key);
     selectedKeys.value = [...selected];
+    notifySelect();
   };
   const startDrag = (node: any, additive = false) => {
     if (!canDrag(node) || dragging.value) return false;
@@ -261,7 +278,7 @@ export function useTreeMove(options: {
     const suppressed = suppressClick;
     suppressClick = false;
     if (suppressed) return;
-    select(node, checkbox ? { ctrlKey: true } : event);
+    select(node, checkbox ? { ctrlKey: true, clientX: event.clientX, clientY: event.clientY } : event);
   };
   if (getCurrentScope()) onScopeDispose(cancel);
   return {

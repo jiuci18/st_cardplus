@@ -19,6 +19,7 @@ interface Options {
   canDrag?: (node: any) => boolean;
   canDrop?: (source: any, target: any, type: TreeMoveType) => boolean;
   innerPosition?: () => "start" | "end";
+  onSelect?: (point?: { x: number; y: number }) => void;
 }
 
 /** Owns expansion/rendering only; selection and movement belong to the move library. */
@@ -119,6 +120,7 @@ export function useSidebarTree(options: Options) {
       options.canDrop?.(source, target, type) ?? true,
     commit: options.drop,
     innerPosition: options.innerPosition,
+    onSelect: options.onSelect,
     root: () => options.tree()?.$el,
     settled: async (target, type, moved) => {
       const targetKey = target.data[options.key()];
