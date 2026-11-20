@@ -2,6 +2,11 @@
 @import './css/settings.css';
 @import './css/buttons-adv.css';
 
+.workspace-empty-state {
+  padding: 80px 20px;
+  text-align: center;
+}
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: 0.3s;

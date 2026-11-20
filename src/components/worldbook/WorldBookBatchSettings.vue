@@ -1,88 +1,82 @@
 <template>
   <div class="worldbook-batch-settings">
-    <div v-if="!book" class="worldbook-editor-empty-state">
-      <el-empty description="请先选择一个世界书进行批量设置" :image-size="80" />
+    <div class="worldbook-batch-toolbar">
+      <h3 class="worldbook-batch-title">
+        <Icon icon="ph:sliders-horizontal-duotone" class="form-section-icon" />
+        批量设置
+      </h3>
+      <div class="worldbook-batch-toolbar-actions">
+        <el-button @click="resetDraft">重置</el-button>
+        <el-button type="primary" :disabled="!canApply" @click="applyBatchSettings">
+          应用到 {{ checkedEntryKeys.length }} 个条目
+        </el-button>
+      </div>
     </div>
 
-    <template v-else>
-      <div class="worldbook-batch-toolbar">
-        <h3 class="worldbook-batch-title">
-          <Icon icon="ph:sliders-horizontal-duotone" class="form-section-icon" />
-          批量设置
-        </h3>
-        <div class="worldbook-batch-toolbar-actions">
-          <el-button @click="resetDraft">重置</el-button>
-          <el-button type="primary" :disabled="!canApply" @click="applyBatchSettings">
-            应用到 {{ checkedEntryKeys.length }} 个条目
-          </el-button>
-        </div>
-      </div>
-
-      <Splitpanes class="default-theme worldbook-batch-panes" push-other-panes>
-        <Pane size="64" min-size="42">
-          <el-scrollbar class="worldbook-batch-scrollbar">
-            <div class="worldbook-batch-left">
-              <section class="form-section">
-                <h3 class="form-section-title">
-                  <Icon icon="ph:check-square-duotone" class="form-section-icon" />
-                  选择要覆盖的组件
-                </h3>
-                <div class="worldbook-batch-overwrite-groups">
-                  <div v-for="section in fieldSections" :key="section.title" class="worldbook-batch-overwrite-group">
-                    <div class="worldbook-batch-overwrite-group-title">
-                      <Icon :icon="section.icon" />
-                      {{ section.title }}
-                    </div>
-                    <el-checkbox v-for="field in section.fields" :key="field.key" v-model="enabledFields[field.key]"
-                      class="worldbook-batch-overwrite-checkbox">
-                      {{ field.label }}
-                    </el-checkbox>
-                  </div>
-                </div>
-              </section>
-
-              <WorldBookEditor :entry="draftEntry" v-model="draftEntry" :all-keywords="allKeywords"
-                :current-entry-index="0" :total-entries="1" :is-next-entry-in-different-book="false"
-                :is-previous-entry-in-different-book="false" hide-content hide-navigation />
-            </div>
-          </el-scrollbar>
-        </Pane>
-
-        <Pane size="36" min-size="28">
-          <div class="worldbook-batch-right">
-            <div class="worldbook-batch-right-header">
+    <Splitpanes class="default-theme worldbook-batch-panes" push-other-panes>
+      <Pane size="64" min-size="42">
+        <el-scrollbar class="worldbook-batch-scrollbar">
+          <div class="worldbook-batch-left">
+            <section class="form-section">
               <h3 class="form-section-title">
-                <Icon icon="ph:tree-structure-duotone" class="form-section-icon" />
-                目标条目
+                <Icon icon="ph:check-square-duotone" class="form-section-icon" />
+                选择要覆盖的组件
               </h3>
-              <div class="worldbook-batch-selection-actions">
-                <el-button size="small" @click="checkAllEntries">全选</el-button>
-                <el-button size="small" @click="clearCheckedEntries">清空</el-button>
-              </div>
-            </div>
-            <el-scrollbar class="worldbook-batch-tree-scrollbar">
-              <el-tree ref="entryTreeRef" :data="entryTreeData" :props="treeProps" node-key="id" show-checkbox
-                default-expand-all :empty-text="book.entries.length === 0 ? '当前世界书没有条目' : '无条目'"
-                @check="syncCheckedEntries">
-                <template #default="{ node, data }">
-                  <div class="worldbook-batch-tree-node" :class="{ 'is-disabled': data.raw?.disable }">
-                    <Icon :icon="data.icon" class="sidebar-tree-node-icon" />
-                    <span>{{ node.label }}</span>
+              <div class="worldbook-batch-overwrite-groups">
+                <div v-for="section in fieldSections" :key="section.title" class="worldbook-batch-overwrite-group">
+                  <div class="worldbook-batch-overwrite-group-title">
+                    <Icon :icon="section.icon" />
+                    {{ section.title }}
                   </div>
-                </template>
-              </el-tree>
-            </el-scrollbar>
+                  <el-checkbox v-for="field in section.fields" :key="field.key" v-model="enabledFields[field.key]"
+                    class="worldbook-batch-overwrite-checkbox">
+                    {{ field.label }}
+                  </el-checkbox>
+                </div>
+              </div>
+            </section>
+
+            <WorldBookEditor :entry="draftEntry" v-model="draftEntry" :all-keywords="allKeywords"
+              :current-entry-index="0" :total-entries="1" :is-next-entry-in-different-book="false"
+              :is-previous-entry-in-different-book="false" hide-content hide-navigation />
           </div>
-        </Pane>
-      </Splitpanes>
-    </template>
+        </el-scrollbar>
+      </Pane>
+
+      <Pane size="36" min-size="28">
+        <div class="worldbook-batch-right">
+          <div class="worldbook-batch-right-header">
+            <h3 class="form-section-title">
+              <Icon icon="ph:tree-structure-duotone" class="form-section-icon" />
+              目标条目
+            </h3>
+            <div class="worldbook-batch-selection-actions">
+              <el-button size="small" @click="checkAllEntries">全选</el-button>
+              <el-button size="small" @click="clearCheckedEntries">清空</el-button>
+            </div>
+          </div>
+          <el-scrollbar class="worldbook-batch-tree-scrollbar">
+            <el-tree ref="entryTreeRef" :data="entryTreeData" :props="treeProps" node-key="id" show-checkbox
+              default-expand-all :empty-text="book.entries.length === 0 ? '当前世界书没有条目' : '无条目'"
+              @check="syncCheckedEntries">
+              <template #default="{ node, data }">
+                <div class="worldbook-batch-tree-node" :class="{ 'is-disabled': data.raw?.disable }">
+                  <Icon :icon="data.icon" class="sidebar-tree-node-icon" />
+                  <span>{{ node.label }}</span>
+                </div>
+              </template>
+            </el-tree>
+          </el-scrollbar>
+        </div>
+      </Pane>
+    </Splitpanes>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
 import { Icon } from '@iconify/vue';
-import { ElButton, ElCheckbox, ElEmpty, ElMessage, ElScrollbar, ElTree } from 'element-plus';
+import { ElButton, ElCheckbox, ElMessage, ElScrollbar, ElTree } from 'element-plus';
 import { Pane, Splitpanes } from 'splitpanes';
 import type { WorldBook, WorldBookEntry } from '@/types/worldbook';
 import { createDefaultEntryData } from '@/composables/worldbook/entry/useWorldBookEntryData';
@@ -103,7 +97,7 @@ const SCAN_SCOPE_FIELDS = [
 ] as const satisfies ReadonlyArray<keyof WorldBookEntry>;
 
 const props = defineProps<{
-  book: WorldBook | null;
+  book: WorldBook;
   allKeywords?: string[];
 }>();
 
@@ -193,7 +187,6 @@ const treeProps = {
 const entryKeyOf = (entry: WorldBookEntry, index: number) => `entry-${entry.uid ?? entry.id ?? index}`;
 
 const entryTreeData = computed(() => {
-  if (!props.book) return [];
   return [
     {
       id: `book-${props.book.id}`,
@@ -221,7 +214,7 @@ const syncCheckedEntries = () => {
 };
 
 const checkAllEntries = () => {
-  const keys = props.book?.entries.map((entry, index) => entryKeyOf(entry, index)) ?? [];
+  const keys = props.book.entries.map((entry, index) => entryKeyOf(entry, index));
   entryTreeRef.value?.setCheckedKeys(keys, false);
   checkedEntryKeys.value = keys;
 };
@@ -242,7 +235,7 @@ const copyFieldValue = (fieldKey: keyof WorldBookEntry) => {
 };
 
 const applyBatchSettings = () => {
-  if (!props.book || !canApply.value) return;
+  if (!canApply.value) return;
 
   const checked = new Set(checkedEntryKeys.value);
   const nextEntries = props.book.entries.map((entry, index) => {
@@ -272,7 +265,7 @@ const applyBatchSettings = () => {
 };
 
 watch(
-  () => props.book?.id,
+  () => props.book.id,
   () => {
     clearCheckedEntries();
   }

@@ -9,6 +9,7 @@ import {
   getLocalStorageSnapshot,
   localStorageStore,
   restoreLocalStorageSnapshot,
+  sessionStorageStore,
 } from "@/utils/localStorageUtils";
 import { saveFile } from "@/utils/system/fileSave";
 
@@ -103,6 +104,7 @@ export function useLocalData(updateStorageInfo: () => Promise<void>) {
         try {
           await resetAppDatabase();
           localStorageStore.clear();
+          sessionStorageStore.clear();
 
           ElMessage.success("所有本地数据已清除并重建数据库，应用将重新加载");
           await updateStorageInfo();

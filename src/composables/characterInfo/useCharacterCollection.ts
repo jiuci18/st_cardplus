@@ -124,19 +124,6 @@ export function useCharacterCollection() {
       if (migrated) {
         saveCharactersToLocalStorage();
       }
-    } else {
-      // Initialize with a default character if none exist
-      const newId = uuidv4();
-      const defaultCharacter = createCharacterCardWithMeta(
-        { id: newId, order: 0, starred: false },
-        { chineseName: '默认角色' }
-      );
-      characterCollection.value = {
-        characters: { [newId]: defaultCharacter },
-        projects: {},
-        activeCharacterId: newId,
-      };
-      saveCharactersToLocalStorage();
     }
   });
 

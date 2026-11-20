@@ -1,73 +1,31 @@
 <template>
   <div class="world-editor-main-panel">
     <template v-if="props.selectedItem">
-      <div
-        class="editor-content"
-        :key="props.selectedItem.id"
-      >
-        <ProjectEditor
-          v-if="isProject(props.selectedItem)"
-          :project="props.selectedItem"
-          :on-export-project="props.exportProject"
-          :on-import-project-overwrite="props.importProjectOverwrite"
-        />
-        <LandmarkEditor
-          v-else-if="isLandmark(props.selectedItem)"
-          :landmark="props.selectedItem"
-          :all-landmarks="props.landmarks"
-          :all-tags="props.allTags"
-          :all-regions="props.allRegions"
-          :all-forces="props.forces"
-          :create-region="props.createRegion"
-          @select-force="force => emit('update:selectedItem', force)"
-        />
-        <RegionEditor
-          v-else-if="isRegion(props.selectedItem)"
-          :region="props.selectedItem"
-        />
-        <ForceEditor
-          v-else-if="isForce(props.selectedItem)"
-          :force="props.selectedItem"
-          :all-tags="props.allTags"
-          :all-forces="props.forces"
-          :all-landmarks="props.landmarks"
-        />
-        <IntegratedPanel
-          v-else-if="isIntegration(props.selectedItem)"
-          :integration="props.selectedItem"
-          :current-project="getCurrentProject(props.selectedItem)"
-          :landmarks="props.landmarks || []"
-          :regions="props.regions || []"
-          :forces="props.forces || []"
-        />
-        <div
-          v-else
-          class="editor-placeholder"
-        >
-          <p>未知项目类型</p>
-        </div>
+      <div class="editor-content" :key="props.selectedItem.id">
+        <ProjectEditor v-if="isProject(props.selectedItem)" :project="props.selectedItem"
+          :on-export-project="props.exportProject" :on-import-project-overwrite="props.importProjectOverwrite" />
+        <LandmarkEditor v-else-if="isLandmark(props.selectedItem)" :landmark="props.selectedItem"
+          :all-landmarks="props.landmarks" :all-tags="props.allTags" :all-regions="props.allRegions"
+          :all-forces="props.forces" :create-region="props.createRegion"
+          @select-force="force => emit('update:selectedItem', force)" />
+        <RegionEditor v-else-if="isRegion(props.selectedItem)" :region="props.selectedItem" />
+        <ForceEditor v-else-if="isForce(props.selectedItem)" :force="props.selectedItem" :all-tags="props.allTags"
+          :all-forces="props.forces" :all-landmarks="props.landmarks" />
+        <IntegratedPanel v-else-if="isIntegration(props.selectedItem)" :integration="props.selectedItem"
+          :current-project="getCurrentProject(props.selectedItem)" :landmarks="props.landmarks || []"
+          :regions="props.regions || []" :forces="props.forces || []" />
+        <el-empty v-else class="workspace-empty-state" :image-size="80" description="未知项目类型" />
       </div>
     </template>
-    <div
-      v-else
-      class="editor-placeholder"
-    >
-      <p>
-        请选择一个条目/功能以使用，或者
-        <button
-          type="button"
-          class="create-project-link"
-          @click="emit('create-project')"
-        >
-          新建
-        </button>
-        一个项目
-      </p>
-    </div>
+    <el-empty v-else class="workspace-empty-state" :image-size="80"
+      :description="props.projects?.length ? '请从列表选择一个条目，或创建新项目' : '暂无项目，请先创建一个项目'">
+      <el-button type="primary" @click="emit('create-project')">创建项目</el-button>
+    </el-empty>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ElButton, ElEmpty } from 'element-plus';
 import type {
   EnhancedForce,
   EnhancedLandmark,
@@ -135,37 +93,9 @@ const getCurrentProject = (integration: ProjectIntegration): Project | null => {
   flex-direction: column;
 }
 
-.world-editor-main-panel > .editor-content {
+.world-editor-main-panel>.editor-content {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-}
-
-.world-editor-main-panel > .editor-placeholder,
-.world-editor-main-panel > .editor-content > .editor-placeholder {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  border: 2px dashed var(--el-border-color);
-  border-radius: 8px;
-  color: var(--el-text-color-placeholder);
-  text-align: center;
-  padding: 20px;
-  box-sizing: border-box;
-}
-
-.create-project-link {
-  border: none;
-  background: transparent;
-  padding: 0 2px;
-  color: var(--el-color-primary);
-  cursor: pointer;
-  font-size: inherit;
-  text-decoration: underline;
-}
-
-.create-project-link:hover {
-  color: var(--el-color-primary-light-3);
 }
 </style>

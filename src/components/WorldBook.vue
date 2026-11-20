@@ -1,23 +1,29 @@
 <template>
   <DefineEditor>
-    <div class="content-panel-header">
-      <h2 class="content-panel-title">
-        <Icon icon="ph:note-pencil-duotone" class="content-panel-icon" />
-        编辑: <span class="content-panel-text-highlight">{{ editorTitle }}</span>
-      </h2>
-      <div class="worldbook-editor-header-actions">
-        <span class="worldbook-import-notice">导入须知：请使用从酒馆导出的世界书进行导入</span>
-        <WorldBookActions context="editor" :has-selection="activeView === 'entry' && !!selectedEntry"
-          :save-status="saveStatus" :auto-save-mode="autoSaveMode" @toggle-mode="toggleAutoSaveMode"
-          @copy-entry="copySelectedEntry" @save-entry="saveCurrentEntry" @delete-entry="deleteSelectedEntry" />
+    <template v-if="activeBook">
+      <div v-if="showBatchSettings || selectedEntry" class="content-panel-header">
+        <h2 class="content-panel-title">
+          <Icon icon="ph:note-pencil-duotone" class="content-panel-icon" />
+          编辑: <span class="content-panel-text-highlight">{{ editorTitle }}</span>
+        </h2>
+        <div class="worldbook-editor-header-actions">
+          <span class="worldbook-import-notice">导入须知：请使用从酒馆导出的世界书进行导入</span>
+          <WorldBookActions context="editor" :has-selection="!showBatchSettings && !!selectedEntry"
+            :save-status="saveStatus" :auto-save-mode="autoSaveMode" @toggle-mode="toggleAutoSaveMode"
+            @copy-entry="copySelectedEntry" @save-entry="saveCurrentEntry" @delete-entry="deleteSelectedEntry" />
+        </div>
       </div>
-    </div>
-    <WorldBookBatchSettings v-if="activeView === 'batch'" :book="activeBook" :all-keywords="allKeywords"
-      @apply="applyBatchSettings" />
-    <WorldBookEditor v-else :entry="selectedEntry" v-model="editableEntry" :all-keywords="allKeywords"
-      :current-entry-index="currentEntryIndex" :total-entries="totalEntries" @go-to-previous="goToPreviousEntry"
-      @go-to-next="goToNextEntry" :is-next-entry-in-different-book="isNextEntryInDifferentBook"
-      :is-previous-entry-in-different-book="isPreviousEntryInDifferentBook" :save-status="saveStatus" />
+      <WorldBookBatchSettings v-if="showBatchSettings" :book="activeBook" :all-keywords="allKeywords"
+        @apply="applyBatchSettings" />
+      <WorldBookEditor v-else :entry="selectedEntry" v-model="editableEntry" :all-keywords="allKeywords"
+        :current-entry-index="currentEntryIndex" :total-entries="totalEntries" @go-to-previous="goToPreviousEntry"
+        @go-to-next="goToNextEntry" :is-next-entry-in-different-book="isNextEntryInDifferentBook"
+        :is-previous-entry-in-different-book="isPreviousEntryInDifferentBook" :save-status="saveStatus" />
+    </template>
+    <el-empty v-else-if="!isLoading" class="workspace-empty-state" :image-size="80"
+      description="暂无世界书，请创建一本，或从列表导入">
+      <el-button type="primary" @click="handleCreateBook">创建世界书</el-button>
+    </el-empty>
   </DefineEditor>
   <DefineList>
     <WorldBookList :collection="worldBookCollection" :active-book-id="activeBookId" @select-book="handleSelectBook"
@@ -25,7 +31,7 @@
       @delete-book="handleDeleteBook" @select-batch-settings="handleSelectBatchSettings"
       @select-entry="handleSelectEntry" @add-entry="addNewEntry" @duplicate-entry="handleDuplicateEntry"
       @delete-entry="handleDeleteEntryFromList" :selected-entry="selectedEntry"
-      :is-batch-settings-active="activeView === 'batch'" @copy-book="copyWorldBookToClipboard"
+      :is-batch-settings-active="showBatchSettings" @copy-book="copyWorldBookToClipboard"
       @export-json="exportToJson" @import-book-file="handleImportBookFile" @clear-all="clearAllEntries"
       :drag-drop-handlers="dragDropHandlers" :sidebar-width="sidebarWidth" />
   </DefineList>
@@ -75,7 +81,7 @@
 <script setup lang="ts">
 import { createReusableTemplate, useElementSize } from '@vueuse/core';
 import { Icon } from '@iconify/vue';
-import { ElMessage, ElTooltip } from 'element-plus';
+import { ElButton, ElEmpty, ElMessage, ElTooltip } from 'element-plus';
 import { Pane, Splitpanes } from 'splitpanes';
 import 'splitpanes/dist/splitpanes.css';
 import '../css/worldbook.css';
@@ -144,7 +150,8 @@ const {
 });
 
 const { isMobile } = useDevice();
-const activeView = ref<'entry' | 'batch'>('batch');
+const batchBookId = ref<string | null>(null);
+const showBatchSettings = computed(() => batchBookId.value !== null && batchBookId.value === activeBookId.value);
 const mobileDrawerVisible = ref(false);
 const mobilePanelTab = ref('list');
 const mobileBookmarkItems = [
@@ -158,18 +165,9 @@ const mobileBookmarkItems = [
 ];
 
 watch(
-  [isMobile, activeTab, isLoading],
-  ([mobile, tab, loading]) => {
-    if (!mobile || loading) {
-      mobileDrawerVisible.value = false;
-      return;
-    }
-    if (tab === 'list') {
-      mobilePanelTab.value = 'list';
-      mobileDrawerVisible.value = true;
-      return;
-    }
-    mobileDrawerVisible.value = false;
+  [isMobile, activeTab, isLoading, activeBookId],
+  ([mobile, tab, loading, bookId]) => {
+    mobileDrawerVisible.value = mobile && tab === 'list' && !loading && !!bookId;
   },
   { immediate: true }
 );
@@ -185,10 +183,7 @@ const {
   selectEntry: (bookId, index) => handleSelectEntry(bookId, index),
 });
 
-const editorTitle = computed(() => {
-  if (activeView.value === 'batch') return '批量设置';
-  return selectedEntry.value ? selectedEntry.value.comment || '新条目' : '未选择条目';
-});
+const editorTitle = computed(() => showBatchSettings.value ? '批量设置' : selectedEntry.value?.comment || '新条目');
 
 const dragDropHandlers = useWorldBookDragDrop(
   worldBookCollection,
@@ -204,7 +199,7 @@ const closeMobileDrawer = () => {
 };
 
 const handleSelectBook = (bookId: string) => {
-  activeView.value = 'entry';
+  batchBookId.value = null;
   selectBook(bookId);
   nextTick(() => {
     if (activeBook.value && activeBook.value.entries.length > 0) {
@@ -219,7 +214,7 @@ const handleSelectBook = (bookId: string) => {
 };
 
 const handleSelectEntry = async (bookId: string, entryIndex: number | null) => {
-  activeView.value = 'entry';
+  batchBookId.value = null;
   await ensureActiveBook(bookId);
   selectEntry(entryIndex === null ? null : String(entryIndex));
   if (entryIndex !== null) {
@@ -238,21 +233,18 @@ const handleSelectBatchSettings = (bookId: string) => {
   if (activeBookId.value !== bookId) {
     selectBook(bookId);
   }
-  activeView.value = 'batch';
+  batchBookId.value = bookId;
   activeTab.value = 'editor';
   closeMobileDrawer();
 };
 
 const applyBatchSettings = async (entries: WorldBookEntry[]) => {
-  if (!activeBook.value) {
-    ElMessage.error('请先选择一个世界书');
-    return;
-  }
+  const book = activeBook.value;
+  if (!book) return;
+  await updateBookEntries(book.id, entries);
 
-  await updateBookEntries(activeBook.value.id, entries);
-
-  if (selectedEntry.value) {
-    const refreshedEntry = activeBook.value.entries.find((entry) => entry.uid === selectedEntry.value?.uid);
+  if (activeBook.value === book && selectedEntry.value) {
+    const refreshedEntry = book.entries.find((entry) => entry.uid === selectedEntry.value?.uid);
     if (refreshedEntry) {
       editableEntry.value = JSON.parse(JSON.stringify(refreshedEntry));
     }
@@ -260,7 +252,7 @@ const applyBatchSettings = async (entries: WorldBookEntry[]) => {
 };
 
 const addNewEntry = async (bookId?: string) => {
-  activeView.value = 'entry';
+  batchBookId.value = null;
   const targetBookId = bookId || activeBookId.value;
   if (!targetBookId) {
     ElMessage.error('请先选择一个世界书 ');
@@ -272,14 +264,14 @@ const addNewEntry = async (bookId?: string) => {
 };
 
 const handleDuplicateEntry = async (bookId: string, entryIndex: number) => {
-  activeView.value = 'entry';
+  batchBookId.value = null;
   await ensureActiveBook(bookId);
   await duplicateEntry(entryIndex);
   closeMobileDrawer();
 };
 
 const handleDeleteEntryFromList = async (bookId: string, entryIndex: number) => {
-  activeView.value = 'entry';
+  batchBookId.value = null;
   await ensureActiveBook(bookId);
   if (!activeBook.value?.entries[entryIndex]) return;
   selectEntry(String(entryIndex));

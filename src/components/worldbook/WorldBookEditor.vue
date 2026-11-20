@@ -1,7 +1,7 @@
 <template>
   <el-scrollbar ref="editorScrollbarRef" class="worldbook-editor-scrollbar">
     <div class="content-panel-body">
-      <div v-if="!entry" class="worldbook-editor-empty-state">
+      <div v-if="!entry" class="workspace-empty-state">
         <el-empty description="请先选择或新增一个条目进行编辑" :image-size="80"></el-empty>
       </div>
       <el-form v-if="entry" :model="localModel" label-position="top" ref="entryFormRef"

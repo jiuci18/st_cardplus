@@ -1,19 +1,10 @@
 <template>
   <el-scrollbar class="worldbook-editor-scrollbar">
     <div class="content-panel-body">
-      <div v-if="!region" class="worldbook-editor-empty-state">
-        <el-empty
-          description="请在列表中选择或新增一个区域进行编辑"
-          :image-size="80"
-        ></el-empty>
+      <div v-if="!region" class="workspace-empty-state">
+        <el-empty description="请在列表中选择或新增一个区域进行编辑" :image-size="80"></el-empty>
       </div>
-      <el-form
-        v-if="region"
-        :model="region"
-        label-position="top"
-        class="worldbook-editor-form"
-        @submit.prevent
-      >
+      <el-form v-if="region" :model="region" label-position="top" class="worldbook-editor-form" @submit.prevent>
         <section class="form-section">
           <h3 class="form-section-title">
             <Icon icon="ph:info-duotone" class="form-section-icon" />
@@ -26,12 +17,7 @@
             </div>
             <div>
               <label class="form-label">介绍</label>
-              <el-input
-                v-model="region.description"
-                type="textarea"
-                :rows="4"
-                placeholder="描述这个区域的总体特征..."
-              />
+              <el-input v-model="region.description" type="textarea" :rows="4" placeholder="描述这个区域的总体特征..." />
             </div>
           </div>
         </section>
@@ -48,15 +34,9 @@
             </div>
           </div>
           <div class="color-palette">
-            <button
-              v-for="color in REGION_COLOR_PALETTE"
-              :key="color"
-              type="button"
-              class="color-swatch"
-              :style="{ backgroundColor: color }"
-              :class="{ active: region.color === color }"
-              @click="region.color = color"
-            ></button>
+            <button v-for="color in REGION_COLOR_PALETTE" :key="color" type="button" class="color-swatch"
+              :style="{ backgroundColor: color }" :class="{ active: region.color === color }"
+              @click="region.color = color"></button>
           </div>
         </section>
 
@@ -67,12 +47,7 @@
           </h3>
           <div>
             <label class="form-label">备注</label>
-            <el-input
-              v-model="region.notes"
-              type="textarea"
-              :rows="3"
-              placeholder="内部备注或额外信息..."
-            />
+            <el-input v-model="region.notes" type="textarea" :rows="3" placeholder="内部备注或额外信息..." />
           </div>
         </section>
       </el-form>
